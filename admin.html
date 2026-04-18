@@ -552,6 +552,35 @@
     .ni-msg { font-size: 0.75rem; color: var(--t2); line-height: 1.4; margin-bottom: 4px; }
     .ni-time { font-size: 0.625rem; color: var(--t3); }
     .ni-actions { display: flex; gap: 6px; margin-top: 8px; }
+
+    /* ── REVIEW QUEUE ── */
+    .rv-card {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 18px; margin-bottom: 12px;
+      transition: border-color var(--ease);
+    }
+    .rv-card:hover { border-color: var(--brd2); }
+    .rv-hd { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 12px; }
+    .rv-info { flex: 1; min-width: 0; }
+    .rv-title { font-size: 0.9375rem; font-weight: 700; margin-bottom: 7px; line-height: 1.3; }
+    .rv-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; font-size: 0.8125rem; color: var(--t2); }
+    .rv-actions { display: flex; gap: 7px; flex-shrink: 0; flex-wrap: wrap; }
+    .rv-sub {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--rsm); padding: 12px; margin-top: 4px;
+    }
+    .rv-revision-form {
+      margin-top: 12px; padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .review-banner {
+      display: flex; align-items: center; justify-content: space-between;
+      background: linear-gradient(135deg, rgba(251,191,36,.15), rgba(232,184,75,.07));
+      border: 1px solid rgba(232,184,75,.3); border-radius: var(--r);
+      padding: 16px 20px; margin-bottom: 20px; cursor: pointer;
+      transition: all var(--ease);
+    }
+    .review-banner:hover { border-color: var(--gold); }
   </style>
 </head>
 
@@ -566,6 +595,10 @@
       <button class="sb" onclick="goSec('users')" title="User Control">👥</button>
       <button class="sb" onclick="goSec('create-task')" title="Buat Task">➕</button>
       <button class="sb" onclick="goSec('all-tasks')" title="Semua Task">📋</button>
+      <div class="notif-btn-wrap">
+        <button class="sb" onclick="goSec('review')" title="Review Queue" id="reviewBtn">🔍</button>
+        <span class="notif-badge-btn" id="reviewBadge" style="display:none">0</span>
+      </div>
       <button class="sb" onclick="goSec('kanban')" title="Kanban Board">🗂️</button>
       <button class="sb" onclick="goSec('leaderboard')" title="Leaderboard">🏆</button>
     </nav>
@@ -599,6 +632,9 @@
         <p>Ringkasan keseluruhan tim dan progress project</p>
       </div>
 
+      <!-- Review Banner (shown when ada task on_review) -->
+      <div id="reviewBanner" style="display:none" onclick="goSec('review')"></div>
+
       <!-- Colored feat cards -->
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px" id="featCards">
         <div class="feat-card fc-purple" onclick="goSec('all-tasks')">
@@ -607,7 +643,7 @@
           <div class="fc-val" id="fcOngoing">—</div>
           <div class="fc-sub">task aktif</div>
         </div>
-        <div class="feat-card fc-amber" onclick="goSec('all-tasks')">
+        <div class="feat-card fc-amber" onclick="goSec('review')">
           <div class="fc-ico">🔍</div>
           <div class="fc-label">On Review</div>
           <div class="fc-val" id="fcReview">—</div>
@@ -825,6 +861,20 @@
             </tbody>
           </table>
         </div>
+      </div>
+    </section>
+
+    <!-- ═══ REVIEW QUEUE ═══ -->
+    <section class="sec" id="sec-review">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px">
+        <div class="shd" style="margin-bottom:0">
+          <h2>🔍 Review Queue</h2>
+          <p>Task yang sudah selesai dari developer — cek dan beri feedback</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="loadReviewQueue()">🔄 Refresh</button>
+      </div>
+      <div id="reviewList">
+        <div class="page-loader"><span class="spinner"></span></div>
       </div>
     </section>
 
@@ -1069,7 +1119,7 @@
   const SEC_TITLES = {
     overview:'Admin Overview', users:'User Control',
     'create-task':'Buat Task Baru', 'all-tasks':'Semua Task',
-    kanban:'Kanban Board', leaderboard:'Leaderboard'
+    review:'Review Queue', kanban:'Kanban Board', leaderboard:'Leaderboard'
   };
 
   function goSec(name) {
@@ -1082,6 +1132,7 @@
 
     if (name === 'users')       loadUsers();
     if (name === 'all-tasks')   loadAllTasks();
+    if (name === 'review')      loadReviewQueue();
     if (name === 'kanban')      loadAdminKanban();
     if (name === 'leaderboard') loadAdminLeaderboard();
   }
@@ -1096,9 +1147,34 @@
     document.getElementById('stUsers').textContent   = uc || 0;
     document.getElementById('stTotal').textContent   = (tasks||[]).length;
     document.getElementById('fcOngoing').textContent = (tasks||[]).filter(t=>t.status==='ongoing').length;
-    document.getElementById('fcReview').textContent  = (tasks||[]).filter(t=>t.status==='on_review').length;
-    document.getElementById('fcDone').textContent    = (tasks||[]).filter(t=>t.status==='processed').length;
     document.getElementById('stRevision').textContent= (tasks||[]).filter(t=>t.status==='revision').length;
+    document.getElementById('fcDone').textContent    = (tasks||[]).filter(t=>t.status==='processed').length;
+
+    const onReviewCount = (tasks||[]).filter(t=>t.status==='on_review').length;
+    document.getElementById('fcReview').textContent = onReviewCount;
+
+    // Review banner
+    const banner = document.getElementById('reviewBanner');
+    if (onReviewCount > 0) {
+      banner.style.display = '';
+      banner.innerHTML = `
+        <div class="review-banner">
+          <div>
+            <div style="font-size:0.9375rem;font-weight:700;color:var(--gold);margin-bottom:3px">
+              🔍 ${onReviewCount} task menunggu review kamu!
+            </div>
+            <div style="font-size:0.8125rem;color:var(--t2)">
+              Developer sudah selesai — tinggal kamu cek dan beri feedback
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();goSec('review')">
+            Cek Sekarang →
+          </button>
+        </div>`;
+    } else {
+      banner.style.display = 'none';
+    }
+    updateReviewBadge(onReviewCount);
 
     // Recent tasks
     const { data: recent } = await db.from('tasks')
@@ -1747,6 +1823,179 @@
   }
 
   // showToast, setLoading, openModal, closeModal → dari utils.js
+
+  // ── REVIEW QUEUE ────────────────────────────────────
+  async function loadReviewQueue() {
+    const el = document.getElementById('reviewList');
+    el.innerHTML = `<div class="page-loader"><span class="spinner"></span></div>`;
+
+    const { data: tasks } = await db.from('tasks')
+      .select('*, assigned_to:profiles!tasks_assigned_to_fkey(id,full_name,role)')
+      .eq('status', 'on_review')
+      .order('updated_at', { ascending: false });
+
+    if (!tasks?.length) {
+      el.innerHTML = `<div class="empty-state"><div class="ei">✅</div><div class="et">Semua beres!</div><p class="text-muted" style="margin-top:8px">Tidak ada task yang perlu di-review saat ini</p></div>`;
+      updateReviewBadge(0);
+      return;
+    }
+
+    // Fetch latest submission per task
+    const { data: subs } = await db.from('task_submissions')
+      .select('*, submitted_by:profiles!task_submissions_submitted_by_fkey(full_name)')
+      .in('task_id', tasks.map(t => t.id))
+      .order('submitted_at', { ascending: false });
+
+    const latestSub = {}, subCount = {};
+    (subs || []).forEach(s => {
+      if (!latestSub[s.task_id]) latestSub[s.task_id] = s;
+      subCount[s.task_id] = (subCount[s.task_id] || 0) + 1;
+    });
+
+    // Resolve image URLs to signed URLs
+    for (const tid of Object.keys(latestSub)) {
+      if (latestSub[tid].file_url) {
+        latestSub[tid].file_url = await resolveFileUrl(latestSub[tid].file_url) || latestSub[tid].file_url;
+      }
+    }
+
+    const isImg = url => /\.(png|jpg|jpeg|gif|webp|svg)(\?|$)/i.test(url||'');
+
+    el.innerHTML = tasks.map(t => {
+      const sub = latestSub[t.id];
+      const cnt = subCount[t.id] || 0;
+      const assignedId = t.assigned_to?.id || '';
+
+      return `
+      <div class="rv-card" id="rvc-${t.id}">
+        <div class="rv-hd">
+          <div class="rv-info">
+            <div class="rv-title">${esc(t.title)}</div>
+            <div class="rv-meta">
+              ${t.assigned_to ? `
+                <span style="display:flex;align-items:center;gap:5px">
+                  <span class="mini-ava">${ini(t.assigned_to.full_name)}</span>
+                  <span style="font-weight:600">${esc(t.assigned_to.full_name)}</span>
+                </span>
+                ${t.assigned_to.role ? `<span class="badge bg-${t.assigned_to.role}">${ROLES[t.assigned_to.role]?.icon||''} ${ROLES[t.assigned_to.role]?.label||t.assigned_to.role}</span>` : ''}
+              ` : '<span class="text-tiny">Unassigned</span>'}
+              <span class="badge bg-${t.priority}">${t.priority}</span>
+              ${t.due_date ? `<span style="font-size:0.6875rem;color:${isOverdue(t.due_date)?'#f87171':'var(--t3)'}">📅 ${fmtDate(t.due_date)}</span>` : ''}
+              ${cnt > 1 ? `<span style="font-size:0.6875rem;color:var(--amber)">↺ ${cnt}x submit</span>` : ''}
+            </div>
+          </div>
+          <div class="rv-actions">
+            <button class="btn btn-primary btn-sm" onclick="adminApprove('${t.id}','${assignedId}','${esc(t.title)}')">✅ Setujui</button>
+            <button class="btn btn-danger btn-sm" onclick="toggleRevisionForm('${t.id}')">🔄 Revisi</button>
+          </div>
+        </div>
+
+        ${sub ? `
+        <div class="rv-sub">
+          <div style="font-size:0.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:8px">
+            Submission terbaru · ${timeAgo(sub.submitted_at)} · oleh ${esc(sub.submitted_by?.full_name||'?')}
+          </div>
+          ${sub.note ? `<p style="font-size:0.8125rem;color:var(--t2);margin-bottom:8px">💬 ${esc(sub.note)}</p>` : ''}
+          ${sub.file_url ? `
+            ${isImg(sub.file_url)
+              ? `<img src="${sub.file_url}" class="sub-img-preview"
+                  style="max-height:200px;cursor:zoom-in"
+                  onclick="openLightbox('${sub.file_url}')">`
+              : `<a href="${sub.file_url}" target="_blank" class="btn btn-secondary btn-sm">⬇️ ${esc(sub.file_name||'Download File')}</a>`
+            }` : '<span style="font-size:0.75rem;color:var(--t3)">Tidak ada file</span>'}
+          ${cnt > 1 ? `<div style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="openSubs('${t.id}','${esc(t.title)}')">📋 Lihat semua ${cnt} submission →</button></div>` : ''}
+        </div>` : `<div style="font-size:0.8125rem;color:var(--t3);padding:8px 0">Belum ada file submission</div>`}
+
+        <!-- Revision form -->
+        <div class="rv-revision-form" id="rvf-${t.id}" style="display:none">
+          <div style="font-size:0.8125rem;font-weight:600;margin-bottom:8px;color:var(--amber)">🔄 Feedback Revisi</div>
+          <textarea class="form-textarea" id="rvnote-${t.id}"
+            placeholder="Tulis catatan revisi untuk developer... (opsional)"
+            style="min-height:72px;margin-bottom:10px"></textarea>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-danger btn-sm" onclick="adminRevision('${t.id}','${assignedId}','${esc(t.title)}')">🔄 Kirim Revisi</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleRevisionForm('${t.id}')">Batal</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    updateReviewBadge(tasks.length);
+  }
+
+  function toggleRevisionForm(taskId) {
+    const form = document.getElementById(`rvf-${taskId}`);
+    const isOpen = form.style.display !== 'none';
+    form.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) document.getElementById(`rvnote-${taskId}`)?.focus();
+  }
+
+  async function adminApprove(taskId, assignedTo, taskTitle) {
+    const card = document.getElementById(`rvc-${taskId}`);
+    const btn = card?.querySelector('.btn-primary');
+    if (btn) { btn.disabled = true; btn.textContent = '...'; }
+
+    const { error } = await db.from('tasks')
+      .update({ status: 'processed', updated_at: new Date().toISOString() })
+      .eq('id', taskId);
+    if (error) { showToast('Gagal: '+error.message, 'error'); if (btn) { btn.disabled=false; btn.textContent='✅ Setujui'; } return; }
+
+    if (assignedTo) {
+      const { data: task } = await db.from('tasks').select('points_reward').eq('id', taskId).single();
+      if (task?.points_reward) {
+        const { data: prof } = await db.from('profiles').select('points').eq('id', assignedTo).single();
+        await db.from('profiles').update({ points: (prof?.points||0) + task.points_reward }).eq('id', assignedTo);
+      }
+      await db.from('notifications').insert({
+        recipient_id: assignedTo, sender_id: adminProfile.id,
+        type: 'task_approved', task_id: taskId,
+        title: '✅ Task Disetujui!',
+        message: `Task "${taskTitle}" telah disetujui oleh admin`
+      });
+    }
+
+    showToast('✅ Task disetujui!', 'success');
+    card?.remove();
+    loadOverview();
+  }
+
+  async function adminRevision(taskId, assignedTo, taskTitle) {
+    const note = document.getElementById(`rvnote-${taskId}`)?.value.trim();
+    const card = document.getElementById(`rvc-${taskId}`);
+    const btn  = card?.querySelector('.btn-danger');
+    if (btn) { btn.disabled = true; btn.textContent = '...'; }
+
+    const { error } = await db.from('tasks')
+      .update({ status: 'revision', updated_at: new Date().toISOString() })
+      .eq('id', taskId);
+    if (error) { showToast('Gagal: '+error.message, 'error'); if (btn) { btn.disabled=false; btn.textContent='🔄 Kirim Revisi'; } return; }
+
+    if (assignedTo) {
+      await db.from('notifications').insert({
+        recipient_id: assignedTo, sender_id: adminProfile.id,
+        type: 'task_revision', task_id: taskId,
+        title: '🔄 Task Perlu Revisi',
+        message: note || `Task "${taskTitle}" perlu diperbaiki`
+      });
+    }
+
+    showToast('🔄 Feedback revisi dikirim!', 'warning');
+    card?.remove();
+    loadOverview();
+  }
+
+  function updateReviewBadge(count) {
+    const badge = document.getElementById('reviewBadge');
+    const btn   = document.getElementById('reviewBtn');
+    if (count > 0) {
+      badge.textContent = count > 99 ? '99+' : count;
+      badge.style.display = 'flex';
+      if (btn) btn.style.color = 'var(--amber)';
+    } else {
+      badge.style.display = 'none';
+      if (btn) btn.style.color = '';
+    }
+  }
 
   // ── ADMIN NOTIFICATION SYSTEM ──────────────────────
   let _adminNotifOpen = false;

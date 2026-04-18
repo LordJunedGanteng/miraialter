@@ -1444,8 +1444,8 @@
       <section class="ds-section" id="sec-submit">
         <div class="sub-wrap">
           <div class="section-hd">
-            <h2>📤 Submit Task</h2>
-            <p>Upload bukti pekerjaan dan kirim ke review</p>
+            <h2>✅ Mark as Done</h2>
+            <p>Upload bukti pekerjaan dan tandai task selesai</p>
           </div>
           <div class="sub-card">
             <form id="submitForm" onsubmit="handleSubmit(event)">
@@ -1453,13 +1453,6 @@
                 <label class="form-label">Pilih Task</label>
                 <select class="form-select" id="subTaskSel" required>
                   <option value="">— Pilih task kamu —</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Status Baru</label>
-                <select class="form-select" id="subNewStatus">
-                  <option value="on_review">Kirim ke ON REVIEW</option>
-                  <option value="revision">Tandai REVISION</option>
                 </select>
               </div>
               <div class="form-group">
@@ -1483,7 +1476,7 @@
               </div>
               <button type="submit" class="btn btn-primary" id="subBtn"
                 style="width:100%;justify-content:center;padding:11px">
-                📤 Submit & Kirim ke Review
+                ✅ Done
               </button>
             </form>
           </div>
@@ -1541,21 +1534,17 @@
         </div>
       </div>
 
-      <!-- Quick Submit -->
+      <!-- Quick Done -->
       <div>
         <div class="dr-title">
-          <div class="dr-title-icon teal">⚡</div>
-          Quick Submit
+          <div class="dr-title-icon teal">✅</div>
+          Quick Done
         </div>
         <div class="qs-form">
           <select class="qs-select" id="qsTaskSel">
             <option value="">Pilih task...</option>
           </select>
-          <select class="qs-select" id="qsStatus">
-            <option value="on_review">→ On Review</option>
-            <option value="revision">→ Revision</option>
-          </select>
-          <button class="qs-btn" id="qsBtn" onclick="quickSubmit()">Submit Task</button>
+          <button class="qs-btn" id="qsBtn" onclick="quickSubmit()">✅ Mark as Done</button>
         </div>
       </div>
     </aside>
@@ -1885,7 +1874,7 @@
       setBtn(btn, true, 'Mengirim...');
       try {
         const note = document.getElementById('subNote').value.trim() || null;
-        const newStatus = document.getElementById('subNewStatus').value;
+        const newStatus = 'on_review';
 
         if (selectedFiles.length > 0) {
           // Upload each file and insert a submission record
@@ -1919,8 +1908,8 @@
           const adminIds = await getAdminIds();
           if (adminIds.length) await db.from('notifications').insert(adminIds.map(aid => ({
             recipient_id: aid, sender_id: CU.id, type: 'task_submitted',
-            task_id: taskId, title: '📤 Task Disubmit',
-            message: `${CP.full_name} submit: ${taskTitle}`
+            task_id: taskId, title: '✅ Task Done',
+            message: `${CP.full_name} selesaikan: ${taskTitle}`
           })));
         }
 
@@ -1937,24 +1926,21 @@
 
     async function quickSubmit() {
       const taskId = document.getElementById('qsTaskSel').value;
-      const status = document.getElementById('qsStatus').value;
       if (!taskId) { toast('Pilih task dulu.', 'error'); return; }
       const btn = document.getElementById('qsBtn');
-      btn.disabled = true; btn.textContent = 'Mengirim...';
+      btn.disabled = true; btn.innerHTML = '...';
       await db.from('task_submissions').insert({ task_id: taskId, submitted_by: CU.id });
-      const { error } = await db.from('tasks').update({ status, updated_at: new Date().toISOString() }).eq('id', taskId);
-      btn.disabled = false; btn.textContent = 'Submit Task';
+      const { error } = await db.from('tasks').update({ status: 'on_review', updated_at: new Date().toISOString() }).eq('id', taskId);
+      btn.disabled = false; btn.innerHTML = '✅ Mark as Done';
       if (error) { toast('Gagal: ' + error.message, 'error'); return; }
-      if (status === 'on_review') {
-        const taskName = document.getElementById('qsTaskSel').options[document.getElementById('qsTaskSel').selectedIndex]?.text || taskId;
-        const adminIds = await getAdminIds();
-        if (adminIds.length) await db.from('notifications').insert(adminIds.map(aid => ({
-          recipient_id: aid, sender_id: CU.id, type: 'task_submitted',
-          task_id: taskId, title: '📤 Task Disubmit',
-          message: `${CP.full_name} submit: ${taskName}`
-        })));
-      }
-      toast('✓ Task disubmit!', 'success');
+      const taskName = document.getElementById('qsTaskSel').options[document.getElementById('qsTaskSel').selectedIndex]?.text || taskId;
+      const adminIds = await getAdminIds();
+      if (adminIds.length) await db.from('notifications').insert(adminIds.map(aid => ({
+        recipient_id: aid, sender_id: CU.id, type: 'task_submitted',
+        task_id: taskId, title: '✅ Task Done',
+        message: `${CP.full_name} selesaikan: ${taskName}`
+      })));
+      toast('✓ Task ditandai Done!', 'success');
       loadSubmitDropdowns(); loadHome(); loadUpcoming();
     }
 
@@ -2039,11 +2025,12 @@
       const acts = document.getElementById('modalActions');
       if (t.status === 'ongoing' || t.status === 'revision') {
         acts.innerHTML = `
-        <button class="btn btn-primary btn-sm" onclick="inlineSubmit('${t.id}','${esc(t.title)}')">📤 Submit Task</button>
+        <button class="btn btn-primary btn-sm" onclick="inlineSubmit('${t.id}','${esc(t.title)}')">✅ Done</button>
         <button class="btn btn-ghost btn-sm" onclick="closeModal();switchSection('submit');setTimeout(()=>document.getElementById('subTaskSel').value='${t.id}',100)">📎 + File</button>`;
       } else if (t.status === 'on_review') {
         acts.innerHTML = `
-        <button class="btn btn-danger btn-sm" onclick="inlineUnsubmit('${t.id}','${esc(t.title)}')">↩ Unsubmit (Revision)</button>`;
+        <span style="font-size:0.75rem;color:var(--t2)">✅ Menunggu review admin</span>
+        <button class="btn btn-ghost btn-sm" onclick="inlineUnsubmit('${t.id}','${esc(t.title)}')">↩ Batalkan</button>`;
       }
     }
 
@@ -2152,10 +2139,10 @@
       const adminIds = await getAdminIds();
       if (adminIds.length) await db.from('notifications').insert(adminIds.map(aid => ({
         recipient_id: aid, sender_id: CU.id, type: 'task_submitted',
-        task_id: taskId, title: '📤 Task Disubmit',
-        message: `${CP.full_name} submit: ${taskTitle}`
+        task_id: taskId, title: '✅ Task Done',
+        message: `${CP.full_name} selesaikan: ${taskTitle}`
       })));
-      toast('✓ Task disubmit ke On Review!', 'success');
+      toast('✓ Task ditandai Done!', 'success');
       closeModal(); loadHome(); loadSubmitDropdowns();
     }
 
