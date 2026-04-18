@@ -2156,6 +2156,9 @@
 
     async function onNotifClick(notifId, taskId, type) {
       db.from('notifications').update({ is_read: true }).eq('id', notifId);
+      if (type === 'task_approved') {
+        launchConfetti();
+      }
       if (type === 'task_revision' || type === 'task_message') {
         if (taskId && taskId !== 'null') {
           toggleNotifPanel();
@@ -2211,7 +2214,8 @@
         task_id: taskId, title: '✅ Task Done',
         message: `${CP.full_name} selesaikan: ${taskTitle}`
       })));
-      toast('✓ Task ditandai Done!', 'success');
+      launchConfetti();
+      toast('🎉 Task ditandai Done! Menunggu review admin...', 'success');
       closeModal(); loadHome(); loadSubmitDropdowns();
     }
 
@@ -2228,6 +2232,63 @@
       })));
       toast('Task dikembalikan ke Revision.', 'info');
       closeModal(); loadHome(); loadSubmitDropdowns();
+    }
+
+    // ── CONFETTI ─────────────────────────────────────────
+    function launchConfetti() {
+      const canvas = document.createElement('canvas');
+      canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:99999';
+      document.body.appendChild(canvas);
+      const ctx = canvas.getContext('2d');
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const COLORS = ['#e8b84b','#7c6fff','#3dd9ad','#ff6584','#fbbf24','#f0f4ff','#f87171','#60d394'];
+      const SHAPES = ['rect','circle','ribbon'];
+      const particles = Array.from({length: 160}, () => ({
+        x:     Math.random() * canvas.width,
+        y:     Math.random() * canvas.height * 0.4 - canvas.height * 0.2,
+        r:     Math.random() * 7 + 3,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        shape: SHAPES[Math.floor(Math.random() * SHAPES.length)],
+        vx:    (Math.random() - 0.5) * 7,
+        vy:    Math.random() * 5 + 2,
+        angle: Math.random() * Math.PI * 2,
+        spin:  (Math.random() - 0.5) * 0.25,
+        life:  1
+      }));
+
+      let frame = 0;
+      (function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          p.x     += p.vx;
+          p.y     += p.vy;
+          p.vy    += 0.12;
+          p.vx    *= 0.99;
+          p.angle += p.spin;
+          p.life  -= 0.007;
+          if (p.life <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, p.life);
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.angle);
+          ctx.fillStyle = p.color;
+          if (p.shape === 'circle') {
+            ctx.beginPath();
+            ctx.arc(0, 0, p.r, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (p.shape === 'ribbon') {
+            ctx.fillRect(-p.r * 2, -p.r * 0.4, p.r * 4, p.r * 0.8);
+          } else {
+            ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 2);
+          }
+          ctx.restore();
+        });
+        frame++;
+        if (frame < 220) requestAnimationFrame(animate);
+        else canvas.remove();
+      })();
     }
 
     // ── CHAT SYSTEM ──────────────────────────────────────

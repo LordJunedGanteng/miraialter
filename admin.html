@@ -1622,13 +1622,15 @@
 
     if ((newStatus === 'processed' || newStatus === 'revision') && assigned_to) {
       const taskTitle = document.getElementById('etTitle').value.trim();
+      const { data: tData } = await db.from('tasks').select('points_reward').eq('id',id).single();
+      const pts = tData?.points_reward || 10;
       await db.from('notifications').insert({
         recipient_id: assigned_to, sender_id: adminProfile.id,
         type: newStatus === 'processed' ? 'task_approved' : 'task_revision',
         task_id: id,
-        title: newStatus === 'processed' ? '✅ Task Disetujui!' : '🔄 Task Perlu Revisi',
+        title: newStatus === 'processed' ? '🎉 Hore! Task kamu selesai!' : '🔄 Task Perlu Revisi',
         message: newStatus === 'processed'
-          ? `Task "${taskTitle}" telah disetujui admin`
+          ? `Task "${taskTitle}" telah disetujui! Kamu mendapatkan ${pts} poin 🎊`
           : `Task "${taskTitle}" perlu revisi dari admin`
       });
     }
@@ -1838,13 +1840,15 @@
     if (newStatus === 'processed' || newStatus === 'revision') {
       const { data: task } = await db.from('tasks').select('title,assigned_to').eq('id', dragTaskId).single();
       if (task?.assigned_to) {
+        const { data: tPts } = await db.from('tasks').select('points_reward').eq('id',dragTaskId).single();
+        const pts = tPts?.points_reward || 10;
         await db.from('notifications').insert({
           recipient_id: task.assigned_to, sender_id: adminProfile.id,
           type: newStatus === 'processed' ? 'task_approved' : 'task_revision',
           task_id: dragTaskId,
-          title: newStatus === 'processed' ? '✅ Task Disetujui!' : '🔄 Task Perlu Revisi',
+          title: newStatus === 'processed' ? '🎉 Hore! Task kamu selesai!' : '🔄 Task Perlu Revisi',
           message: newStatus === 'processed'
-            ? `Task "${task.title}" telah disetujui admin`
+            ? `Task "${task.title}" telah disetujui! Kamu mendapatkan ${pts} poin 🎊`
             : `Task "${task.title}" perlu revisi dari admin`
         });
       }
