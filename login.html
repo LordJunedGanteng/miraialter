@@ -480,27 +480,33 @@
     btn.disabled = true;
     btn.innerHTML = `<span class="spinner"></span> Membuat akun...`;
 
-    const { error } = await db.auth.signUp({
-      email: toEmail(username),
-      password,
-      options: { data: { full_name, username, role } }
-    });
+    try {
+      const { error } = await db.auth.signUp({
+        email: toEmail(username),
+        password,
+        options: { data: { full_name, username, role } }
+      });
 
-    if (error) {
-      showError(error.message.includes('already registered') ? 'Username sudah dipakai.' : error.message);
+      if (error) {
+        showError(error.message.includes('already registered') ? 'Username sudah dipakai.' : error.message);
+        btn.disabled = false;
+        btn.innerHTML = 'Buat Akun';
+        return;
+      }
+
+      btn.innerHTML = '✓ Akun berhasil dibuat!';
+      btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = 'Buat Akun';
+        btn.style.background = '';
+        switchTab('login');
+      }, 2000);
+    } catch (err) {
+      showError('Koneksi gagal. Cek konfigurasi Supabase.');
       btn.disabled = false;
       btn.innerHTML = 'Buat Akun';
-      return;
     }
-
-    btn.innerHTML = '✓ Akun berhasil dibuat!';
-    btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
-    setTimeout(() => {
-      btn.disabled = false;
-      btn.innerHTML = 'Buat Akun';
-      btn.style.background = '';
-      switchTab('login');
-    }, 2000);
   }
 </script>
 

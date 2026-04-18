@@ -1079,18 +1079,29 @@
       color: rgba(245,239,230,0.55);
       margin-bottom: 24px;
     }
-    .modal-video-placeholder {
+    .modal-video-wrap {
       width: 100%;
       aspect-ratio: 16/9;
-      background: linear-gradient(135deg, #1a3a0d, #2a5820);
+      background: #000;
       border-radius: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 4rem;
+      overflow: hidden;
       margin-bottom: 24px;
       border: 1px solid rgba(122,158,126,0.2);
+      position: relative;
     }
+    .modal-video-wrap video {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+    .video-fallback {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px; color: rgba(245,239,230,0.4);
+      font-size: 0.85rem;
+    }
+    .video-fallback span { font-size: 3rem; }
     .modal-close {
       padding: 10px 32px;
       background: none;
@@ -1146,7 +1157,7 @@
     <div class="nav-right">
       <button class="btn-sound" id="soundBtn" title="Toggle ambient sound">🔇</button>
       <a href="/login" class="btn-login">Team Login</a>
-      <button class="btn-connect" onclick="document.getElementById('modal').classList.add('active')">Watch Trailer</button>
+      <button class="btn-connect" onclick="openTrailer()">Watch Trailer</button>
     </div>
   </nav>
 
@@ -1183,7 +1194,7 @@
       <img src="logo.png" alt="Mirai Atelier" class="hero-logo-img">
       <p class="hero-tagline">Explore enchanted forests, forge bonds, and discover your destiny.</p>
       <div class="hero-buttons">
-        <button class="btn-trailer" onclick="document.getElementById('modal').classList.add('active')">
+        <button class="btn-trailer" onclick="openTrailer()">
           <span class="play-icon"></span>
           Watch Trailer
         </button>
@@ -1251,7 +1262,7 @@
       </p>
       <div style="margin-top:36px; display:flex; gap:14px; flex-wrap:wrap;">
         <a href="#lore" class="btn-play-now" style="padding:13px 32px; font-size:0.82rem;">Explore the Lore</a>
-        <button class="btn-trailer" style="padding:13px 32px;" onclick="document.getElementById('modal').classList.add('active')">
+        <button class="btn-trailer" style="padding:13px 32px;" onclick="openTrailer()">
           <span class="play-icon"></span>
           Watch Trailer
         </button>
@@ -1471,8 +1482,16 @@
     <div class="modal-box">
       <h2>🎬 Mirai Atelier — Official Trailer</h2>
       <p>Experience the world of Mirai in its full animated glory.</p>
-      <div class="modal-video-placeholder">🌲</div>
-      <button class="modal-close" onclick="document.getElementById('modal').classList.remove('active')">Close ✕</button>
+      <div class="modal-video-wrap">
+        <video id="trailerVideo" controls preload="none" poster="hero.png">
+          <source src="videos/trailer.mp4" type="video/mp4">
+        </video>
+        <div class="video-fallback" id="videoFallback" style="display:none">
+          <span>🎬</span>
+          Video belum tersedia — taruh <strong>trailer.mp4</strong> di folder <code>videos/</code>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeTrailer()">Close ✕</button>
     </div>
   </div>
 
@@ -1517,11 +1536,28 @@
     }, { threshold: 0.12 });
     reveals.forEach(r => observer.observe(r));
 
-    // ─── Modal close on overlay click
+    // ─── Trailer modal
+    const trailerVideo = document.getElementById('trailerVideo');
+    const videoFallback = document.getElementById('videoFallback');
+
+    trailerVideo.addEventListener('error', () => {
+      trailerVideo.style.display = 'none';
+      videoFallback.style.display = 'flex';
+    });
+
+    function openTrailer() {
+      openTrailer();
+      if (trailerVideo.style.display !== 'none') trailerVideo.play();
+    }
+
+    function closeTrailer() {
+      document.getElementById('modal').classList.remove('active');
+      trailerVideo.pause();
+      trailerVideo.currentTime = 0;
+    }
+
     function closeModal(e) {
-      if (e.target.id === 'modal') {
-        document.getElementById('modal').classList.remove('active');
-      }
+      if (e.target.id === 'modal') closeTrailer();
     }
 
     // ─── Join form
