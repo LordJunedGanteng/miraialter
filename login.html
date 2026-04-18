@@ -335,8 +335,8 @@
       <!-- LOGIN FORM -->
       <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
         <div class="form-group">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-input" id="loginEmail" placeholder="email@miraiatelier.com" required>
+          <label class="form-label">Username</label>
+          <input type="text" class="form-input" id="loginUsername" placeholder="username" autocomplete="username" required>
         </div>
         <div class="form-group">
           <label class="form-label">Password</label>
@@ -359,14 +359,10 @@
           </div>
           <div class="form-group" style="margin:0">
             <label class="form-label">Username</label>
-            <input type="text" class="form-input" id="regUsername" placeholder="johndoe" required>
+            <input type="text" class="form-input" id="regUsername" placeholder="johndoe" autocomplete="username" required>
           </div>
         </div>
         <div class="form-group" style="margin-top:14px">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-input" id="regEmail" placeholder="email@miraiatelier.com" required>
-        </div>
-        <div class="form-group">
           <label class="form-label">Password</label>
           <input type="password" class="form-input" id="regPassword" placeholder="Min. 8 karakter" minlength="8" required>
         </div>
@@ -418,7 +414,7 @@
     const { data: { session } } = await db.auth.getSession();
     if (session) {
       const { data: profile } = await db.from('profiles').select('role').eq('id', session.user.id).single();
-      window.location.href = (profile?.role === 'admin') ? '/admin.html' : '/dashboard.html';
+      window.location.href = (profile?.role === 'admin') ? '/admin' : '/dashboard';
     }
   })();
 
@@ -441,26 +437,32 @@
     document.getElementById('errorMsg').classList.remove('show');
   }
 
+  function toEmail(username) {
+    return `${username.toLowerCase().trim()}@miraialter.app`;
+  }
+
   async function handleLogin(e) {
     e.preventDefault();
     hideError();
     const btn = document.getElementById('loginBtn');
-    const email = document.getElementById('loginEmail').value.trim();
+    const username = document.getElementById('loginUsername').value.trim().toLowerCase();
     const password = document.getElementById('loginPassword').value;
+
+    if (!username) { showError('Username harus diisi.'); return; }
 
     btn.disabled = true;
     btn.innerHTML = `<span class="spinner"></span> Masuk...`;
 
-    const { data, error } = await db.auth.signInWithPassword({ email, password });
+    const { data, error } = await db.auth.signInWithPassword({ email: toEmail(username), password });
     if (error) {
-      showError(error.message === 'Invalid login credentials' ? 'Email atau password salah.' : error.message);
+      showError('Username atau password salah.');
       btn.disabled = false;
       btn.innerHTML = 'Masuk ke Dashboard';
       return;
     }
 
     const { data: profile } = await db.from('profiles').select('role').eq('id', data.user.id).single();
-    window.location.href = (profile?.role === 'admin') ? '/admin.html' : '/dashboard.html';
+    window.location.href = (profile?.role === 'admin') ? '/admin' : '/dashboard';
   }
 
   async function handleRegister(e) {
@@ -469,36 +471,36 @@
     const btn = document.getElementById('registerBtn');
     const full_name = document.getElementById('regName').value.trim();
     const username  = document.getElementById('regUsername').value.trim().toLowerCase();
-    const email     = document.getElementById('regEmail').value.trim();
     const password  = document.getElementById('regPassword').value;
     const role      = document.querySelector('input[name="role"]:checked')?.value || 'programmer';
 
     if (!full_name || !username) { showError('Nama dan username harus diisi.'); return; }
-    if (username.includes(' ')) { showError('Username tidak boleh mengandung spasi.'); return; }
+    if (!/^[a-z0-9_]+$/.test(username)) { showError('Username hanya boleh huruf kecil, angka, dan underscore.'); return; }
 
     btn.disabled = true;
     btn.innerHTML = `<span class="spinner"></span> Membuat akun...`;
 
     const { error } = await db.auth.signUp({
-      email, password,
+      email: toEmail(username),
+      password,
       options: { data: { full_name, username, role } }
     });
 
     if (error) {
-      showError(error.message);
+      showError(error.message.includes('already registered') ? 'Username sudah dipakai.' : error.message);
       btn.disabled = false;
       btn.innerHTML = 'Buat Akun';
       return;
     }
 
-    btn.innerHTML = '✓ Cek email kamu untuk verifikasi!';
+    btn.innerHTML = '✓ Akun berhasil dibuat!';
     btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
     setTimeout(() => {
       btn.disabled = false;
       btn.innerHTML = 'Buat Akun';
       btn.style.background = '';
       switchTab('login');
-    }, 4000);
+    }, 2000);
   }
 </script>
 

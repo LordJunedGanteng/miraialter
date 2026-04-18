@@ -38,13 +38,13 @@ async function getProfile(uid) {
   return data;
 }
 
-async function requireAuth(redirect = '/login.html') {
+async function requireAuth(redirect = '/login') {
   const session = await getSession();
   if (!session) { window.location.href = redirect; return null; }
   return session;
 }
 
-async function requireAdmin(redirect = '/dashboard.html') {
+async function requireAdmin(redirect = '/dashboard') {
   const session = await requireAuth();
   if (!session) return null;
   const profile = await getProfile(session.user.id);
@@ -54,7 +54,7 @@ async function requireAdmin(redirect = '/dashboard.html') {
 
 async function signOut() {
   await db.auth.signOut();
-  window.location.href = '/login.html';
+  window.location.href = '/login';
 }
 
 // ── UI helpers ────────────────────────────────────────

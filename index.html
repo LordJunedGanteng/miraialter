@@ -116,6 +116,24 @@
     }
     .btn-sound:hover { color: var(--gold); transform: scale(1.15); }
 
+    .btn-login {
+      padding: 10px 22px;
+      background: transparent;
+      color: rgba(245,239,230,0.85);
+      border: 1px solid rgba(245,239,230,0.3);
+      border-radius: 30px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    .btn-login:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(245,239,230,0.6);
+      color: var(--cream);
+    }
     .btn-connect {
       padding: 10px 28px;
       background: linear-gradient(135deg, var(--amber), var(--gold));
@@ -1127,6 +1145,7 @@
     </ul>
     <div class="nav-right">
       <button class="btn-sound" id="soundBtn" title="Toggle ambient sound">🔇</button>
+      <a href="/login" class="btn-login">Team Login</a>
       <button class="btn-connect" onclick="document.getElementById('modal').classList.add('active')">Watch Trailer</button>
     </div>
   </nav>
