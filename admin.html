@@ -1384,9 +1384,20 @@
       return;
     }
 
-    const isImage = url => /\.(png|jpg|jpeg|gif|webp|svg)(\?|$)/i.test(url||'');
+    const isImg = url => /\.(png|jpg|jpeg|gif|webp|svg)(\?|$)/i.test(url||'');
+    const isPdf = url => /\.pdf(\?|$)/i.test(url||'');
 
-    document.getElementById('subsModalBody').innerHTML = data.map(s=>`
+    // Download all button (only if there are files)
+    const filesOnly = data.filter(s => s.file_url);
+    const dlAllBtn = filesOnly.length > 1
+      ? `<div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+          <button class="btn btn-secondary btn-sm" onclick="downloadAll(${JSON.stringify(filesOnly.map(s=>({url:s.file_url,name:s.file_name||'file'})))})">
+            ⬇️ Download Semua (${filesOnly.length} file)
+          </button>
+         </div>`
+      : '';
+
+    document.getElementById('subsModalBody').innerHTML = dlAllBtn + data.map(s=>`
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);padding:12px;margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:8px">
@@ -1396,12 +1407,47 @@
           <span class="text-tiny">${timeAgo(s.submitted_at)}</span>
         </div>
         ${s.note?`<p style="font-size:0.8125rem;color:var(--t2);margin-bottom:8px">${esc(s.note)}</p>`:''}
-        ${s.file_url?isImage(s.file_url)
-          ?`<img src="${s.file_url}" class="sub-img-preview" alt="Submission" onclick="openLightbox('${s.file_url}')" title="Klik untuk zoom">`
-          :`<a href="${s.file_url}" target="_blank" class="btn btn-secondary btn-sm">📎 ${esc(s.file_name||'Download File')}</a>`
-          :'<span class="text-tiny">Tidak ada file</span>'}
+        ${s.file_url ? `
+          ${isImg(s.file_url)
+            ? `<div style="position:relative">
+                <img src="${s.file_url}" class="sub-img-preview" alt="Submission"
+                  onclick="openLightbox('${s.file_url}')" title="Klik untuk zoom"
+                  style="width:100%;max-height:220px;object-fit:contain;border-radius:var(--rsm);border:1px solid var(--border);cursor:zoom-in;display:block;margin-bottom:8px">
+               </div>`
+            : isPdf(s.file_url)
+              ? `<div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--card2);border-radius:var(--rsm);margin-bottom:8px">
+                  <span style="font-size:1.5rem">📄</span>
+                  <span style="font-size:0.8125rem;color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.file_name||'document.pdf')}</span>
+                 </div>`
+              : `<div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--card2);border-radius:var(--rsm);margin-bottom:8px">
+                  <span style="font-size:1.5rem">📁</span>
+                  <span style="font-size:0.8125rem;color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.file_name||'file')}</span>
+                 </div>`
+          }
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${isImg(s.file_url)
+              ? `<button class="btn btn-secondary btn-sm" onclick="openLightbox('${s.file_url}')">🔍 Zoom</button>`
+              : ''}
+            <a href="${s.file_url}" download="${esc(s.file_name||'file')}" class="btn btn-primary btn-sm">⬇️ Download</a>
+            <a href="${s.file_url}" target="_blank" class="btn btn-ghost btn-sm">🔗 Buka</a>
+          </div>`
+        : '<span class="text-tiny">Tidak ada file</span>'}
       </div>`).join('');
   }
+
+  function downloadAll(files) {
+    files.forEach((f, i) => {
+      setTimeout(() => {
+        const a = document.createElement('a');
+        a.href = f.url; a.download = f.name; a.target = '_blank';
+        a.style.display = 'none';
+        document.body.appendChild(a); a.click();
+        setTimeout(() => a.remove(), 500);
+      }, i * 600); // stagger 600ms to avoid browser blocking
+    });
+    showToast(`⬇️ Mendownload ${files.length} file...`, 'info');
+  }
+
 
   // ── ADMIN KANBAN (DRAG & DROP) ─────────────────────
   async function loadAdminKanban() {
@@ -1531,14 +1577,8 @@
     document.getElementById('lightboxImg').src = '';
   }
 
-  // ── MODAL HELPERS ──────────────────────────────────
-  function openModal(id)  { document.getElementById(id).classList.add('open'); }
-  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  // Close modal on overlay click handled by utils.js
 
-  // Close modal on overlay click
-  document.querySelectorAll('.modal-overlay').forEach(m=>{
-    m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('open'); });
-  });
 
   // ── HELPERS ────────────────────────────────────────
   function ini(name='') { return (name||'').split(' ').slice(0,2).map(n=>n[0]||'').join('').toUpperCase()||'??'; }
@@ -1551,19 +1591,7 @@
     return r ? `<span class="badge bg-${role}">${r.icon} ${r.label}</span>` : `<span class="badge">${role}</span>`;
   }
 
-  function showToast(msg, type='info') {
-    document.querySelectorAll('.toast').forEach(t=>t.remove());
-    const el=document.createElement('div');
-    el.className=`toast toast-${type}`; el.textContent=msg;
-    document.body.appendChild(el);
-    requestAnimationFrame(()=>el.classList.add('show'));
-    setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300);},3500);
-  }
-
-  function setLoading(btn, on, txt='') {
-    if(on) { btn._orig=btn.innerHTML; btn.disabled=true; btn.innerHTML=`<span class="spinner"></span> ${txt}`; }
-    else   { btn.disabled=false; btn.innerHTML=btn._orig||txt; }
-  }
+  // showToast, setLoading, openModal, closeModal → dari utils.js
 
   init();
 </script>
