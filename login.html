@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Mirai Atelier Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #e8b84b; --gold-l: #f5d080; --gold-d: #c97d2e;
+      --bg: #07100a; --bg2: #0c1a0e; --bg3: #111f13;
+      --border: #1a2d1a; --border2: #253d25;
+      --t1: #f5efe6; --t2: #8aaa8a; --t3: #3d5a3d;
+    }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--t1);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ── */
+    .login-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 100vh;
+    }
+
+    /* ── Left Brand Panel ── */
+    .brand-panel {
+      background: linear-gradient(160deg, #0c1a0e 0%, #112010 40%, #0a1608 100%);
+      border-right: 1px solid var(--border);
+      padding: 48px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    .brand-glow {
+      position: absolute;
+      top: -100px; left: -100px;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(232,184,75,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .brand-glow2 {
+      position: absolute;
+      bottom: -80px; right: -80px;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(122,158,126,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .brand-top {
+      display: flex; align-items: center; gap: 12px;
+      position: relative; z-index: 1;
+    }
+    .brand-logo {
+      height: 36px;
+      width: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 0 12px rgba(255,255,255,0.25));
+    }
+    .brand-name { display: none; }
+
+    .brand-middle {
+      flex: 1; display: flex; flex-direction: column;
+      justify-content: center; position: relative; z-index: 1;
+    }
+    .brand-eyebrow {
+      font-size: 0.625rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.2em;
+      color: var(--gold); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .brand-eyebrow::before {
+      content: ''; width: 24px; height: 1px; background: var(--gold);
+    }
+    .brand-headline {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 3.5vw, 3rem);
+      font-weight: 300; line-height: 1.2;
+      color: var(--t1); margin-bottom: 20px;
+    }
+    .brand-headline em { font-style: italic; color: var(--gold); }
+    .brand-desc {
+      font-size: 0.875rem; color: var(--t2); line-height: 1.7;
+      max-width: 380px; margin-bottom: 36px;
+    }
+    .brand-features { display: flex; flex-direction: column; gap: 12px; }
+    .brand-feature {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 0.8125rem; color: var(--t2);
+    }
+    .brand-feature-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(232,184,75,0.08);
+      border: 1px solid rgba(232,184,75,0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.875rem; flex-shrink: 0;
+    }
+
+    .brand-bottom {
+      position: relative; z-index: 1;
+    }
+    .brand-bottom p {
+      font-size: 0.75rem; color: var(--t3);
+    }
+
+    /* ── Forest decoration ── */
+    .brand-trees {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 180px;
+      background:
+        radial-gradient(ellipse 80px 200px at 5%   100%, #112a08 0%, transparent 70%),
+        radial-gradient(ellipse 100px 240px at 15%  100%, #1a3810 0%, transparent 70%),
+        radial-gradient(ellipse 70px 180px at 25%  100%, #0e2206 0%, transparent 70%),
+        radial-gradient(ellipse 90px 220px at 35%  100%, #163008 0%, transparent 70%),
+        radial-gradient(ellipse 110px 260px at 50% 100%, #1e3c12 0%, transparent 70%),
+        radial-gradient(ellipse 85px 210px at 65%  100%, #142a0a 0%, transparent 70%),
+        radial-gradient(ellipse 95px 230px at 75%  100%, #183410 0%, transparent 70%),
+        radial-gradient(ellipse 75px 185px at 88%  100%, #102208 0%, transparent 70%),
+        radial-gradient(ellipse 105px 255px at 98% 100%, #1c3c14 0%, transparent 70%);
+      opacity: 0.8;
+      pointer-events: none;
+    }
+
+    /* ── Right Form Panel ── */
+    .form-panel {
+      background: var(--bg2);
+      padding: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+    .form-inner { max-width: 400px; width: 100%; margin: 0 auto; }
+
+    .form-header { margin-bottom: 28px; }
+    .form-header h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+    .form-header p { font-size: 0.875rem; color: var(--t2); }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex; gap: 4px; margin-bottom: 28px;
+      background: var(--bg); border-radius: 8px; padding: 4px;
+      border: 1px solid var(--border);
+    }
+    .tab-btn {
+      flex: 1; padding: 8px; border-radius: 6px;
+      font-size: 0.8125rem; font-weight: 600;
+      cursor: pointer; border: none; background: transparent;
+      color: var(--t2); transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .tab-btn.active { background: var(--bg3); color: var(--t1); }
+
+    /* ── Form ── */
+    .auth-form { display: none; }
+    .auth-form.active { display: block; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-label {
+      display: block; font-size: 0.8125rem; font-weight: 500;
+      color: var(--t1); margin-bottom: 6px;
+    }
+    .form-input, .form-select {
+      width: 100%; background: var(--bg);
+      border: 1px solid var(--border2); border-radius: 8px;
+      padding: 10px 14px; font-size: 0.875rem;
+      color: var(--t1); font-family: inherit;
+      transition: border-color 0.15s; outline: none;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(232,184,75,0.12);
+    }
+    .form-input::placeholder { color: var(--t3); }
+    .form-select {
+      cursor: pointer; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%233d5a3d' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+      padding-right: 34px;
+    }
+    .form-select option { background: var(--bg3); }
+
+    /* Role Grid */
+    .role-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+      margin-top: 6px;
+    }
+    .role-opt {
+      position: relative; cursor: pointer;
+    }
+    .role-opt input { position: absolute; opacity: 0; pointer-events: none; }
+    .role-card {
+      border: 1px solid var(--border2); border-radius: 8px;
+      padding: 10px 8px; text-align: center;
+      transition: all 0.15s; background: var(--bg);
+    }
+    .role-opt input:checked + .role-card {
+      border-color: var(--gold); background: rgba(232,184,75,0.08);
+    }
+    .role-card:hover { border-color: var(--border2); background: var(--bg3); }
+    .role-card-icon { font-size: 1.25rem; margin-bottom: 4px; }
+    .role-card-name { font-size: 0.6875rem; font-weight: 600; color: var(--t2); }
+    .role-opt input:checked + .role-card .role-card-name { color: var(--gold); }
+
+    /* Submit button */
+    .btn-submit {
+      width: 100%; padding: 11px;
+      background: linear-gradient(135deg, var(--gold-d), var(--gold));
+      color: #060e04; border: none; border-radius: 8px;
+      font-size: 0.9375rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: all 0.15s; margin-top: 6px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,184,75,0.3); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .form-switch {
+      text-align: center; margin-top: 18px;
+      font-size: 0.8125rem; color: var(--t2);
+    }
+    .form-switch a {
+      color: var(--gold); cursor: pointer; text-decoration: underline; font-weight: 500;
+    }
+
+    .error-msg {
+      background: rgba(248,113,113,0.10); color: #f87171;
+      border: 1px solid rgba(248,113,113,0.2);
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 0.8125rem; margin-bottom: 14px; display: none;
+    }
+    .error-msg.show { display: block; }
+
+    .divider-or {
+      display: flex; align-items: center; gap: 12px;
+      margin: 18px 0; color: var(--t3); font-size: 0.75rem;
+    }
+    .divider-or::before, .divider-or::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(0,0,0,0.2); border-top-color: #060e04;
+      border-radius: 50%; animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .login-wrap { grid-template-columns: 1fr; }
+      .brand-panel { display: none; }
+      .form-panel { padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-wrap">
+
+  <!-- Left Brand Panel -->
+  <div class="brand-panel">
+    <div class="brand-glow"></div>
+    <div class="brand-glow2"></div>
+    <div class="brand-trees"></div>
+
+    <div class="brand-top">
+      <img src="logo.png" alt="Logo" class="brand-logo">
+      <div>
+        <div class="brand-name">Mirai <span>Atelier</span></div>
+      </div>
+    </div>
+
+    <div class="brand-middle">
+      <div class="brand-eyebrow">Development Hub</div>
+      <h1 class="brand-headline">
+        Bangun game<br>impian kita<br><em>bersama</em>
+      </h1>
+      <p class="brand-desc">
+        Platform internal tim Mirai Atelier untuk mengelola task,
+        memantau progress, dan berkolaborasi lintas divisi — dari Produser
+        hingga UI Designer.
+      </p>
+      <div class="brand-features">
+        <div class="brand-feature">
+          <div class="brand-feature-icon">📋</div>
+          Kanban board global untuk semua divisi
+        </div>
+        <div class="brand-feature">
+          <div class="brand-feature-icon">🏆</div>
+          Leaderboard & sistem poin untuk motivasi tim
+        </div>
+        <div class="brand-feature">
+          <div class="brand-feature-icon">📤</div>
+          Upload bukti kerja & submit task langsung di platform
+        </div>
+        <div class="brand-feature">
+          <div class="brand-feature-icon">👑</div>
+          Admin panel untuk distribusi task ke seluruh tim
+        </div>
+      </div>
+    </div>
+
+    <div class="brand-bottom">
+      <p>© 2026 Mirai Atelier Studio · Internal Use Only</p>
+    </div>
+  </div>
+
+  <!-- Right Form Panel -->
+  <div class="form-panel">
+    <div class="form-inner">
+
+      <div class="form-header">
+        <h2 id="formHeading">Welcome back</h2>
+        <p id="formSubheading">Masuk ke akun tim kamu</p>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+        <button class="tab-btn" onclick="switchTab('register')">Daftar</button>
+      </div>
+
+      <!-- Error message -->
+      <div class="error-msg" id="errorMsg"></div>
+
+      <!-- LOGIN FORM -->
+      <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="loginEmail" placeholder="email@miraiatelier.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="loginPassword" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn-submit" id="loginBtn">
+          Masuk ke Dashboard
+        </button>
+        <div class="form-switch">
+          Belum punya akun? <a onclick="switchTab('register')">Daftar sekarang</a>
+        </div>
+      </form>
+
+      <!-- REGISTER FORM -->
+      <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Nama Lengkap</label>
+            <input type="text" class="form-input" id="regName" placeholder="John Doe" required>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Username</label>
+            <input type="text" class="form-input" id="regUsername" placeholder="johndoe" required>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:14px">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="regEmail" placeholder="email@miraiatelier.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="regPassword" placeholder="Min. 8 karakter" minlength="8" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pilih Role / Divisi</label>
+          <div class="role-grid">
+            <label class="role-opt">
+              <input type="radio" name="role" value="produser">
+              <div class="role-card"><div class="role-card-icon">🎭</div><div class="role-card-name">Produser</div></div>
+            </label>
+            <label class="role-opt">
+              <input type="radio" name="role" value="director">
+              <div class="role-card"><div class="role-card-icon">🎬</div><div class="role-card-name">Director</div></div>
+            </label>
+            <label class="role-opt">
+              <input type="radio" name="role" value="modeller" checked>
+              <div class="role-card"><div class="role-card-icon">🎨</div><div class="role-card-name">Modeller</div></div>
+            </label>
+            <label class="role-opt">
+              <input type="radio" name="role" value="programmer">
+              <div class="role-card"><div class="role-card-icon">💻</div><div class="role-card-name">Programmer</div></div>
+            </label>
+            <label class="role-opt">
+              <input type="radio" name="role" value="animator">
+              <div class="role-card"><div class="role-card-icon">✨</div><div class="role-card-name">Animator</div></div>
+            </label>
+            <label class="role-opt">
+              <input type="radio" name="role" value="ui_designer">
+              <div class="role-card"><div class="role-card-icon">🖌️</div><div class="role-card-name">UI Designer</div></div>
+            </label>
+          </div>
+        </div>
+        <button type="submit" class="btn-submit" id="registerBtn">
+          Buat Akun
+        </button>
+        <div class="form-switch">
+          Sudah punya akun? <a onclick="switchTab('login')">Login di sini</a>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Check if already logged in
+  (async () => {
+    const { data: { session } } = await db.auth.getSession();
+    if (session) {
+      const { data: profile } = await db.from('profiles').select('role').eq('id', session.user.id).single();
+      window.location.href = (profile?.role === 'admin') ? '/admin.html' : '/dashboard.html';
+    }
+  })();
+
+  function switchTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('loginForm').classList.toggle('active', isLogin);
+    document.getElementById('registerForm').classList.toggle('active', !isLogin);
+    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', isLogin ? i === 0 : i === 1));
+    document.getElementById('formHeading').textContent = isLogin ? 'Welcome back' : 'Buat Akun Baru';
+    document.getElementById('formSubheading').textContent = isLogin ? 'Masuk ke akun tim kamu' : 'Daftarkan diri ke Mirai Atelier Hub';
+    hideError();
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+  function hideError() {
+    document.getElementById('errorMsg').classList.remove('show');
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    hideError();
+    const btn = document.getElementById('loginBtn');
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span> Masuk...`;
+
+    const { data, error } = await db.auth.signInWithPassword({ email, password });
+    if (error) {
+      showError(error.message === 'Invalid login credentials' ? 'Email atau password salah.' : error.message);
+      btn.disabled = false;
+      btn.innerHTML = 'Masuk ke Dashboard';
+      return;
+    }
+
+    const { data: profile } = await db.from('profiles').select('role').eq('id', data.user.id).single();
+    window.location.href = (profile?.role === 'admin') ? '/admin.html' : '/dashboard.html';
+  }
+
+  async function handleRegister(e) {
+    e.preventDefault();
+    hideError();
+    const btn = document.getElementById('registerBtn');
+    const full_name = document.getElementById('regName').value.trim();
+    const username  = document.getElementById('regUsername').value.trim().toLowerCase();
+    const email     = document.getElementById('regEmail').value.trim();
+    const password  = document.getElementById('regPassword').value;
+    const role      = document.querySelector('input[name="role"]:checked')?.value || 'programmer';
+
+    if (!full_name || !username) { showError('Nama dan username harus diisi.'); return; }
+    if (username.includes(' ')) { showError('Username tidak boleh mengandung spasi.'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span> Membuat akun...`;
+
+    const { error } = await db.auth.signUp({
+      email, password,
+      options: { data: { full_name, username, role } }
+    });
+
+    if (error) {
+      showError(error.message);
+      btn.disabled = false;
+      btn.innerHTML = 'Buat Akun';
+      return;
+    }
+
+    btn.innerHTML = '✓ Cek email kamu untuk verifikasi!';
+    btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = 'Buat Akun';
+      btn.style.background = '';
+      switchTab('login');
+    }, 4000);
+  }
+</script>
+
+</body>
+</html>
