@@ -1400,6 +1400,18 @@
     loadAllTasks(); loadOverview();
   }
 
+  // Helper: signed URL for private Supabase storage bucket
+  async function resolveFileUrl(url) {
+    if (!url) return null;
+    try {
+      const match = url.match(/\/object\/(?:public|sign)\/task-submissions\/(.+?)(\?|$)/);
+      if (!match) return url;
+      const path = decodeURIComponent(match[1]);
+      const { data } = await db.storage.from('task-submissions').createSignedUrl(path, 86400);
+      return data?.signedUrl || url;
+    } catch { return url; }
+  }
+
   // ── SUBMISSIONS MODAL ──────────────────────────────
   async function openSubs(taskId, taskTitle) {
     document.getElementById('subsModalTitle').textContent = `📎 Submissions · ${taskTitle}`;
@@ -1413,6 +1425,11 @@
     if(!data?.length) {
       document.getElementById('subsModalBody').innerHTML=`<div class="empty-state"><div class="ei">📭</div><div class="et">Belum ada submission</div></div>`;
       return;
+    }
+
+    // Resolve all file URLs to signed URLs (private bucket)
+    for (const s of data) {
+      if (s.file_url) s.file_url = await resolveFileUrl(s.file_url) || s.file_url;
     }
 
     const isImg = url => /\.(png|jpg|jpeg|gif|webp|svg)(\?|$)/i.test(url||'');

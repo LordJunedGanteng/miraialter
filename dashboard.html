@@ -1874,6 +1874,18 @@
       loadSubmitDropdowns(); loadHome(); loadUpcoming();
     }
 
+    // Helper: extract path from Supabase storage URL and get a signed URL
+    async function resolveFileUrl(url) {
+      if (!url) return null;
+      try {
+        const match = url.match(/\/object\/(?:public|sign)\/task-submissions\/(.+?)(\?|$)/);
+        if (!match) return url;
+        const path = decodeURIComponent(match[1]);
+        const { data } = await db.storage.from('task-submissions').createSignedUrl(path, 86400);
+        return data?.signedUrl || url;
+      } catch { return url; }
+    }
+
     // ── TASK MODAL ────────────────────────────────────────
     async function openTaskModal(taskId) {
       document.getElementById('taskModal').classList.add('open');
@@ -1889,6 +1901,14 @@
       const { data: subs } = await db.from('task_submissions')
         .select('*, submitted_by:profiles!task_submissions_submitted_by_fkey(full_name)')
         .eq('task_id', taskId).order('submitted_at', { ascending: false });
+
+      // Resolve all file URLs to signed URLs (private bucket)
+      for (const s of (subs || [])) {
+        if (s.file_url) s.file_url = await resolveFileUrl(s.file_url) || s.file_url;
+      }
+
+      const isImg   = url => /\.(png|jpg|jpeg|gif|webp|svg)(\?|$)/i.test(url||'');
+      const isVid   = url => /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(url||'');
 
       document.getElementById('modalBody').innerHTML = `
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
@@ -1911,20 +1931,23 @@
       <div style="margin-top:14px">
         <div style="font-size:0.625rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--t3);margin-bottom:8px">Submissions (${subs.length})</div>
         ${subs.map(s => {
-          const isImg = s.file_url && /\.(png|jpg|jpeg|gif|webp|svg)(\?|$)/i.test(s.file_url);
+          const fileHtml = s.file_url
+            ? isImg(s.file_url)
+              ? `<img src="${s.file_url}" alt="${esc(s.file_name||'img')}"
+                  style="width:100%;max-height:200px;object-fit:contain;border-radius:6px;border:1px solid var(--border);cursor:zoom-in;margin-top:6px;display:block"
+                  onclick="window.open('${s.file_url}','_blank')">`
+              : isVid(s.file_url)
+              ? `<video src="${s.file_url}" controls style="width:100%;max-height:220px;border-radius:6px;border:1px solid var(--border);margin-top:6px;display:block" preload="metadata"></video>`
+              : `<a href="${s.file_url}" target="_blank" download="${esc(s.file_name||'file')}"
+                  style="font-size:0.75rem;color:var(--gold);display:inline-flex;align-items:center;gap:4px;margin-top:6px">⬇️ ${esc(s.file_name||'Download File')}</a>`
+            : '';
           return `<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px">
           <div style="display:flex;justify-content:space-between;margin-bottom:4px">
             <span style="font-size:0.8125rem;font-weight:600">${esc(s.submitted_by?.full_name || '?')}</span>
             <span style="font-size:0.6875rem;color:var(--t3)">${timeAgo(s.submitted_at)}</span>
           </div>
-          ${s.note ? `<p style="font-size:0.8125rem;color:var(--t2);margin-bottom:6px">${esc(s.note)}</p>` : ''}
-          ${s.file_url ? isImg
-            ? `<img src="${s.file_url}" alt="${esc(s.file_name||'img')}"
-                style="width:100%;max-height:200px;object-fit:contain;border-radius:6px;border:1px solid var(--border);cursor:zoom-in;margin-top:4px"
-                onclick="window.open('${s.file_url}','_blank')">`
-            : `<a href="${s.file_url}" target="_blank" style="font-size:0.75rem;color:var(--gold);display:inline-flex;align-items:center;gap:4px;margin-top:4px">📎 ${esc(s.file_name||'File')}</a>`
-            : ''
-          }
+          ${s.note ? `<p style="font-size:0.8125rem;color:var(--t2);margin-bottom:4px">📎 ${esc(s.note)}</p>` : ''}
+          ${fileHtml}
         </div>`;
         }).join('')}
       </div>` : ''}`;
@@ -1934,6 +1957,7 @@
         <button class="btn btn-primary btn-sm" onclick="closeModal();switchSection('submit');setTimeout(()=>document.getElementById('subTaskSel').value='${taskId}',100)">📤 Submit</button>`;
       }
     }
+
     function closeModal() { document.getElementById('taskModal').classList.remove('open'); }
     document.getElementById('taskModal').addEventListener('click', e => { if (e.target === document.getElementById('taskModal')) closeModal(); });
 
