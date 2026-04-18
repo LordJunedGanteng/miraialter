@@ -1,746 +1,1877 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — Mirai Atelier Hub</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>
   <script src="js/utils.js"></script>
-  <link rel="stylesheet" href="css/app.css">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0e1116;
+      --surf: #161b22;
+      --card: #1c2130;
+      --card2: #212840;
+      --border: #2a3040;
+      --border2: #353f55;
+      --gold: #e8b84b;
+      --gold-d: #c97d2e;
+      --t1: #f0f4ff;
+      --t2: #7a8aaa;
+      --t3: #3a4560;
+      --purple: #7c6fff;
+      --pink: #ff6584;
+      --teal: #3dd9ad;
+      --amber: #fbbf24;
+      --red: #f87171;
+      --r: 14px;
+      --r-sm: 8px;
+      --r-lg: 18px;
+      --ease: 0.18s ease;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--t1);
+      height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── LAYOUT ── */
+    .dash-wrap {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* ── LEFT SIDEBAR (icon only) ── */
+    .dash-sidebar {
+      width: 68px;
+      background: var(--surf);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 18px 0;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .ds-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--gold-d), var(--gold));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8125rem;
+      font-weight: 800;
+      color: #0e1116;
+      margin-bottom: 16px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .ds-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      align-items: center;
+    }
+
+    .ds-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--t3);
+      transition: all var(--ease);
+      position: relative;
+    }
+
+    .ds-btn:hover {
+      background: var(--card);
+      color: var(--t2);
+    }
+
+    .ds-btn.active {
+      background: var(--card2);
+      color: var(--t1);
+    }
+
+    .ds-btn.active::before {
+      content: '';
+      position: absolute;
+      left: -1px;
+      top: 25%;
+      bottom: 25%;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: var(--gold);
+    }
+
+    .ds-btn[title]:hover::after {
+      content: attr(title);
+      position: absolute;
+      left: 56px;
+      background: var(--card2);
+      color: var(--t1);
+      padding: 5px 10px;
+      border-radius: var(--r-sm);
+      font-size: 0.75rem;
+      font-weight: 500;
+      white-space: nowrap;
+      z-index: 100;
+      border: 1px solid var(--border2);
+    }
+
+    .ds-bottom {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: center;
+    }
+
+    /* ── MAIN CONTENT ── */
+    .dash-main {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ds-section {
+      display: none;
+      padding: 28px 28px 28px;
+      flex: 1;
+    }
+
+    .ds-section.active {
+      display: block;
+    }
+
+    /* ── HEADER ── */
+    .ds-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .ds-greeting {
+      font-size: 1.375rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .ds-greeting span {
+      color: var(--gold);
+    }
+
+    .ds-progress-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.8125rem;
+      color: var(--t2);
+    }
+
+    .ds-progress-track {
+      width: 140px;
+      height: 5px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .ds-progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--gold-d), var(--gold));
+      transition: width 0.5s ease;
+    }
+
+    .ds-date-block {
+      text-align: right;
+    }
+
+    .ds-date-day {
+      font-size: 0.75rem;
+      color: var(--t3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .ds-date-full {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--t2);
+      margin-top: 2px;
+    }
+
+    /* ── FEATURED CARDS ── */
+    .ds-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .ds-feat-card {
+      border-radius: var(--r);
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform var(--ease), box-shadow var(--ease);
+      min-height: 130px;
+    }
+
+    .ds-feat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .ds-feat-card.purple {
+      background: linear-gradient(135deg, #5b4fe9, #7c6fff);
+    }
+
+    .ds-feat-card.pink {
+      background: linear-gradient(135deg, #c94070, #ff6584);
+    }
+
+    .ds-feat-card.teal {
+      background: linear-gradient(135deg, #1a9e7a, #3dd9ad);
+    }
+
+    .dfc-label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.75;
+      margin-bottom: 10px;
+    }
+
+    .dfc-title {
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 10px;
+    }
+
+    .dfc-count {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .dfc-sub {
+      font-size: 0.75rem;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+
+    .dfc-icon {
+      position: absolute;
+      right: 16px;
+      top: 16px;
+      font-size: 1.75rem;
+      opacity: 0.25;
+    }
+
+    .dfc-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.5);
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+
+    /* ── TASK SECTION ── */
+    .ds-tasks-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .ds-tasks-title {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .ds-tabs {
+      display: flex;
+      gap: 2px;
+      background: var(--surf);
+      border-radius: 10px;
+      padding: 3px;
+      border: 1px solid var(--border);
+    }
+
+    .ds-tab {
+      padding: 5px 14px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: var(--t3);
+      cursor: pointer;
+      transition: all var(--ease);
+      font-family: inherit;
+    }
+
+    .ds-tab.active {
+      background: var(--card2);
+      color: var(--t1);
+    }
+
+    .ds-tab:hover:not(.active) {
+      color: var(--t2);
+    }
+
+    /* ── TASK LIST ROWS ── */
+    .task-group-label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--t3);
+      margin: 14px 0 8px;
+    }
+
+    .task-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: all var(--ease);
+    }
+
+    .task-row:hover {
+      border-color: var(--border2);
+      background: var(--card);
+    }
+
+    .task-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .task-row-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .task-row-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .task-row-sub {
+      font-size: 0.75rem;
+      color: var(--t2);
+      margin-top: 1px;
+    }
+
+    .task-row-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 100px;
+      font-size: 0.625rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      border: 1px solid;
+    }
+
+    .badge-ongoing {
+      background: rgba(124, 111, 255, 0.15);
+      color: #9d8fff;
+      border-color: rgba(124, 111, 255, 0.3);
+    }
+
+    .badge-on_review {
+      background: rgba(251, 191, 36, 0.12);
+      color: #fbbf24;
+      border-color: rgba(251, 191, 36, 0.25);
+    }
+
+    .badge-processed {
+      background: rgba(61, 217, 173, 0.12);
+      color: #3dd9ad;
+      border-color: rgba(61, 217, 173, 0.25);
+    }
+
+    .badge-revision {
+      background: rgba(248, 113, 113, 0.12);
+      color: #f87171;
+      border-color: rgba(248, 113, 113, 0.25);
+    }
+
+    .badge-low {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--t3);
+      border-color: var(--border);
+    }
+
+    .badge-medium {
+      background: rgba(124, 111, 255, 0.12);
+      color: #9d8fff;
+      border-color: rgba(124, 111, 255, 0.25);
+    }
+
+    .badge-high {
+      background: rgba(251, 191, 36, 0.12);
+      color: #fbbf24;
+      border-color: rgba(251, 191, 36, 0.25);
+    }
+
+    .badge-urgent {
+      background: rgba(248, 113, 113, 0.12);
+      color: #f87171;
+      border-color: rgba(248, 113, 113, 0.25);
+    }
+
+    .badge-produser {
+      background: rgba(192, 132, 252, 0.12);
+      color: #c084fc;
+      border-color: rgba(192, 132, 252, 0.25);
+    }
+
+    .badge-director {
+      background: rgba(96, 165, 250, 0.12);
+      color: #60a5fa;
+      border-color: rgba(96, 165, 250, 0.25);
+    }
+
+    .badge-modeller {
+      background: rgba(52, 211, 153, 0.12);
+      color: #34d399;
+      border-color: rgba(52, 211, 153, 0.25);
+    }
+
+    .badge-programmer {
+      background: rgba(251, 146, 60, 0.12);
+      color: #fb923c;
+      border-color: rgba(251, 146, 60, 0.25);
+    }
+
+    .badge-animator {
+      background: rgba(244, 114, 182, 0.12);
+      color: #f472b6;
+      border-color: rgba(244, 114, 182, 0.25);
+    }
+
+    .badge-ui_designer {
+      background: rgba(34, 211, 238, 0.12);
+      color: #22d3ee;
+      border-color: rgba(34, 211, 238, 0.25);
+    }
+
+    .badge-admin {
+      background: rgba(232, 184, 75, 0.12);
+      color: #e8b84b;
+      border-color: rgba(232, 184, 75, 0.25);
+    }
+
+    /* ── RIGHT PANEL ── */
+    .dash-right {
+      width: 290px;
+      flex-shrink: 0;
+      background: var(--surf);
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 24px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .dr-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dr-title-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+    }
+
+    .dr-title-icon.purple {
+      background: rgba(124, 111, 255, 0.2);
+    }
+
+    .dr-title-icon.teal {
+      background: rgba(61, 217, 173, 0.2);
+    }
+
+    /* Schedule cards */
+    .sched-card {
+      border-radius: var(--r-sm);
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      border: 1px solid var(--border);
+      transition: all var(--ease);
+    }
+
+    .sched-card:hover {
+      border-color: var(--border2);
+    }
+
+    .sched-card.sc-purple {
+      background: linear-gradient(135deg, rgba(91, 79, 233, 0.25), rgba(124, 111, 255, 0.1));
+      border-color: rgba(124, 111, 255, 0.2);
+    }
+
+    .sched-card.sc-pink {
+      background: linear-gradient(135deg, rgba(201, 64, 112, 0.25), rgba(255, 101, 132, 0.1));
+      border-color: rgba(255, 101, 132, 0.2);
+    }
+
+    .sched-card.sc-teal {
+      background: linear-gradient(135deg, rgba(26, 158, 122, 0.25), rgba(61, 217, 173, 0.1));
+      border-color: rgba(61, 217, 173, 0.2);
+    }
+
+    .sched-card-top {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .sched-card-title {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      line-height: 1.3;
+      flex: 1;
+    }
+
+    .sched-card-due {
+      font-size: 0.75rem;
+      color: var(--t2);
+      font-weight: 600;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+
+    .sched-card-sub {
+      font-size: 0.6875rem;
+      color: var(--t3);
+    }
+
+    /* Quick submit */
+    .qs-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .qs-select,
+    .qs-btn {
+      width: 100%;
+      border-radius: var(--r-sm);
+      font-family: inherit;
+      font-size: 0.8125rem;
+    }
+
+    .qs-select {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      color: var(--t1);
+      padding: 9px 12px;
+      outline: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%233a4560' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+      transition: border-color var(--ease);
+    }
+
+    .qs-select:focus {
+      border-color: var(--gold);
+    }
+
+    .qs-select option {
+      background: var(--card);
+    }
+
+    .qs-btn {
+      padding: 10px;
+      border: none;
+      background: linear-gradient(135deg, var(--gold-d), var(--gold));
+      color: #0e1116;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--ease);
+    }
+
+    .qs-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(232, 184, 75, 0.35);
+    }
+
+    .qs-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* ── LEADERBOARD ── */
+    .lb-wrap {
+      padding: 28px;
+      overflow-y: auto;
+    }
+
+    .lb-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 600px;
+    }
+
+    .lb-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      transition: all var(--ease);
+    }
+
+    .lb-row:hover {
+      border-color: var(--border2);
+      background: var(--card);
+    }
+
+    .lb-row.is-me {
+      border-color: var(--gold);
+      background: rgba(232, 184, 75, 0.06);
+    }
+
+    .lb-rank {
+      font-size: 0.875rem;
+      font-weight: 800;
+      color: var(--t3);
+      width: 26px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .r1 {
+      color: #fbbf24;
+    }
+
+    .r2 {
+      color: #94a3b8;
+    }
+
+    .r3 {
+      color: #b45309;
+    }
+
+    .lb-ava {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #5b4fe9, #3dd9ad);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .lb-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .lb-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .lb-role-t {
+      font-size: 0.6875rem;
+      color: var(--t2);
+    }
+
+    .lb-score {
+      font-size: 1.125rem;
+      font-weight: 800;
+      color: var(--gold);
+    }
+
+    .lb-score-lbl {
+      font-size: 0.5625rem;
+      color: var(--t3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── KANBAN ── */
+    .kb-wrap {
+      padding: 28px;
+      overflow-y: auto;
+    }
+
+    .kb-board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .kb-col {
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px;
+    }
+
+    .kb-col-hd {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .kb-col-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.6875rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .kb-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .kb-cnt {
+      font-size: 0.625rem;
+      color: var(--t3);
+      background: var(--bg);
+      padding: 1px 6px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+    }
+
+    .kb-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 11px 12px;
+      margin-bottom: 7px;
+      cursor: pointer;
+      transition: all var(--ease);
+    }
+
+    .kb-card:hover {
+      border-color: var(--border2);
+      background: var(--card2);
+    }
+
+    .kb-card-title {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      margin-bottom: 7px;
+      line-height: 1.4;
+    }
+
+    .kb-card-meta {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .kb-card-user {
+      font-size: 0.6875rem;
+      color: var(--t2);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 6px;
+    }
+
+    .mini-ava {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold-d), var(--gold));
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #0e1116;
+      flex-shrink: 0;
+    }
+
+    /* ── SUBMIT ── */
+    .sub-wrap {
+      padding: 28px;
+      overflow-y: auto;
+      max-width: 560px;
+    }
+
+    .sub-card {
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 22px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: var(--r-sm);
+      padding: 9px 12px;
+      font-size: 0.8125rem;
+      color: var(--t1);
+      font-family: inherit;
+      outline: none;
+      transition: border-color var(--ease);
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(232, 184, 75, 0.1);
+    }
+
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+      color: var(--t3);
+    }
+
+    .form-select {
+      appearance: none;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%233a4560' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 30px;
+    }
+
+    .form-select option {
+      background: var(--card);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .file-drop {
+      border: 2px dashed var(--border2);
+      border-radius: var(--r);
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--ease);
+    }
+
+    .file-drop:hover,
+    .file-drop.dragover {
+      border-color: var(--gold);
+      background: rgba(232, 184, 75, 0.05);
+    }
+
+    .file-selected {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      margin-top: 8px;
+      background: rgba(61, 217, 173, 0.08);
+      border: 1px solid rgba(61, 217, 173, 0.2);
+      border-radius: var(--r-sm);
+      font-size: 0.8125rem;
+      color: #3dd9ad;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border-radius: var(--r-sm);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      transition: all var(--ease);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold-d), var(--gold));
+      color: #0e1116;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(232, 184, 75, 0.3);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--t2);
+    }
+
+    .btn-ghost:hover {
+      background: var(--card);
+      color: var(--t1);
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 0.75rem;
+    }
+
+    /* ── PROFILE ── */
+    .prof-wrap {
+      padding: 28px;
+      max-width: 480px;
+      overflow-y: auto;
+    }
+
+    .prof-card {
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 22px;
+    }
+
+    .prof-top {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 22px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .prof-avatar-lg {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--gold-d), var(--gold));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #0e1116;
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--ease);
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-box {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: var(--r-lg);
+      padding: 24px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: scale(0.95) translateY(8px);
+      transition: transform var(--ease);
+    }
+
+    .modal-overlay.open .modal-box {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-hd {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .modal-title {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .modal-x {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--t2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      transition: all var(--ease);
+    }
+
+    .modal-x:hover {
+      background: var(--border2);
+      color: var(--t1);
+    }
+
+    /* ── MISC ── */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(0, 0, 0, 0.2);
+      border-top-color: #0e1116;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+    }
+
+    .spinner-dark {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .page-loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--t3);
+      font-size: 0.875rem;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 11px 16px;
+      border-radius: var(--r);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      z-index: 9999;
+      max-width: 300px;
+      transform: translateY(10px);
+      opacity: 0;
+      transition: all var(--ease);
+      border: 1px solid;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast-success {
+      background: rgba(61, 217, 173, 0.12);
+      color: #3dd9ad;
+      border-color: rgba(61, 217, 173, 0.25);
+    }
+
+    .toast-error {
+      background: rgba(248, 113, 113, 0.12);
+      color: #f87171;
+      border-color: rgba(248, 113, 113, 0.25);
+    }
+
+    .toast-info {
+      background: rgba(124, 111, 255, 0.12);
+      color: #9d8fff;
+      border-color: rgba(124, 111, 255, 0.25);
+    }
+
+    .section-hd {
+      margin-bottom: 20px;
+    }
+
+    .section-hd h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .section-hd p {
+      font-size: 0.8125rem;
+      color: var(--t2);
+    }
+
+    @media (max-width: 1100px) {
+      .dash-right {
+        display: none;
+      }
+
+      .kb-board {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .ds-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .kb-board {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="app-layout">
+  <div class="dash-wrap">
 
-  <!-- ─── SIDEBAR ─── -->
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <img src="logo.png" alt="Mirai Atelier">
-      <div class="sidebar-logo-sub">Dev Hub</div>
-    </div>
-
-    <div class="sidebar-user">
-      <div class="sidebar-avatar" id="sidebarAvatar">MA</div>
-      <div class="sidebar-user-info" style="min-width:0">
-        <div class="sidebar-user-name" id="sidebarName">Loading...</div>
-        <div class="sidebar-user-role" id="sidebarRole">—</div>
+    <!-- ── LEFT SIDEBAR ── -->
+    <aside class="dash-sidebar">
+      <div class="ds-avatar" id="sidebarAvatar" onclick="switchSection('profile')" title="Profile">MA</div>
+      <nav class="ds-nav">
+        <button class="ds-btn active" onclick="switchSection('home')" title="Overview">🏠</button>
+        <button class="ds-btn" onclick="switchSection('kanban')" title="Kanban Board">📊</button>
+        <button class="ds-btn" onclick="switchSection('leaderboard')" title="Leaderboard">🏆</button>
+        <button class="ds-btn" onclick="switchSection('submit')" title="Submit Task">📤</button>
+      </nav>
+      <div class="ds-bottom">
+        <button class="ds-btn" onclick="switchSection('profile')" title="Profile">⚙️</button>
+        <button class="ds-btn" onclick="signOut()" title="Logout">🚪</button>
       </div>
-    </div>
+    </aside>
 
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Menu</div>
-      <button class="nav-item active" onclick="showSection('overview')">
-        <span class="nav-icon">🏠</span> Overview
-      </button>
-      <button class="nav-item" onclick="showSection('mytasks')">
-        <span class="nav-icon">📋</span> My Tasks
-      </button>
-      <button class="nav-item" onclick="showSection('kanban')">
-        <span class="nav-icon">📊</span> Kanban Board
-      </button>
-      <button class="nav-item" onclick="showSection('leaderboard')">
-        <span class="nav-icon">🏆</span> Leaderboard
-      </button>
-      <button class="nav-item" onclick="showSection('submit')">
-        <span class="nav-icon">📤</span> Submit Task
-      </button>
-    </nav>
+    <!-- ── MAIN CONTENT ── -->
+    <main class="dash-main" id="dashMain">
 
-    <div class="sidebar-bottom">
-      <button class="nav-item" onclick="showSection('profile')">
-        <span class="nav-icon">⚙️</span> Profile
-      </button>
-      <button class="nav-item" onclick="signOut()">
-        <span class="nav-icon">🚪</span> Logout
-      </button>
-    </div>
-  </aside>
-
-  <!-- ─── MAIN CONTENT ─── -->
-  <div class="main-content">
-
-    <!-- Header -->
-    <header class="app-header">
-      <div class="header-title" id="headerTitle">Overview</div>
-      <div class="header-right">
-        <div class="icon-btn" title="Notifikasi" onclick="showSection('overview')" id="notifBtn">
-          🔔
-        </div>
-        <div style="font-size:0.75rem;color:var(--t2)" id="headerDate"></div>
-      </div>
-    </header>
-
-    <!-- ═══ SECTION: OVERVIEW ═══ -->
-    <section class="page-section active" id="sec-overview">
-      <div class="section-header">
-        <h2>Selamat datang, <span id="welcomeName" style="color:var(--gold)">...</span> 👋</h2>
-        <p>Ringkasan aktivitas dan progress tim hari ini</p>
-      </div>
-
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">My Tasks</div>
-          <div class="stat-value stat-accent" id="statMyTasks">—</div>
-          <div class="stat-sub">task aktif</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Selesai</div>
-          <div class="stat-value" id="statDone">—</div>
-          <div class="stat-sub">total processed</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Poin Kamu</div>
-          <div class="stat-value stat-accent" id="statPoints">—</div>
-          <div class="stat-sub">XP terkumpul</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Rank Kamu</div>
-          <div class="stat-value" id="statRank">—</div>
-          <div class="stat-sub">di leaderboard</div>
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">📋 Task Terbaru Kamu</div>
-            <button class="btn btn-ghost btn-sm" onclick="showSection('mytasks')">Lihat semua →</button>
+      <!-- HOME -->
+      <section class="ds-section active" id="sec-home">
+        <div class="ds-header">
+          <div>
+            <div class="ds-greeting">Halo, <span id="greetName">...</span> 👋</div>
+            <div class="ds-progress-row">
+              <span id="progressText">Loading...</span>
+              <div class="ds-progress-track">
+                <div class="ds-progress-fill" id="progressFill" style="width:0%"></div>
+              </div>
+            </div>
           </div>
-          <div id="overviewTaskList">
-            <div class="page-loader"><span class="spinner"></span></div>
+          <div class="ds-date-block">
+            <div class="ds-date-day" id="dateDay"></div>
+            <div class="ds-date-full" id="dateFull"></div>
           </div>
         </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">🏆 Top Leaderboard</div>
-            <button class="btn btn-ghost btn-sm" onclick="showSection('leaderboard')">Lihat semua →</button>
+
+        <!-- Featured Cards -->
+        <div class="ds-cards">
+          <div class="ds-feat-card purple" onclick="setTab('ongoing')">
+            <div class="dfc-icon">⚡</div>
+            <div class="dfc-label"><span class="dfc-dot"></span>On Going</div>
+            <div class="dfc-count" id="fcOngoing">—</div>
+            <div class="dfc-sub">task aktif</div>
           </div>
-          <div id="overviewLeaderboard">
-            <div class="page-loader"><span class="spinner"></span></div>
+          <div class="ds-feat-card pink" onclick="setTab('on_review')">
+            <div class="dfc-icon">🔍</div>
+            <div class="dfc-label"><span class="dfc-dot"></span>On Review</div>
+            <div class="dfc-count" id="fcReview">—</div>
+            <div class="dfc-sub">menunggu review</div>
           </div>
+          <div class="ds-feat-card teal" onclick="setTab('processed')">
+            <div class="dfc-icon">✅</div>
+            <div class="dfc-label"><span class="dfc-dot"></span>Completed</div>
+            <div class="dfc-count" id="fcDone">—</div>
+            <div class="dfc-sub">task selesai</div>
+          </div>
+        </div>
+
+        <!-- Task List -->
+        <div class="ds-tasks-header">
+          <div class="ds-tasks-title">Recent Tasks</div>
+          <div class="ds-tabs" id="taskTabs">
+            <button class="ds-tab active" onclick="setTab('all')">Semua</button>
+            <button class="ds-tab" onclick="setTab('ongoing')">Active</button>
+            <button class="ds-tab" onclick="setTab('on_review')">On Review</button>
+            <button class="ds-tab" onclick="setTab('processed')">Completed</button>
+            <button class="ds-tab" onclick="setTab('revision')">Revision</button>
+          </div>
+        </div>
+        <div id="taskListMain">
+          <div class="page-loader"><span class="spinner-dark"></span></div>
+        </div>
+      </section>
+
+      <!-- KANBAN -->
+      <section class="ds-section" id="sec-kanban">
+        <div class="kb-wrap">
+          <div class="section-hd">
+            <h2>Kanban Board</h2>
+            <p>Global view seluruh task tim</p>
+          </div>
+          <div class="kb-board">
+            <div class="kb-col">
+              <div class="kb-col-hd">
+                <div class="kb-col-title"><span class="kb-dot" style="background:#7c6fff"></span><span
+                    style="color:#9d8fff">On Going</span></div>
+                <span class="kb-cnt" id="kc-ongoing">0</span>
+              </div>
+              <div id="kCol-ongoing">
+                <div class="page-loader"><span class="spinner-dark"></span></div>
+              </div>
+            </div>
+            <div class="kb-col">
+              <div class="kb-col-hd">
+                <div class="kb-col-title"><span class="kb-dot" style="background:#fbbf24"></span><span
+                    style="color:#fbbf24">On Review</span></div>
+                <span class="kb-cnt" id="kc-on_review">0</span>
+              </div>
+              <div id="kCol-on_review"></div>
+            </div>
+            <div class="kb-col">
+              <div class="kb-col-hd">
+                <div class="kb-col-title"><span class="kb-dot" style="background:#3dd9ad"></span><span
+                    style="color:#3dd9ad">Processed</span></div>
+                <span class="kb-cnt" id="kc-processed">0</span>
+              </div>
+              <div id="kCol-processed"></div>
+            </div>
+            <div class="kb-col">
+              <div class="kb-col-hd">
+                <div class="kb-col-title"><span class="kb-dot" style="background:#f87171"></span><span
+                    style="color:#f87171">Revision</span></div>
+                <span class="kb-cnt" id="kc-revision">0</span>
+              </div>
+              <div id="kCol-revision"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LEADERBOARD -->
+      <section class="ds-section" id="sec-leaderboard">
+        <div class="lb-wrap">
+          <div class="section-hd">
+            <h2>🏆 Leaderboard</h2>
+            <p>Ranking berdasarkan poin dari task selesai</p>
+          </div>
+          <div class="lb-list" id="lbList">
+            <div class="page-loader"><span class="spinner-dark"></span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SUBMIT -->
+      <section class="ds-section" id="sec-submit">
+        <div class="sub-wrap">
+          <div class="section-hd">
+            <h2>📤 Submit Task</h2>
+            <p>Upload bukti pekerjaan dan kirim ke review</p>
+          </div>
+          <div class="sub-card">
+            <form id="submitForm" onsubmit="handleSubmit(event)">
+              <div class="form-group">
+                <label class="form-label">Pilih Task</label>
+                <select class="form-select" id="subTaskSel" required>
+                  <option value="">— Pilih task kamu —</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Status Baru</label>
+                <select class="form-select" id="subNewStatus">
+                  <option value="on_review">Kirim ke ON REVIEW</option>
+                  <option value="revision">Tandai REVISION</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Upload File Bukti</label>
+                <div class="file-drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
+                  <div style="font-size:1.75rem;margin-bottom:6px">📁</div>
+                  <div style="font-size:0.8125rem;color:var(--t2)">Klik atau drag file ke sini</div>
+                  <div style="font-size:0.6875rem;color:var(--t3);margin-top:3px">PNG, JPG, PDF, ZIP · Max 50MB</div>
+                </div>
+                <input type="file" id="fileInput" style="display:none" onchange="onFileSelect(this)">
+                <div class="file-selected" id="fileSelectedBox" style="display:none">
+                  ✓ <span id="fileSelectedName"
+                    style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+                  <button type="button" class="btn btn-ghost btn-sm" onclick="clearFile()">✕</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Catatan</label>
+                <textarea class="form-textarea" id="subNote"
+                  placeholder="Keterangan, link, atau detail pekerjaan..."></textarea>
+              </div>
+              <div id="subError"
+                style="display:none;background:rgba(248,113,113,0.1);color:#f87171;border:1px solid rgba(248,113,113,0.2);border-radius:8px;padding:10px 14px;font-size:0.8125rem;margin-bottom:12px">
+              </div>
+              <button type="submit" class="btn btn-primary" id="subBtn"
+                style="width:100%;justify-content:center;padding:11px">
+                📤 Submit & Kirim ke Review
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROFILE -->
+      <section class="ds-section" id="sec-profile">
+        <div class="prof-wrap">
+          <div class="section-hd">
+            <h2>⚙️ Profile</h2>
+            <p>Edit informasi akun kamu</p>
+          </div>
+          <div class="prof-card">
+            <div class="prof-top">
+              <div class="prof-avatar-lg" id="profAvaLg">MA</div>
+              <div>
+                <div style="font-weight:700;font-size:1rem;margin-bottom:4px" id="profNameDisplay">...</div>
+                <div id="profRoleBadge"></div>
+              </div>
+            </div>
+            <form id="profForm" onsubmit="saveProfile(event)">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="form-group">
+                  <label class="form-label">Nama Lengkap</label>
+                  <input type="text" class="form-input" id="profName">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Username</label>
+                  <input type="text" class="form-input" id="profUsername">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Bio</label>
+                <textarea class="form-textarea" id="profBio" placeholder="Ceritakan tentang dirimu..."></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary" id="profSaveBtn">Simpan</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ── RIGHT PANEL ── -->
+    <aside class="dash-right" id="dashRight">
+      <!-- Upcoming deadlines -->
+      <div>
+        <div class="dr-title">
+          <div class="dr-title-icon purple">📅</div>
+          Upcoming Deadline
+        </div>
+        <div id="upcomingList">
+          <div class="page-loader"><span class="spinner-dark"></span></div>
         </div>
       </div>
-    </section>
 
-    <!-- ═══ SECTION: MY TASKS ═══ -->
-    <section class="page-section" id="sec-mytasks">
-      <div class="section-header flex-between" style="display:flex;align-items:flex-start;flex-wrap:wrap;gap:12px">
-        <div>
-          <h2>My Tasks</h2>
-          <p>Task yang di-assign ke kamu berdasarkan role</p>
+      <!-- Quick Submit -->
+      <div>
+        <div class="dr-title">
+          <div class="dr-title-icon teal">⚡</div>
+          Quick Submit
         </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <select class="form-select" id="taskFilterStatus" style="width:auto" onchange="loadMyTasks()">
-            <option value="">Semua Status</option>
-            <option value="ongoing">ON GOING</option>
-            <option value="on_review">ON REVIEW</option>
-            <option value="processed">PROCESSED</option>
-            <option value="revision">REVISION</option>
+        <div class="qs-form">
+          <select class="qs-select" id="qsTaskSel">
+            <option value="">Pilih task...</option>
           </select>
+          <select class="qs-select" id="qsStatus">
+            <option value="on_review">→ On Review</option>
+            <option value="revision">→ Revision</option>
+          </select>
+          <button class="qs-btn" id="qsBtn" onclick="quickSubmit()">Submit Task</button>
         </div>
       </div>
-      <div id="myTaskList">
-        <div class="page-loader"><span class="spinner"></span></div>
-      </div>
-    </section>
+    </aside>
 
-    <!-- ═══ SECTION: KANBAN BOARD ═══ -->
-    <section class="page-section" id="sec-kanban">
-      <div class="section-header">
-        <h2>Kanban Board</h2>
-        <p>Global board — semua task dari seluruh tim</p>
-      </div>
-      <div class="kanban-board" id="kanbanBoard">
-        <div class="kanban-col">
-          <div class="kanban-col-header">
-            <div class="kanban-col-title">
-              <span class="k-dot" style="background:#4ade80"></span>
-              <span style="color:#4ade80">On Going</span>
-            </div>
-            <span class="kanban-count" id="kCount-ongoing">0</span>
-          </div>
-          <div id="kCol-ongoing"><div class="page-loader"><span class="spinner"></span></div></div>
-        </div>
-        <div class="kanban-col">
-          <div class="kanban-col-header">
-            <div class="kanban-col-title">
-              <span class="k-dot" style="background:#fbbf24"></span>
-              <span style="color:#fbbf24">On Review</span>
-            </div>
-            <span class="kanban-count" id="kCount-on_review">0</span>
-          </div>
-          <div id="kCol-on_review"></div>
-        </div>
-        <div class="kanban-col">
-          <div class="kanban-col-header">
-            <div class="kanban-col-title">
-              <span class="k-dot" style="background:#e8b84b"></span>
-              <span style="color:#e8b84b">Processed</span>
-            </div>
-            <span class="kanban-count" id="kCount-processed">0</span>
-          </div>
-          <div id="kCol-processed"></div>
-        </div>
-        <div class="kanban-col">
-          <div class="kanban-col-header">
-            <div class="kanban-col-title">
-              <span class="k-dot" style="background:#f87171"></span>
-              <span style="color:#f87171">Revision</span>
-            </div>
-            <span class="kanban-count" id="kCount-revision">0</span>
-          </div>
-          <div id="kCol-revision"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══ SECTION: LEADERBOARD ═══ -->
-    <section class="page-section" id="sec-leaderboard">
-      <div class="section-header">
-        <h2>🏆 Leaderboard</h2>
-        <p>Ranking berdasarkan poin dari task yang diselesaikan</p>
-      </div>
-      <div style="max-width:640px">
-        <div id="leaderboardList">
-          <div class="page-loader"><span class="spinner"></span></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══ SECTION: SUBMIT TASK ═══ -->
-    <section class="page-section" id="sec-submit">
-      <div class="section-header">
-        <h2>📤 Submit Task</h2>
-        <p>Upload bukti pekerjaan dan submit task ke review</p>
-      </div>
-      <div style="max-width:560px">
-        <div class="card">
-          <form id="submitForm" onsubmit="handleSubmitTask(event)">
-            <div class="form-group">
-              <label class="form-label">Pilih Task <span class="req">*</span></label>
-              <select class="form-select" id="submitTaskSelect" required>
-                <option value="">— Pilih task kamu —</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Status Baru <span class="req">*</span></label>
-              <select class="form-select" id="submitNewStatus" required>
-                <option value="on_review">Kirim ke ON REVIEW</option>
-                <option value="revision">Tandai REVISION (perlu revisi)</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Upload Bukti File</label>
-              <div class="file-drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
-                <div class="file-drop-icon">📁</div>
-                <div class="file-drop-text">Klik atau drag file ke sini</div>
-                <div class="file-drop-hint">PNG, JPG, PDF, ZIP, dll · Max 50MB</div>
-              </div>
-              <input type="file" id="fileInput" style="display:none" onchange="handleFileSelect(this)">
-              <div class="file-selected" id="fileSelected" style="display:none">
-                <span>✓</span>
-                <span class="file-selected-name" id="fileSelectedName"></span>
-                <button type="button" class="btn btn-ghost btn-sm" onclick="clearFile()">✕</button>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Catatan / Note</label>
-              <textarea class="form-textarea" id="submitNote" placeholder="Tambahkan keterangan, link, atau detail pekerjaan..."></textarea>
-            </div>
-
-            <div id="submitError" style="background:rgba(248,113,113,0.10);color:#f87171;border:1px solid rgba(248,113,113,0.2);border-radius:8px;padding:10px 14px;font-size:0.8125rem;margin-bottom:12px;display:none"></div>
-
-            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" style="width:100%">
-              📤 Submit & Kirim ke Review
-            </button>
-          </form>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══ SECTION: PROFILE ═══ -->
-    <section class="page-section" id="sec-profile">
-      <div class="section-header">
-        <h2>⚙️ Profile Settings</h2>
-        <p>Edit informasi akun kamu</p>
-      </div>
-      <div style="max-width:480px">
-        <div class="card">
-          <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)">
-            <div class="lb-avatar" id="profileAvatar" style="width:56px;height:56px;font-size:1.125rem">MA</div>
-            <div>
-              <div style="font-weight:700;font-size:1rem" id="profileName">...</div>
-              <div id="profileRoleBadge"></div>
-            </div>
-          </div>
-          <form id="profileForm" onsubmit="handleUpdateProfile(event)">
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Nama Lengkap</label>
-                <input type="text" class="form-input" id="profileFullName">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Username</label>
-                <input type="text" class="form-input" id="profileUsername">
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Bio</label>
-              <textarea class="form-textarea" id="profileBio" placeholder="Ceritakan sedikit tentang dirimu..."></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary" id="profileSaveBtn">Simpan Perubahan</button>
-          </form>
-        </div>
-      </div>
-    </section>
-
-  </div><!-- end main-content -->
-</div><!-- end app-layout -->
-
-<!-- ── Task Detail Modal ── -->
-<div class="modal-overlay" id="taskDetailModal">
-  <div class="modal-box" style="max-width:560px">
-    <div class="modal-header">
-      <div class="modal-title" id="modalTaskTitle">Task Detail</div>
-      <button class="modal-close" onclick="closeModal('taskDetailModal')">✕</button>
-    </div>
-    <div id="modalTaskBody"></div>
-    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap" id="modalTaskActions"></div>
   </div>
-</div>
 
-<script>
-  let currentUser = null;
-  let currentProfile = null;
-  let selectedFile = null;
+  <!-- Task Detail Modal -->
+  <div class="modal-overlay" id="taskModal">
+    <div class="modal-box">
+      <div class="modal-hd">
+        <div class="modal-title" id="modalTitle">Detail Task</div>
+        <button class="modal-x" onclick="closeModal()">✕</button>
+      </div>
+      <div id="modalBody"></div>
+      <div id="modalActions" style="margin-top:14px;display:flex;gap:8px"></div>
+    </div>
+  </div>
 
-  // ── Init ──────────────────────────────────────────────
+  <script>
+    let CU = null, CP = null, selectedFile = null, currentTab = 'all';
+    let allMyTasks = [];
 
-  async function init() {
-    const session = await requireAuth('/login.html');
-    if (!session) return;
+    // ── INIT ─────────────────────────────────────────────
+    async function init() {
+      const session = await requireAuth('/login');
+      if (!session) return;
+      CU = session.user;
+      CP = await getProfile(CU.id);
+      if (!CP) { window.location.href = '/login'; return; }
 
-    currentUser = session.user;
-    currentProfile = await getProfile(currentUser.id);
-    if (!currentProfile) { window.location.href = '/login.html'; return; }
+      // Sidebar avatar
+      document.getElementById('sidebarAvatar').textContent = ini(CP.full_name);
+      document.getElementById('greetName').textContent = CP.full_name.split(' ')[0];
 
-    // Populate sidebar
-    document.getElementById('sidebarAvatar').textContent = initials(currentProfile.full_name);
-    document.getElementById('sidebarName').textContent = currentProfile.full_name;
-    const role = ROLES[currentProfile.role];
-    document.getElementById('sidebarRole').textContent = `${role?.icon || ''} ${role?.label || currentProfile.role}`;
-    document.getElementById('welcomeName').textContent = currentProfile.full_name.split(' ')[0];
+      // Date
+      const now = new Date();
+      document.getElementById('dateDay').textContent = now.toLocaleDateString('id-ID', { weekday: 'long' });
+      document.getElementById('dateFull').textContent = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-    // Header date
-    document.getElementById('headerDate').textContent = new Date().toLocaleDateString('id-ID', {
-      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-    });
+      // Profile section
+      document.getElementById('profAvaLg').textContent = ini(CP.full_name);
+      document.getElementById('profNameDisplay').textContent = CP.full_name;
+      document.getElementById('profRoleBadge').innerHTML = roleBadge(CP.role);
+      document.getElementById('profName').value = CP.full_name || '';
+      document.getElementById('profUsername').value = CP.username || '';
+      document.getElementById('profBio').value = CP.bio || '';
 
-    // Profile section
-    document.getElementById('profileAvatar').textContent = initials(currentProfile.full_name);
-    document.getElementById('profileName').textContent = currentProfile.full_name;
-    document.getElementById('profileRoleBadge').innerHTML = roleBadge(currentProfile.role);
-    document.getElementById('profileFullName').value = currentProfile.full_name || '';
-    document.getElementById('profileUsername').value = currentProfile.username || '';
-    document.getElementById('profileBio').value = currentProfile.bio || '';
+      await loadHome();
+      loadSubmitDropdowns();
+      loadUpcoming();
+    }
 
-    // Load initial data
-    await Promise.all([loadOverview(), loadKanban()]);
-    loadSubmitTaskDropdown();
-  }
+    // ── NAVIGATION ────────────────────────────────────────
+    function switchSection(name) {
+      document.querySelectorAll('.ds-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.ds-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`sec-${name}`).classList.add('active');
+      event?.currentTarget?.classList.add('active');
 
-  // ── Navigation ────────────────────────────────────────
+      // Right panel only on home
+      document.getElementById('dashRight').style.display = name === 'home' ? '' : 'none';
 
-  const sectionTitles = {
-    overview: 'Overview', mytasks: 'My Tasks',
-    kanban: 'Kanban Board', leaderboard: 'Leaderboard',
-    submit: 'Submit Task', profile: 'Profile'
-  };
+      if (name === 'kanban') loadKanban();
+      if (name === 'leaderboard') loadLeaderboard();
+    }
 
-  function showSection(name) {
-    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    // ── HOME ──────────────────────────────────────────────
+    async function loadHome() {
+      const { data } = await db.from('tasks')
+        .select('id,title,description,status,priority,due_date,assigned_by:profiles!tasks_assigned_by_fkey(full_name)')
+        .or(`assigned_to.eq.${CU.id},role_target.eq.${CP.role},role_target.eq.all`)
+        .order('created_at', { ascending: false });
 
-    document.getElementById(`sec-${name}`).classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(b => {
-      if (b.textContent.trim().toLowerCase().includes(name === 'mytasks' ? 'my' : name.slice(0, 5))) {
-        b.classList.add('active');
+      allMyTasks = data || [];
+
+      // Stats
+      const ongoing = allMyTasks.filter(t => t.status === 'ongoing').length;
+      const onReview = allMyTasks.filter(t => t.status === 'on_review').length;
+      const processed = allMyTasks.filter(t => t.status === 'processed').length;
+      const total = allMyTasks.length;
+
+      document.getElementById('fcOngoing').textContent = ongoing;
+      document.getElementById('fcReview').textContent = onReview;
+      document.getElementById('fcDone').textContent = processed;
+
+      const pct = total > 0 ? Math.round((processed / total) * 100) : 0;
+      document.getElementById('progressText').textContent = `${pct}% Task Completed`;
+      document.getElementById('progressFill').style.width = pct + '%';
+
+      renderTaskList(allMyTasks);
+    }
+
+    function setTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.ds-tab').forEach((b, i) => {
+        const tabs = ['all', 'ongoing', 'on_review', 'processed', 'revision'];
+        b.classList.toggle('active', tabs[i] === tab);
+      });
+      const filtered = tab === 'all' ? allMyTasks : allMyTasks.filter(t => t.status === tab);
+      renderTaskList(filtered);
+    }
+
+    const numColors = ['#7c6fff', '#ff6584', '#3dd9ad', '#fbbf24', '#f87171', '#fb923c', '#22d3ee', '#c084fc'];
+
+    function renderTaskList(tasks) {
+      const el = document.getElementById('taskListMain');
+      if (!tasks.length) {
+        el.innerHTML = `<div class="empty">📭 Tidak ada task</div>`; return;
       }
-    });
-    document.getElementById('headerTitle').textContent = sectionTitles[name] || name;
-
-    // Lazy load
-    if (name === 'mytasks')    loadMyTasks();
-    if (name === 'leaderboard') loadLeaderboard();
-    if (name === 'kanban')      loadKanban();
-  }
-
-  // ── OVERVIEW ─────────────────────────────────────────
-
-  async function loadOverview() {
-    // Stats
-    const { data: myTasks } = await db.from('tasks')
-      .select('id,status')
-      .eq('assigned_to', currentUser.id);
-
-    const ongoing   = (myTasks || []).filter(t => t.status !== 'processed').length;
-    const processed = (myTasks || []).filter(t => t.status === 'processed').length;
-    document.getElementById('statMyTasks').textContent = ongoing;
-    document.getElementById('statDone').textContent    = processed;
-    document.getElementById('statPoints').textContent  = currentProfile.points || 0;
-
-    // Rank
-    const { data: ranked } = await db.from('profiles').select('id,points').order('points', { ascending: false });
-    if (ranked) {
-      const rank = ranked.findIndex(p => p.id === currentUser.id) + 1;
-      document.getElementById('statRank').textContent = `#${rank}`;
-    }
-
-    // Recent tasks (3)
-    const { data: recent } = await db.from('tasks')
-      .select('*, assigned_by:profiles!tasks_assigned_by_fkey(full_name)')
-      .eq('assigned_to', currentUser.id)
-      .order('created_at', { ascending: false })
-      .limit(3);
-
-    const tList = document.getElementById('overviewTaskList');
-    if (!recent || recent.length === 0) {
-      tList.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Belum ada task</div></div>`;
-    } else {
-      tList.innerHTML = recent.map(t => taskCardHTML(t)).join('');
-    }
-
-    // Mini leaderboard (top 5)
-    const { data: lb } = await db.from('profiles')
-      .select('id,full_name,role,points')
-      .eq('is_active', true)
-      .order('points', { ascending: false })
-      .limit(5);
-
-    const lbEl = document.getElementById('overviewLeaderboard');
-    if (!lb || lb.length === 0) {
-      lbEl.innerHTML = `<div class="empty-state"><div class="empty-title">Belum ada data</div></div>`;
-    } else {
-      lbEl.innerHTML = `<div class="lb-list">${lb.map((p, i) => lbItemHTML(p, i + 1)).join('')}</div>`;
-    }
-  }
-
-  // ── MY TASKS ──────────────────────────────────────────
-
-  async function loadMyTasks() {
-    const statusFilter = document.getElementById('taskFilterStatus').value;
-    const el = document.getElementById('myTaskList');
-    el.innerHTML = `<div class="page-loader"><span class="spinner"></span></div>`;
-
-    let q = db.from('tasks')
-      .select('*, assigned_by:profiles!tasks_assigned_by_fkey(full_name)')
-      .eq('assigned_to', currentUser.id)
-      .order('created_at', { ascending: false });
-
-    if (statusFilter) q = q.eq('status', statusFilter);
-
-    const { data } = await q;
-
-    if (!data || data.length === 0) {
-      el.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Tidak ada task</div><div class="empty-sub">Admin atau Director belum assign task ke kamu</div></div>`;
-      return;
-    }
-
-    el.innerHTML = `<div class="task-list">${data.map(t => taskCardHTML(t, true)).join('')}</div>`;
-  }
-
-  function taskCardHTML(task, showSubmit = false) {
-    const due = task.due_date;
-    const overdue = isOverdue(due) && task.status !== 'processed';
-    return `
-      <div class="task-card" onclick="openTaskDetail('${task.id}')">
-        <div class="task-card-top">
-          <div class="task-title">${escapeHtml(task.title)}</div>
-          ${statusBadge(task.status)}
+      el.innerHTML = tasks.map((t, i) => {
+        const over = t.due_date && new Date(t.due_date) < new Date() && t.status !== 'processed';
+        const color = numColors[i % numColors.length];
+        return `<div class="task-row" onclick="openTaskModal('${t.id}')">
+        <div class="task-num" style="background:${color}22;color:${color}">${i + 1}</div>
+        <div class="task-row-info">
+          <div class="task-row-title">${esc(t.title)}</div>
+          <div class="task-row-sub">${t.assigned_by?.full_name ? 'dari ' + esc(t.assigned_by.full_name) : 'Role task'}</div>
         </div>
-        ${task.description ? `<div class="task-desc">${escapeHtml(task.description)}</div>` : ''}
-        <div class="task-footer">
-          ${priorityBadge(task.priority)}
-          ${task.assigned_by?.full_name ? `<span class="text-tiny">dari ${escapeHtml(task.assigned_by.full_name)}</span>` : ''}
-          <span class="task-due ${overdue ? 'overdue' : ''}">${due ? '📅 ' + formatDate(due) : ''}</span>
+        <div class="task-row-right">
+          <span class="badge badge-${t.status}">${STATUS_MAP[t.status]?.label || t.status}</span>
+          <span class="badge badge-${t.priority}">${PRIORITY_MAP[t.priority] || t.priority}</span>
+          ${t.due_date ? `<span style="font-size:0.6875rem;color:${over ? '#f87171' : 'var(--t3)'}">📅 ${fmtDate(t.due_date)}</span>` : ''}
         </div>
       </div>`;
-  }
+      }).join('');
+    }
 
-  // ── KANBAN ────────────────────────────────────────────
+    // ── UPCOMING DEADLINES ───────────────────────────────
+    async function loadUpcoming() {
+      const { data } = await db.from('tasks')
+        .select('id,title,due_date,status,priority')
+        .or(`assigned_to.eq.${CU.id},role_target.eq.${CP.role},role_target.eq.all`)
+        .neq('status', 'processed')
+        .not('due_date', 'is', null)
+        .order('due_date', { ascending: true })
+        .limit(4);
 
-  async function loadKanban() {
-    const { data } = await db.from('tasks')
-      .select('*, assigned_to:profiles!tasks_assigned_to_fkey(full_name,role), assigned_by:profiles!tasks_assigned_by_fkey(full_name)')
-      .order('updated_at', { ascending: false });
+      const el = document.getElementById('upcomingList');
+      if (!data?.length) {
+        el.innerHTML = `<div style="font-size:0.8125rem;color:var(--t3);text-align:center;padding:16px 0">Tidak ada deadline dekat 🎉</div>`;
+        return;
+      }
+      const colors = ['sc-purple', 'sc-pink', 'sc-teal', 'sc-purple'];
+      el.innerHTML = data.map((t, i) => {
+        const over = new Date(t.due_date) < new Date();
+        return `<div class="sched-card ${colors[i]}" onclick="openTaskModal('${t.id}')">
+        <div class="sched-card-top">
+          <div class="sched-card-title">${esc(t.title)}</div>
+          <div class="sched-card-due" style="${over ? 'color:#f87171' : ''}">${fmtDate(t.due_date)}</div>
+        </div>
+        <div class="sched-card-sub">${PRIORITY_MAP[t.priority] || t.priority} Priority</div>
+      </div>`;
+      }).join('');
+    }
 
-    const cols = { ongoing: [], on_review: [], processed: [], revision: [] };
-    (data || []).forEach(t => { if (cols[t.status]) cols[t.status].push(t); });
+    // ── KANBAN ────────────────────────────────────────────
+    async function loadKanban() {
+      const { data } = await db.from('tasks')
+        .select('*, assigned_to:profiles!tasks_assigned_to_fkey(full_name,role)')
+        .order('updated_at', { ascending: false });
 
-    for (const [status, tasks] of Object.entries(cols)) {
-      document.getElementById(`kCount-${status}`).textContent = tasks.length;
-      const el = document.getElementById(`kCol-${status}`);
-      if (tasks.length === 0) {
-        el.innerHTML = `<div class="empty-state" style="padding:20px 10px"><div class="empty-icon" style="font-size:1.5rem">—</div><div class="empty-sub">Kosong</div></div>`;
-      } else {
-        el.innerHTML = tasks.map(t => `
-          <div class="kanban-card" onclick="openTaskDetail('${t.id}')">
-            <div class="kanban-card-title">${escapeHtml(t.title)}</div>
-            <div class="kanban-card-meta">
-              ${t.assigned_to?.role ? roleBadge(t.assigned_to.role) : ''}
-              ${priorityBadge(t.priority)}
+      const cols = { ongoing: [], on_review: [], processed: [], revision: [] };
+      (data || []).forEach(t => { if (cols[t.status]) cols[t.status].push(t); });
+
+      for (const [s, tasks] of Object.entries(cols)) {
+        document.getElementById(`kc-${s}`).textContent = tasks.length;
+        const el = document.getElementById(`kCol-${s}`);
+        el.innerHTML = tasks.length === 0
+          ? `<div class="empty" style="padding:20px 8px">—</div>`
+          : tasks.map(t => `
+          <div class="kb-card" onclick="openTaskModal('${t.id}')">
+            <div class="kb-card-title">${esc(t.title)}</div>
+            <div class="kb-card-meta">
+              ${t.assigned_to?.role ? `<span class="badge badge-${t.assigned_to.role}">${ROLES[t.assigned_to.role]?.icon || ''} ${ROLES[t.assigned_to.role]?.label || t.assigned_to.role}</span>` : ''}
+              <span class="badge badge-${t.priority}">${PRIORITY_MAP[t.priority] || t.priority}</span>
             </div>
-            ${t.assigned_to?.full_name ? `
-            <div class="kanban-card-user">
-              <span class="mini-avatar">${initials(t.assigned_to.full_name)}</span>
-              ${escapeHtml(t.assigned_to.full_name)}
-            </div>` : '<div class="text-tiny" style="margin-top:6px">Belum di-assign</div>'}
+            ${t.assigned_to?.full_name ? `<div class="kb-card-user"><span class="mini-ava">${ini(t.assigned_to.full_name)}</span>${esc(t.assigned_to.full_name)}</div>` : `<div style="font-size:0.6875rem;color:var(--t3);margin-top:6px">Unassigned</div>`}
           </div>`).join('');
       }
     }
-  }
 
-  // ── LEADERBOARD ───────────────────────────────────────
-
-  async function loadLeaderboard() {
-    const el = document.getElementById('leaderboardList');
-    el.innerHTML = `<div class="page-loader"><span class="spinner"></span></div>`;
-
-    const { data } = await db.from('profiles')
-      .select('id,full_name,role,points,username')
-      .eq('is_active', true)
-      .order('points', { ascending: false })
-      .limit(20);
-
-    if (!data || data.length === 0) {
-      el.innerHTML = `<div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-title">Belum ada data</div></div>`;
-      return;
-    }
-
-    el.innerHTML = `<div class="lb-list">${data.map((p, i) => lbItemHTML(p, i + 1)).join('')}</div>`;
-  }
-
-  function lbItemHTML(p, rank) {
-    const isMe = p.id === currentUser?.id;
-    const rankClass = rank <= 3 ? `r${rank}` : '';
-    return `
-      <div class="lb-item ${isMe ? 'is-me' : ''}">
-        <div class="lb-rank ${rankClass}">${rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : '#' + rank}</div>
-        <div class="lb-avatar">${initials(p.full_name)}</div>
+    // ── LEADERBOARD ───────────────────────────────────────
+    async function loadLeaderboard() {
+      const el = document.getElementById('lbList');
+      el.innerHTML = `<div class="page-loader"><span class="spinner-dark"></span></div>`;
+      const { data } = await db.from('profiles').select('id,full_name,role,points,username').eq('is_active', true).order('points', { ascending: false }).limit(20);
+      if (!data?.length) { el.innerHTML = `<div class="empty">Belum ada data</div>`; return; }
+      el.innerHTML = data.map((p, i) => `
+      <div class="lb-row ${p.id === CU.id ? 'is-me' : ''}">
+        <div class="lb-rank ${i < 3 ? 'r' + (i + 1) : ''}">${i < 3 ? ['🥇', '🥈', '🥉'][i] : '#' + (i + 1)}</div>
+        <div class="lb-ava">${ini(p.full_name)}</div>
         <div class="lb-info">
-          <div class="lb-name">${escapeHtml(p.full_name)} ${isMe ? '(kamu)' : ''}</div>
-          <div class="lb-role-text">${ROLES[p.role]?.icon || ''} ${ROLES[p.role]?.label || p.role}</div>
+          <div class="lb-name">${esc(p.full_name)}${p.id === CU.id ? ' (kamu)' : ''}</div>
+          <div class="lb-role-t">${ROLES[p.role]?.icon || ''} ${ROLES[p.role]?.label || p.role}</div>
         </div>
-        <div class="lb-pts">
-          <span class="lb-pts-val">${p.points || 0}</span>
-          <span class="lb-pts-lbl">pts</span>
+        <div style="text-align:right">
+          <div class="lb-score">${p.points || 0}</div>
+          <div class="lb-score-lbl">pts</div>
         </div>
-      </div>`;
-  }
-
-  // ── SUBMIT TASK ───────────────────────────────────────
-
-  async function loadSubmitTaskDropdown() {
-    const { data } = await db.from('tasks')
-      .select('id,title,status')
-      .eq('assigned_to', currentUser.id)
-      .in('status', ['ongoing', 'revision'])
-      .order('created_at', { ascending: false });
-
-    const sel = document.getElementById('submitTaskSelect');
-    if (!data || data.length === 0) {
-      sel.innerHTML = `<option value="">Tidak ada task aktif</option>`;
-      return;
+      </div>`).join('');
     }
-    sel.innerHTML = `<option value="">— Pilih task kamu —</option>` +
-      data.map(t => `<option value="${t.id}">[${STATUS_MAP[t.status]?.label || t.status}] ${escapeHtml(t.title)}</option>`).join('');
-  }
 
-  function handleFileSelect(input) {
-    selectedFile = input.files[0];
-    if (selectedFile) {
-      document.getElementById('fileSelected').style.display = 'flex';
-      document.getElementById('fileSelectedName').textContent = selectedFile.name;
-      document.getElementById('fileDrop').style.display = 'none';
+    // ── SUBMIT TASK ───────────────────────────────────────
+    async function loadSubmitDropdowns() {
+      const { data } = await db.from('tasks').select('id,title,status')
+        .or(`assigned_to.eq.${CU.id},role_target.eq.${CP.role},role_target.eq.all`)
+        .in('status', ['ongoing', 'revision']).order('created_at', { ascending: false });
+
+      const opts = `<option value="">— Pilih task —</option>` + (data || []).map(t => `<option value="${t.id}">[${STATUS_MAP[t.status]?.label || t.status}] ${esc(t.title)}</option>`).join('');
+      document.getElementById('subTaskSel').innerHTML = opts;
+      document.getElementById('qsTaskSel').innerHTML = `<option value="">Pilih task...</option>` + (data || []).map(t => `<option value="${t.id}">${esc(t.title)}</option>`).join('');
     }
-  }
 
-  function clearFile() {
-    selectedFile = null;
-    document.getElementById('fileInput').value = '';
-    document.getElementById('fileSelected').style.display = 'none';
-    document.getElementById('fileDrop').style.display = 'block';
-  }
-
-  // Drag & drop
-  const fileDrop = document.getElementById('fileDrop');
-  fileDrop.addEventListener('dragover', e => { e.preventDefault(); fileDrop.classList.add('dragover'); });
-  fileDrop.addEventListener('dragleave', () => fileDrop.classList.remove('dragover'));
-  fileDrop.addEventListener('drop', e => {
-    e.preventDefault(); fileDrop.classList.remove('dragover');
-    const file = e.dataTransfer.files[0];
-    if (file) { selectedFile = file; document.getElementById('fileInput').files = e.dataTransfer.files; handleFileSelect(document.getElementById('fileInput')); }
-  });
-
-  async function handleSubmitTask(e) {
-    e.preventDefault();
-    const errEl = document.getElementById('submitError');
-    errEl.style.display = 'none';
-    const btn = document.getElementById('submitBtn');
-    const taskId = document.getElementById('submitTaskSelect').value;
-    const newStatus = document.getElementById('submitNewStatus').value;
-    const note = document.getElementById('submitNote').value.trim();
-
-    if (!taskId) { errEl.textContent = 'Pilih task terlebih dahulu.'; errEl.style.display = 'block'; return; }
-
-    setLoading(btn, true, 'Mengirim...');
-
-    let fileUrl = null, fileName = null;
-
-    // Upload file if selected
-    if (selectedFile) {
-      const ext = selectedFile.name.split('.').pop();
-      const path = `${currentUser.id}/${taskId}_${Date.now()}.${ext}`;
-      const { data: uploaded, error: uploadErr } = await db.storage
-        .from('task-submissions')
-        .upload(path, selectedFile, { cacheControl: '3600', upsert: false });
-
-      if (uploadErr) {
-        errEl.textContent = 'Gagal upload file: ' + uploadErr.message;
-        errEl.style.display = 'block';
-        setLoading(btn, false);
-        return;
+    function onFileSelect(input) {
+      selectedFile = input.files[0];
+      if (selectedFile) {
+        document.getElementById('fileSelectedBox').style.display = 'flex';
+        document.getElementById('fileSelectedName').textContent = selectedFile.name;
+        document.getElementById('fileDrop').style.display = 'none';
       }
-      const { data: { publicUrl } } = db.storage.from('task-submissions').getPublicUrl(path);
-      fileUrl = publicUrl;
-      fileName = selectedFile.name;
+    }
+    function clearFile() {
+      selectedFile = null;
+      document.getElementById('fileInput').value = '';
+      document.getElementById('fileSelectedBox').style.display = 'none';
+      document.getElementById('fileDrop').style.display = 'block';
     }
 
-    // Insert submission record
-    await db.from('task_submissions').insert({
-      task_id: taskId,
-      submitted_by: currentUser.id,
-      file_url: fileUrl,
-      file_name: fileName,
-      note: note || null
-    });
+    const fd = document.getElementById('fileDrop');
+    fd.addEventListener('dragover', e => { e.preventDefault(); fd.classList.add('dragover'); });
+    fd.addEventListener('dragleave', () => fd.classList.remove('dragover'));
+    fd.addEventListener('drop', e => { e.preventDefault(); fd.classList.remove('dragover'); const f = e.dataTransfer.files[0]; if (f) { selectedFile = f; document.getElementById('fileInput').files = e.dataTransfer.files; onFileSelect(document.getElementById('fileInput')); } });
 
-    // Update task status
-    const { error: updateErr } = await db.from('tasks')
-      .update({ status: newStatus, updated_at: new Date().toISOString() })
-      .eq('id', taskId);
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const errEl = document.getElementById('subError');
+      errEl.style.display = 'none';
+      const btn = document.getElementById('subBtn');
+      const taskId = document.getElementById('subTaskSel').value;
+      if (!taskId) { errEl.textContent = 'Pilih task dulu.'; errEl.style.display = 'block'; return; }
 
-    if (updateErr) {
-      errEl.textContent = 'Gagal update status: ' + updateErr.message;
-      errEl.style.display = 'block';
-      setLoading(btn, false);
-      return;
+      setBtn(btn, true, 'Mengirim...');
+      try {
+        let fileUrl = null, fileName = null;
+        if (selectedFile) {
+          const path = `${CU.id}/${taskId}_${Date.now()}.${selectedFile.name.split('.').pop()}`;
+          const { error: upErr } = await db.storage.from('task-submissions').upload(path, selectedFile);
+          if (upErr) throw new Error('Upload gagal: ' + upErr.message);
+          const { data: { publicUrl } } = db.storage.from('task-submissions').getPublicUrl(path);
+          fileUrl = publicUrl; fileName = selectedFile.name;
+        }
+        await db.from('task_submissions').insert({ task_id: taskId, submitted_by: CU.id, file_url: fileUrl, file_name: fileName, note: document.getElementById('subNote').value.trim() || null });
+        const { error } = await db.from('tasks').update({ status: document.getElementById('subNewStatus').value, updated_at: new Date().toISOString() }).eq('id', taskId);
+        if (error) throw new Error(error.message);
+
+        toast('✓ Task berhasil disubmit!', 'success');
+        document.getElementById('submitForm').reset();
+        clearFile();
+        loadSubmitDropdowns();
+        loadHome();
+      } catch (err) {
+        errEl.textContent = err.message; errEl.style.display = 'block';
+      }
+      setBtn(btn, false);
     }
 
-    setLoading(btn, false);
-    showToast('✓ Task berhasil disubmit!', 'success');
-    document.getElementById('submitForm').reset();
-    clearFile();
-    loadSubmitTaskDropdown();
-    loadKanban();
-  }
+    async function quickSubmit() {
+      const taskId = document.getElementById('qsTaskSel').value;
+      const status = document.getElementById('qsStatus').value;
+      if (!taskId) { toast('Pilih task dulu.', 'error'); return; }
+      const btn = document.getElementById('qsBtn');
+      btn.disabled = true; btn.textContent = 'Mengirim...';
+      await db.from('task_submissions').insert({ task_id: taskId, submitted_by: CU.id });
+      const { error } = await db.from('tasks').update({ status, updated_at: new Date().toISOString() }).eq('id', taskId);
+      btn.disabled = false; btn.textContent = 'Submit Task';
+      if (error) { toast('Gagal: ' + error.message, 'error'); return; }
+      toast('✓ Task disubmit!', 'success');
+      loadSubmitDropdowns(); loadHome(); loadUpcoming();
+    }
 
-  // ── TASK DETAIL MODAL ─────────────────────────────────
+    // ── TASK MODAL ────────────────────────────────────────
+    async function openTaskModal(taskId) {
+      document.getElementById('taskModal').classList.add('open');
+      document.getElementById('modalBody').innerHTML = `<div class="page-loader"><span class="spinner-dark"></span></div>`;
+      document.getElementById('modalActions').innerHTML = '';
 
-  async function openTaskDetail(taskId) {
-    openModal('taskDetailModal');
-    document.getElementById('modalTaskBody').innerHTML = `<div class="page-loader"><span class="spinner"></span></div>`;
-    document.getElementById('modalTaskActions').innerHTML = '';
+      const { data: t } = await db.from('tasks')
+        .select('*, assigned_to:profiles!tasks_assigned_to_fkey(full_name,role), assigned_by:profiles!tasks_assigned_by_fkey(full_name)')
+        .eq('id', taskId).single();
+      if (!t) return;
 
-    const { data: task } = await db.from('tasks')
-      .select('*, assigned_to:profiles!tasks_assigned_to_fkey(full_name,role), assigned_by:profiles!tasks_assigned_by_fkey(full_name)')
-      .eq('id', taskId).single();
+      document.getElementById('modalTitle').textContent = t.title;
+      const { data: subs } = await db.from('task_submissions')
+        .select('*, submitted_by:profiles!task_submissions_submitted_by_fkey(full_name)')
+        .eq('task_id', taskId).order('submitted_at', { ascending: false });
 
-    if (!task) { document.getElementById('modalTaskBody').innerHTML = `<p>Task tidak ditemukan.</p>`; return; }
-
-    document.getElementById('modalTaskTitle').textContent = task.title;
-
-    const { data: subs } = await db.from('task_submissions')
-      .select('*, submitted_by:profiles!task_submissions_submitted_by_fkey(full_name)')
-      .eq('task_id', taskId)
-      .order('submitted_at', { ascending: false });
-
-    document.getElementById('modalTaskBody').innerHTML = `
+      document.getElementById('modalBody').innerHTML = `
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
-        ${statusBadge(task.status)} ${priorityBadge(task.priority)}
-        ${task.assigned_to?.role ? roleBadge(task.assigned_to.role) : ''}
+        <span class="badge badge-${t.status}">${STATUS_MAP[t.status]?.label || t.status}</span>
+        <span class="badge badge-${t.priority}">${PRIORITY_MAP[t.priority] || t.priority}</span>
+        ${t.assigned_to?.role ? `<span class="badge badge-${t.assigned_to.role}">${ROLES[t.assigned_to.role]?.icon || ''} ${ROLES[t.assigned_to.role]?.label || t.assigned_to.role}</span>` : ''}
       </div>
-      ${task.description ? `<p style="margin-bottom:14px;color:var(--t2);line-height:1.6">${escapeHtml(task.description)}</p>` : ''}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px">
-          <div class="text-tiny">ASSIGNED TO</div>
-          <div style="font-size:0.875rem;font-weight:600;margin-top:2px">${task.assigned_to?.full_name || '—'}</div>
+      ${t.description ? `<p style="font-size:0.875rem;color:var(--t2);margin-bottom:14px;line-height:1.6">${esc(t.description)}</p>` : ''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:${subs?.length ? '16px' : '0'}">
+        <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px">
+          <div style="font-size:0.625rem;color:var(--t3);text-transform:uppercase;letter-spacing:0.08em">Assigned To</div>
+          <div style="font-size:0.875rem;font-weight:600;margin-top:3px">${t.assigned_to?.full_name || '—'}</div>
         </div>
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px">
-          <div class="text-tiny">DUE DATE</div>
-          <div style="font-size:0.875rem;font-weight:600;margin-top:2px">${formatDate(task.due_date)}</div>
+        <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px">
+          <div style="font-size:0.625rem;color:var(--t3);text-transform:uppercase;letter-spacing:0.08em">Due Date</div>
+          <div style="font-size:0.875rem;font-weight:600;margin-top:3px">${fmtDate(t.due_date)}</div>
         </div>
       </div>
-      ${subs && subs.length > 0 ? `
+      ${subs?.length ? `
       <div style="margin-top:14px">
-        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--t3);margin-bottom:8px">Submissions (${subs.length})</div>
-        ${subs.map(s => `
-          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-              <span style="font-size:0.8125rem;font-weight:600">${escapeHtml(s.submitted_by?.full_name || '?')}</span>
-              <span class="text-tiny">${timeAgo(s.submitted_at)}</span>
-            </div>
-            ${s.note ? `<p class="text-muted" style="font-size:0.8125rem">${escapeHtml(s.note)}</p>` : ''}
-            ${s.file_url ? `<a href="${s.file_url}" target="_blank" style="font-size:0.75rem;color:var(--gold);display:inline-flex;align-items:center;gap:4px;margin-top:4px">📎 ${escapeHtml(s.file_name || 'File')}</a>` : ''}
-          </div>`).join('')}
+        <div style="font-size:0.625rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--t3);margin-bottom:8px">Submissions (${subs.length})</div>
+        ${subs.map(s => `<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:0.8125rem;font-weight:600">${esc(s.submitted_by?.full_name || '?')}</span>
+            <span style="font-size:0.6875rem;color:var(--t3)">${timeAgo(s.submitted_at)}</span>
+          </div>
+          ${s.note ? `<p style="font-size:0.8125rem;color:var(--t2)">${esc(s.note)}</p>` : ''}
+          ${s.file_url ? `<a href="${s.file_url}" target="_blank" style="font-size:0.75rem;color:var(--gold);display:inline-flex;align-items:center;gap:4px;margin-top:4px">📎 ${esc(s.file_name || 'File')}</a>` : ''}
+        </div>`).join('')}
       </div>` : ''}`;
 
-    // Show submit button if it's my task and not processed
-    if (task.assigned_to && task.assigned_to === currentUser?.id || task.assigned_to?.id === currentUser?.id) {
-      if (task.status !== 'processed') {
-        document.getElementById('modalTaskActions').innerHTML = `
-          <button class="btn btn-primary" onclick="closeModal('taskDetailModal');showSection('submit');document.getElementById('submitTaskSelect').value='${taskId}'">
-            📤 Submit Task Ini
-          </button>`;
+      if (t.status !== 'processed') {
+        document.getElementById('modalActions').innerHTML = `
+        <button class="btn btn-primary btn-sm" onclick="closeModal();switchSection('submit');setTimeout(()=>document.getElementById('subTaskSel').value='${taskId}',100)">📤 Submit</button>`;
       }
     }
-  }
+    function closeModal() { document.getElementById('taskModal').classList.remove('open'); }
+    document.getElementById('taskModal').addEventListener('click', e => { if (e.target === document.getElementById('taskModal')) closeModal(); });
 
-  // ── PROFILE ───────────────────────────────────────────
+    // ── PROFILE ───────────────────────────────────────────
+    async function saveProfile(e) {
+      e.preventDefault();
+      const btn = document.getElementById('profSaveBtn');
+      setBtn(btn, true, 'Menyimpan...');
+      const { error } = await db.from('profiles').update({
+        full_name: document.getElementById('profName').value.trim(),
+        username: document.getElementById('profUsername').value.trim().toLowerCase(),
+        bio: document.getElementById('profBio').value.trim()
+      }).eq('id', CU.id);
+      setBtn(btn, false, 'Simpan');
+      if (error) { toast('Gagal: ' + error.message, 'error'); return; }
+      toast('Profile diupdate!', 'success');
+      CP = await getProfile(CU.id);
+      document.getElementById('sidebarAvatar').textContent = ini(CP.full_name);
+    }
 
-  async function handleUpdateProfile(e) {
-    e.preventDefault();
-    const btn = document.getElementById('profileSaveBtn');
-    setLoading(btn, true, 'Menyimpan...');
+    // ── HELPERS ───────────────────────────────────────────
+    function ini(name = '') { return name.split(' ').slice(0, 2).map(n => n[0] || '').join('').toUpperCase() || '??'; }
+    function esc(s) { if (!s) return ''; return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function fmtDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }); }
+    function timeAgo(d) { if (!d) return ''; const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000); if (m < 1) return 'baru saja'; if (m < 60) return m + 'm lalu'; const h = Math.floor(m / 60); if (h < 24) return h + 'j lalu'; return Math.floor(h / 24) + 'h lalu'; }
+    function roleBadge(role) { const r = ROLES[role]; if (!r) return `<span class="badge">${role}</span>`; return `<span class="badge badge-${role}">${r.icon} ${r.label}</span>`; }
+    function toast(msg, type = 'info') { document.querySelectorAll('.toast').forEach(t => t.remove()); const el = document.createElement('div'); el.className = `toast toast-${type}`; el.textContent = msg; document.body.appendChild(el); requestAnimationFrame(() => el.classList.add('show')); setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3500); }
+    function setBtn(btn, on, txt = '') { if (on) { btn._orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = `<span class="spinner"></span> ${txt}`; } else { btn.disabled = false; btn.innerHTML = btn._orig || txt; } }
 
-    const { error } = await db.from('profiles').update({
-      full_name: document.getElementById('profileFullName').value.trim(),
-      username: document.getElementById('profileUsername').value.trim().toLowerCase(),
-      bio: document.getElementById('profileBio').value.trim()
-    }).eq('id', currentUser.id);
-
-    setLoading(btn, false);
-    if (error) { showToast('Gagal menyimpan: ' + error.message, 'error'); return; }
-    showToast('Profile berhasil diupdate!', 'success');
-    currentProfile = await getProfile(currentUser.id);
-    document.getElementById('sidebarName').textContent = currentProfile.full_name;
-  }
-
-  // ── HELPERS ───────────────────────────────────────────
-
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  // Init
-  init();
-</script>
+    init();
+  </script>
 </body>
+
 </html>

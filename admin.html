@@ -542,7 +542,18 @@
             </div>
           </div>
         </td>
-        <td>${roleBadge(u.role)}</td>
+        <td>
+          <select class="form-select" style="width:auto;font-size:0.75rem;padding:4px 28px 4px 8px"
+            onchange="quickChangeRole('${u.id}', this.value)">
+            <option value="produser"   ${u.role==='produser'   ?'selected':''}>🎭 Produser</option>
+            <option value="director"   ${u.role==='director'   ?'selected':''}>🎬 Director</option>
+            <option value="modeller"   ${u.role==='modeller'   ?'selected':''}>🎨 Modeller</option>
+            <option value="programmer" ${u.role==='programmer' ?'selected':''}>💻 Programmer</option>
+            <option value="animator"   ${u.role==='animator'   ?'selected':''}>✨ Animator</option>
+            <option value="ui_designer"${u.role==='ui_designer'?'selected':''}>🖌️ UI Designer</option>
+            <option value="admin"      ${u.role==='admin'      ?'selected':''}>👑 Admin</option>
+          </select>
+        </td>
         <td><span class="text-muted">${u.username ? '@' + escapeHtml(u.username) : '—'}</span></td>
         <td><span style="font-weight:700;color:var(--gold)">${u.points || 0}</span></td>
         <td><span style="font-size:0.8125rem">${active} aktif · ${done} selesai</span></td>
@@ -552,6 +563,10 @@
         <td>
           <div style="display:flex;gap:6px">
             <button class="btn btn-secondary btn-sm" onclick="openEditUser('${u.id}')">Edit</button>
+            <button class="btn btn-sm ${u.is_active !== false ? 'btn-danger' : 'btn-ghost'}"
+              onclick="toggleUserActive('${u.id}', ${u.is_active !== false})">
+              ${u.is_active !== false ? 'Ban' : 'Aktifkan'}
+            </button>
           </div>
         </td>
       </tr>`;
@@ -565,6 +580,19 @@
     document.getElementById('editUserRole').value = u.role;
     document.getElementById('editUserActive').value = String(u.is_active !== false);
     openModal('editUserModal');
+  }
+
+  async function quickChangeRole(userId, newRole) {
+    const { error } = await db.from('profiles').update({ role: newRole }).eq('id', userId);
+    if (error) { showToast('Gagal ubah role: ' + error.message, 'error'); loadUsers(); return; }
+    showToast(`Role diubah ke ${ROLES[newRole]?.label || newRole}!`, 'success');
+  }
+
+  async function toggleUserActive(userId, currentlyActive) {
+    const { error } = await db.from('profiles').update({ is_active: !currentlyActive }).eq('id', userId);
+    if (error) { showToast('Gagal: ' + error.message, 'error'); return; }
+    showToast(currentlyActive ? 'User di-ban.' : 'User diaktifkan.', 'success');
+    loadUsers();
   }
 
   async function handleEditUser() {
