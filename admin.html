@@ -1065,6 +1065,28 @@
   </div>
 </div>
 
+<!-- ── Revision Modal ── -->
+<div class="modal-overlay" id="revisionModal">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-hd">
+      <div class="modal-title">🔄 Kirim Revisi</div>
+      <button class="modal-x" onclick="closeModal('revisionModal')">✕</button>
+    </div>
+    <input type="hidden" id="rmTaskId">
+    <input type="hidden" id="rmAssignedTo">
+    <input type="hidden" id="rmTaskTitle">
+    <p style="font-size:0.8125rem;color:var(--t2);margin-bottom:14px" id="rmSubtitle"></p>
+    <div class="form-group">
+      <label class="form-label">Catatan Revisi <span style="color:var(--t3);font-weight:400">(opsional)</span></label>
+      <textarea class="form-textarea" id="rmNote" placeholder="Tulis feedback atau detail yang perlu diperbaiki..." style="min-height:90px"></textarea>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" id="rmConfirmBtn" onclick="submitRevisionFromApproved()">🔄 Kirim Revisi</button>
+      <button class="btn btn-secondary" onclick="closeModal('revisionModal')">Batal</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Notification Panel ── -->
 <div class="notif-backdrop" id="adminNotifBackdrop" onclick="toggleAdminNotifPanel()"></div>
 <div class="notif-panel" id="adminNotifPanel">
@@ -1498,6 +1520,7 @@
           <div style="display:flex;gap:5px;flex-wrap:wrap">
             <button class="btn btn-secondary btn-sm" onclick="openEditTask('${t.id}')">✏️</button>
             <button class="btn btn-ghost btn-sm" onclick="openSubs('${t.id}','${esc(t.title)}')">📎</button>
+            ${t.status === 'processed' ? `<button class="btn btn-sm" style="background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.25)" onclick="openRevisionModal('${t.id}','${t.assigned_to?.id||''}','${esc(t.title)}')">🔄 Revisi</button>` : ''}
             <button class="btn btn-danger btn-sm" onclick="deleteTask('${t.id}')">🗑️</button>
           </div>
         </td>
@@ -1824,6 +1847,46 @@
 
   // showToast, setLoading, openModal, closeModal → dari utils.js
 
+  // ── REVISION FROM APPROVED ──────────────────────────
+  function openRevisionModal(taskId, assignedTo, taskTitle) {
+    document.getElementById('rmTaskId').value     = taskId;
+    document.getElementById('rmAssignedTo').value = assignedTo;
+    document.getElementById('rmTaskTitle').value  = taskTitle;
+    document.getElementById('rmSubtitle').textContent = `Task: ${taskTitle}`;
+    document.getElementById('rmNote').value = '';
+    openModal('revisionModal');
+  }
+
+  async function submitRevisionFromApproved() {
+    const taskId     = document.getElementById('rmTaskId').value;
+    const assignedTo = document.getElementById('rmAssignedTo').value;
+    const taskTitle  = document.getElementById('rmTaskTitle').value;
+    const note       = document.getElementById('rmNote').value.trim();
+    const btn        = document.getElementById('rmConfirmBtn');
+
+    setLoading(btn, true, 'Mengirim...');
+    const { error } = await db.from('tasks')
+      .update({ status: 'revision', updated_at: new Date().toISOString() })
+      .eq('id', taskId);
+    setLoading(btn, false);
+
+    if (error) { showToast('Gagal: ' + error.message, 'error'); return; }
+
+    if (assignedTo) {
+      await db.from('notifications').insert({
+        recipient_id: assignedTo, sender_id: adminProfile.id,
+        type: 'task_revision', task_id: taskId,
+        title: '🔄 Task Perlu Revisi',
+        message: note || `Task "${taskTitle}" perlu diperbaiki`
+      });
+    }
+
+    showToast('🔄 Revisi dikirim!', 'warning');
+    closeModal('revisionModal');
+    loadAllTasks();
+    loadOverview();
+  }
+
   // ── REVIEW QUEUE ────────────────────────────────────
   async function loadReviewQueue() {
     const el = document.getElementById('reviewList');
@@ -1831,14 +1894,16 @@
 
     const { data: tasks } = await db.from('tasks')
       .select('*, assigned_to:profiles!tasks_assigned_to_fkey(id,full_name,role)')
-      .eq('status', 'on_review')
       .order('updated_at', { ascending: false });
 
     if (!tasks?.length) {
-      el.innerHTML = `<div class="empty-state"><div class="ei">✅</div><div class="et">Semua beres!</div><p class="text-muted" style="margin-top:8px">Tidak ada task yang perlu di-review saat ini</p></div>`;
+      el.innerHTML = `<div class="empty-state"><div class="ei">📭</div><div class="et">Belum ada task</div></div>`;
       updateReviewBadge(0);
       return;
     }
+
+    const onReviewCount = (tasks||[]).filter(t => t.status === 'on_review').length;
+    updateReviewBadge(onReviewCount);
 
     // Fetch latest submission per task
     const { data: subs } = await db.from('task_submissions')
@@ -1885,8 +1950,13 @@
             </div>
           </div>
           <div class="rv-actions">
-            <button class="btn btn-primary btn-sm" onclick="adminApprove('${t.id}','${assignedId}','${esc(t.title)}')">✅ Setujui</button>
-            <button class="btn btn-danger btn-sm" onclick="toggleRevisionForm('${t.id}')">🔄 Revisi</button>
+            <span class="badge bg-${t.status}" style="font-size:0.6875rem">${STATUS_LABELS[t.status]||t.status}</span>
+            ${t.status === 'on_review' ? `
+              <button class="btn btn-primary btn-sm" onclick="adminApprove('${t.id}','${assignedId}','${esc(t.title)}')">✅ Setujui</button>
+              <button class="btn btn-danger btn-sm" onclick="toggleRevisionForm('${t.id}')">🔄 Revisi</button>
+            ` : t.status === 'processed' ? `
+              <button class="btn btn-sm" style="background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.25)" onclick="toggleRevisionForm('${t.id}')">🔄 Revisi</button>
+            ` : ''}
           </div>
         </div>
 
@@ -1920,7 +1990,7 @@
       </div>`;
     }).join('');
 
-    updateReviewBadge(tasks.length);
+    updateReviewBadge(onReviewCount);
   }
 
   function toggleRevisionForm(taskId) {
@@ -1940,12 +2010,8 @@
       .eq('id', taskId);
     if (error) { showToast('Gagal: '+error.message, 'error'); if (btn) { btn.disabled=false; btn.textContent='✅ Setujui'; } return; }
 
+    // Poin otomatis ditambah oleh trigger award_task_points di DB
     if (assignedTo) {
-      const { data: task } = await db.from('tasks').select('points_reward').eq('id', taskId).single();
-      if (task?.points_reward) {
-        const { data: prof } = await db.from('profiles').select('points').eq('id', assignedTo).single();
-        await db.from('profiles').update({ points: (prof?.points||0) + task.points_reward }).eq('id', assignedTo);
-      }
       await db.from('notifications').insert({
         recipient_id: assignedTo, sender_id: adminProfile.id,
         type: 'task_approved', task_id: taskId,
@@ -1955,7 +2021,7 @@
     }
 
     showToast('✅ Task disetujui!', 'success');
-    card?.remove();
+    loadReviewQueue();
     loadOverview();
   }
 
@@ -1980,7 +2046,7 @@
     }
 
     showToast('🔄 Feedback revisi dikirim!', 'warning');
-    card?.remove();
+    loadReviewQueue();
     loadOverview();
   }
 
