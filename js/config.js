@@ -1,11 +1,4 @@
-// =====================================================
-//  Mirai Atelier — Supabase Configuration
-//  1. Buat project di https://app.supabase.com
-//  2. Masuk ke Settings → API
-//  3. Copy Project URL & anon/public key ke sini
-// =====================================================
-
-const SUPABASE_URL      = 'YOUR_SUPABASE_URL_HERE';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
+const SUPABASE_URL      = 'https://zwoxqbnefnmrnlsmpecv.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3b3hxYm5lZm5tcm5sc21wZWN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1Mjg2NDEsImV4cCI6MjA5MjEwNDY0MX0.tc26YsN0fEwsLvIGxgttKZI4en19dPm-W1gEUGvPBmk';
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
