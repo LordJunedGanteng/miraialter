@@ -581,6 +581,38 @@
       transition: all var(--ease);
     }
     .review-banner:hover { border-color: var(--gold); }
+
+    /* ── CHAT SECTION ── */
+    .chat-layout { display:flex; height:calc(100vh - 80px); overflow:hidden; border-top:1px solid var(--border); margin:-16px -20px 0; }
+    .chat-users-panel { width:230px; border-right:1px solid var(--border); overflow-y:auto; flex-shrink:0; display:flex; flex-direction:column; }
+    .chat-up-hd { padding:12px 14px; font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--t3); border-bottom:1px solid var(--border); flex-shrink:0; }
+    .chat-user-item { display:flex; align-items:center; gap:9px; padding:11px 14px; cursor:pointer; border-bottom:1px solid rgba(42,48,64,.5); transition:background var(--ease); }
+    .chat-user-item:hover { background:var(--card2); }
+    .chat-user-item.active { background:rgba(124,111,255,.1); border-right:2px solid var(--purple); }
+    .chat-unread-dot { background:var(--red); color:#fff; border-radius:99px; font-size:0.55rem; font-weight:800; padding:1px 5px; min-width:15px; height:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .chat-main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+    .chat-thread-hd { padding:12px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:9px; font-weight:600; font-size:0.875rem; flex-shrink:0; }
+    .chat-msgs { flex:1; overflow-y:auto; padding:14px 18px; display:flex; flex-direction:column; gap:9px; }
+    .chat-no-sel { display:flex; align-items:center; justify-content:center; height:100%; color:var(--t2); font-size:0.875rem; text-align:center; }
+    .chat-input-row { padding:10px 18px; border-top:1px solid var(--border); display:flex; gap:7px; align-items:flex-end; flex-shrink:0; }
+    .chat-input-row textarea { flex:1; resize:none; background:var(--card2); border:1px solid var(--border); border-radius:var(--r); color:var(--t1); padding:8px 12px; font-size:0.875rem; font-family:inherit; min-height:38px; max-height:110px; outline:none; transition:border-color var(--ease); }
+    .chat-input-row textarea:focus { border-color:var(--purple); }
+    .msg-row { display:flex; gap:7px; max-width:78%; }
+    .msg-row.mine { align-self:flex-end; flex-direction:row-reverse; }
+    .msg-row.theirs { align-self:flex-start; }
+    .msg-bubble { padding:8px 12px; border-radius:14px; font-size:0.8125rem; line-height:1.45; word-break:break-word; }
+    .msg-row.mine .msg-bubble { background:var(--purple); color:#fff; border-radius:14px 14px 4px 14px; }
+    .msg-row.theirs .msg-bubble { background:var(--card2); color:var(--t1); border-radius:14px 14px 14px 4px; }
+    .msg-meta { font-size:0.5625rem; color:var(--t3); margin-top:3px; }
+    .msg-row.mine .msg-meta { text-align:right; }
+    .msg-avatar-sm { width:24px; height:24px; border-radius:50%; background:var(--purple); color:#fff; font-size:0.55rem; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; }
+    /* Task thread inside review card */
+    .rv-thread { border-top:1px solid var(--border); margin-top:12px; padding-top:12px; }
+    .rv-thread-hd { font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--t3); margin-bottom:8px; }
+    .rv-thread-msgs { max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-bottom:9px; }
+    .rv-thread-input { display:flex; gap:6px; }
+    .rv-thread-input input { flex:1; background:var(--card2); border:1px solid var(--border); border-radius:var(--rsm); color:var(--t1); padding:6px 10px; font-size:0.8125rem; font-family:inherit; outline:none; transition:border-color var(--ease); }
+    .rv-thread-input input:focus { border-color:var(--purple); }
   </style>
 </head>
 
@@ -598,6 +630,10 @@
       <div class="notif-btn-wrap">
         <button class="sb" onclick="goSec('review')" title="Review Queue" id="reviewBtn">🔍</button>
         <span class="notif-badge-btn" id="reviewBadge" style="display:none">0</span>
+      </div>
+      <div class="notif-btn-wrap">
+        <button class="sb" onclick="goSec('chat')" title="Chat" id="chatSideBtn">💬</button>
+        <span class="notif-badge-btn" id="chatBadge" style="display:none">0</span>
       </div>
       <button class="sb" onclick="goSec('kanban')" title="Kanban Board">🗂️</button>
       <button class="sb" onclick="goSec('leaderboard')" title="Leaderboard">🏆</button>
@@ -962,6 +998,26 @@
       </div>
     </section>
 
+    <!-- ═══ CHAT ═══ -->
+    <section class="sec" id="sec-chat">
+      <div class="shd">
+        <h2>💬 Chat</h2>
+        <p>Pesan langsung dengan anggota tim</p>
+      </div>
+      <div class="chat-layout">
+        <div class="chat-users-panel">
+          <div class="chat-up-hd">Anggota Tim</div>
+          <div id="chatUserList"><div class="page-loader"><span class="spinner"></span></div></div>
+        </div>
+        <div class="chat-main" id="chatMain">
+          <div class="chat-no-sel">
+            <div><div style="font-size:2.5rem;margin-bottom:10px">💬</div>
+            <div>Pilih anggota tim untuk memulai chat</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </div><!-- /main -->
 </div><!-- /wrap -->
 
@@ -1135,13 +1191,14 @@
 
     await Promise.all([loadOverview(), loadUserDropdowns()]);
     pollAdminNotifications();
+    pollChatBadge();
   }
 
   // ── NAVIGATION ─────────────────────────────────────
   const SEC_TITLES = {
     overview:'Admin Overview', users:'User Control',
     'create-task':'Buat Task Baru', 'all-tasks':'Semua Task',
-    review:'Review Queue', kanban:'Kanban Board', leaderboard:'Leaderboard'
+    review:'Review Queue', chat:'Chat', kanban:'Kanban Board', leaderboard:'Leaderboard'
   };
 
   function goSec(name) {
@@ -1155,6 +1212,7 @@
     if (name === 'users')       loadUsers();
     if (name === 'all-tasks')   loadAllTasks();
     if (name === 'review')      loadReviewQueue();
+    if (name === 'chat')        loadChatSection();
     if (name === 'kanban')      loadAdminKanban();
     if (name === 'leaderboard') loadAdminLeaderboard();
   }
@@ -1872,12 +1930,17 @@
 
     if (error) { showToast('Gagal: ' + error.message, 'error'); return; }
 
+    const revMsg = note || `Task "${taskTitle}" perlu diperbaiki`;
     if (assignedTo) {
       await db.from('notifications').insert({
         recipient_id: assignedTo, sender_id: adminProfile.id,
         type: 'task_revision', task_id: taskId,
         title: '🔄 Task Perlu Revisi',
-        message: note || `Task "${taskTitle}" perlu diperbaiki`
+        message: revMsg
+      });
+      await db.from('messages').insert({
+        sender_id: adminProfile.id, task_id: taskId,
+        content: `🔄 Revisi: ${revMsg}`
       });
     }
 
@@ -1951,8 +2014,9 @@
           </div>
           <div class="rv-actions">
             <span class="badge bg-${t.status}" style="font-size:0.6875rem">${STATUS_LABELS[t.status]||t.status}</span>
+            <button class="btn btn-ghost btn-sm" onclick="toggleTaskThread('${t.id}','${assignedId}','${esc(t.title)}')" title="Thread Chat">💬</button>
             ${t.status === 'on_review' ? `
-              <button class="btn btn-primary btn-sm" onclick="adminApprove('${t.id}','${assignedId}','${esc(t.title)}')">✅ Setujui</button>
+              <button class="btn btn-primary btn-sm" onclick="adminApprove('${t.id}','${assignedId}','${esc(t.title)}',${t.points_reward||10})">✅ Setujui</button>
               <button class="btn btn-danger btn-sm" onclick="toggleRevisionForm('${t.id}')">🔄 Revisi</button>
             ` : t.status === 'processed' ? `
               <button class="btn btn-sm" style="background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.25)" onclick="toggleRevisionForm('${t.id}')">🔄 Revisi</button>
@@ -1987,6 +2051,8 @@
             <button class="btn btn-ghost btn-sm" onclick="toggleRevisionForm('${t.id}')">Batal</button>
           </div>
         </div>
+        <!-- Task thread chat -->
+        <div class="rv-thread" id="rv-thread-${t.id}" style="display:none"></div>
       </div>`;
     }).join('');
 
@@ -2000,7 +2066,7 @@
     if (!isOpen) document.getElementById(`rvnote-${taskId}`)?.focus();
   }
 
-  async function adminApprove(taskId, assignedTo, taskTitle) {
+  async function adminApprove(taskId, assignedTo, taskTitle, pts = 10) {
     const card = document.getElementById(`rvc-${taskId}`);
     const btn = card?.querySelector('.btn-primary');
     if (btn) { btn.disabled = true; btn.textContent = '...'; }
@@ -2010,13 +2076,12 @@
       .eq('id', taskId);
     if (error) { showToast('Gagal: '+error.message, 'error'); if (btn) { btn.disabled=false; btn.textContent='✅ Setujui'; } return; }
 
-    // Poin otomatis ditambah oleh trigger award_task_points di DB
     if (assignedTo) {
       await db.from('notifications').insert({
         recipient_id: assignedTo, sender_id: adminProfile.id,
         type: 'task_approved', task_id: taskId,
-        title: '✅ Task Disetujui!',
-        message: `Task "${taskTitle}" telah disetujui oleh admin`
+        title: '🎉 Hore! Task kamu selesai!',
+        message: `Task "${taskTitle}" telah disetujui! Kamu mendapatkan ${pts} poin 🎊`
       });
     }
 
@@ -2036,16 +2101,25 @@
       .eq('id', taskId);
     if (error) { showToast('Gagal: '+error.message, 'error'); if (btn) { btn.disabled=false; btn.textContent='🔄 Kirim Revisi'; } return; }
 
+    const revMsg = note || `Task "${taskTitle}" perlu diperbaiki`;
     if (assignedTo) {
       await db.from('notifications').insert({
         recipient_id: assignedTo, sender_id: adminProfile.id,
         type: 'task_revision', task_id: taskId,
         title: '🔄 Task Perlu Revisi',
-        message: note || `Task "${taskTitle}" perlu diperbaiki`
+        message: revMsg
+      });
+      // Juga kirim ke task thread supaya bisa di-reply
+      await db.from('messages').insert({
+        sender_id: adminProfile.id, task_id: taskId,
+        content: `🔄 Revisi: ${revMsg}`
       });
     }
 
     showToast('🔄 Feedback revisi dikirim!', 'warning');
+    // Refresh thread kalau sedang terbuka
+    const threadEl = document.getElementById(`rv-thread-${taskId}`);
+    if (threadEl && threadEl.style.display !== 'none') loadTaskThread(taskId, assignedTo, taskTitle);
     loadReviewQueue();
     loadOverview();
   }
@@ -2111,20 +2185,27 @@
   }
 
   async function quickReview(taskId, notifId, newStatus) {
-    const { data: task } = await db.from('tasks').select('title,assigned_to').eq('id', taskId).single();
+    const { data: task } = await db.from('tasks').select('title,assigned_to,points_reward').eq('id', taskId).single();
     if (!task) return;
     await db.from('tasks').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', taskId);
     db.from('notifications').update({ is_read: true }).eq('id', notifId);
     if (task.assigned_to) {
+      const pts = task.points_reward || 10;
       await db.from('notifications').insert({
         recipient_id: task.assigned_to, sender_id: adminProfile.id,
         type: newStatus === 'processed' ? 'task_approved' : 'task_revision',
         task_id: taskId,
-        title: newStatus === 'processed' ? '✅ Task Disetujui!' : '🔄 Task Perlu Revisi',
+        title: newStatus === 'processed' ? '🎉 Hore! Task kamu selesai!' : '🔄 Task Perlu Revisi',
         message: newStatus === 'processed'
-          ? `Task "${task.title}" telah disetujui admin`
+          ? `Task "${task.title}" disetujui! Kamu mendapatkan ${pts} poin 🎊`
           : `Task "${task.title}" perlu revisi dari admin`
       });
+      if (newStatus === 'revision') {
+        await db.from('messages').insert({
+          sender_id: adminProfile.id, task_id: taskId,
+          content: `🔄 Revisi: Task "${task.title}" perlu diperbaiki`
+        });
+      }
     }
     showToast(newStatus === 'processed' ? '✅ Task disetujui!' : '🔄 Revisi dikirim!', 'success');
     loadAdminNotifications();
@@ -2156,6 +2237,187 @@
       bell.style.color = '';
     }
     _adminNotifTimer = setTimeout(pollAdminNotifications, 30000);
+  }
+
+  // ── CHAT SYSTEM ─────────────────────────────────────────
+  let _chatCurrentUserId = null;
+  let _chatChannel = null;
+
+  async function loadChatSection() {
+    await loadChatUserList();
+  }
+
+  async function loadChatUserList() {
+    const el = document.getElementById('chatUserList');
+    if (!el) return;
+    const { data: users } = await db.from('profiles')
+      .select('id,full_name,role').neq('role','admin').order('full_name');
+    const { data: unread } = await db.from('messages')
+      .select('sender_id').eq('recipient_id', adminProfile.id).eq('is_read', false).is('task_id', null);
+    const unreadMap = {};
+    (unread||[]).forEach(m => { unreadMap[m.sender_id] = (unreadMap[m.sender_id]||0)+1; });
+    if (!users?.length) {
+      el.innerHTML = `<div style="padding:16px;text-align:center;color:var(--t3);font-size:0.8125rem">Belum ada user</div>`;
+      return;
+    }
+    el.innerHTML = users.map(u => {
+      const cnt = unreadMap[u.id]||0;
+      return `<div class="chat-user-item ${_chatCurrentUserId===u.id?'active':''}" id="cui-${u.id}"
+        onclick="openAdminChat('${u.id}','${esc(u.full_name)}')">
+        <div class="mini-ava">${ini(u.full_name)}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:0.8125rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(u.full_name)}</div>
+          <div style="font-size:0.6875rem;color:var(--t2)">${ROLES[u.role]?.label||u.role}</div>
+        </div>
+        ${cnt>0?`<span class="chat-unread-dot">${cnt}</span>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  async function openAdminChat(userId, userName) {
+    _chatCurrentUserId = userId;
+    document.querySelectorAll('.chat-user-item').forEach(e=>e.classList.remove('active'));
+    document.getElementById(`cui-${userId}`)?.classList.add('active');
+    const main = document.getElementById('chatMain');
+    main.innerHTML = `
+      <div class="chat-thread-hd">
+        <div class="mini-ava">${ini(userName)}</div>
+        <span>${esc(userName)}</span>
+      </div>
+      <div class="chat-msgs" id="chatMsgs"></div>
+      <div class="chat-input-row">
+        <textarea id="chatInput" placeholder="Tulis pesan..." rows="1"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAdminDM()}"
+          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,110)+'px'"></textarea>
+        <button class="btn btn-primary btn-sm" onclick="sendAdminDM()" style="padding:8px 16px">↑</button>
+      </div>`;
+    await loadAdminDMThread(userId);
+    subscribeAdminDM(userId);
+    // mark read
+    await db.from('messages').update({is_read:true})
+      .eq('recipient_id', adminProfile.id).eq('sender_id', userId).eq('is_read', false);
+    pollChatBadge();
+    loadChatUserList();
+  }
+
+  async function loadAdminDMThread(userId) {
+    const el = document.getElementById('chatMsgs');
+    if (!el) return;
+    const { data: msgs } = await db.from('messages')
+      .select('*,sender:profiles!messages_sender_id_fkey(full_name)')
+      .or(`and(sender_id.eq.${adminProfile.id},recipient_id.eq.${userId}),and(sender_id.eq.${userId},recipient_id.eq.${adminProfile.id})`)
+      .is('task_id', null)
+      .order('created_at', {ascending:true}).limit(100);
+    renderAdminChatMsgs(msgs||[]);
+  }
+
+  function renderAdminChatMsgs(msgs) {
+    const el = document.getElementById('chatMsgs');
+    if (!el) return;
+    if (!msgs.length) { el.innerHTML=`<div class="chat-no-sel" style="height:100%">Belum ada pesan. Mulai obrolan! 👋</div>`; return; }
+    el.innerHTML = msgs.map(m => {
+      const mine = m.sender_id === adminProfile.id;
+      return `<div class="msg-row ${mine?'mine':'theirs'}">
+        ${!mine?`<div class="msg-avatar-sm">${ini(m.sender?.full_name||'?')}</div>`:''}
+        <div><div class="msg-bubble">${esc(m.content)}</div>
+        <div class="msg-meta">${timeAgo(m.created_at)}</div></div>
+      </div>`;
+    }).join('');
+    el.scrollTop = el.scrollHeight;
+  }
+
+  async function sendAdminDM() {
+    const input = document.getElementById('chatInput');
+    const content = input?.value.trim();
+    if (!content || !_chatCurrentUserId) return;
+    input.value = ''; input.style.height = 'auto';
+    await db.from('messages').insert({
+      sender_id: adminProfile.id, recipient_id: _chatCurrentUserId, content
+    });
+    await loadAdminDMThread(_chatCurrentUserId);
+  }
+
+  function subscribeAdminDM(userId) {
+    if (_chatChannel) db.removeChannel(_chatChannel);
+    _chatChannel = db.channel(`admin-dm-${userId}`)
+      .on('postgres_changes', {event:'INSERT',schema:'public',table:'messages'}, payload => {
+        const m = payload.new;
+        if (m.task_id) return;
+        const rel = (m.sender_id===userId&&m.recipient_id===adminProfile.id)
+          || (m.sender_id===adminProfile.id&&m.recipient_id===userId);
+        if (rel) loadAdminDMThread(userId);
+      }).subscribe();
+  }
+
+  // Task thread (inline in Review Queue cards)
+  async function toggleTaskThread(taskId, assignedId, taskTitle) {
+    const el = document.getElementById(`rv-thread-${taskId}`);
+    if (!el) return;
+    if (el.style.display !== 'none') { el.style.display='none'; return; }
+    el.style.display = 'block';
+    el.innerHTML = `<div class="page-loader"><span class="spinner"></span></div>`;
+    await loadTaskThread(taskId, assignedId, taskTitle);
+  }
+
+  async function loadTaskThread(taskId, assignedId, taskTitle) {
+    const el = document.getElementById(`rv-thread-${taskId}`);
+    if (!el || el.style.display==='none') return;
+    const { data: msgs } = await db.from('messages')
+      .select('*,sender:profiles!messages_sender_id_fkey(full_name)')
+      .eq('task_id', taskId).order('created_at',{ascending:true}).limit(60);
+    const msgsHtml = (msgs||[]).map(m => {
+      const mine = m.sender_id === adminProfile.id;
+      return `<div class="msg-row ${mine?'mine':'theirs'}" style="max-width:100%">
+        ${!mine?`<div class="msg-avatar-sm" style="width:20px;height:20px;font-size:0.5rem">${ini(m.sender?.full_name||'?')}</div>`:''}
+        <div><div class="msg-bubble" style="font-size:0.8rem">${esc(m.content)}</div>
+        <div class="msg-meta">${timeAgo(m.created_at)}</div></div>
+      </div>`;
+    }).join('') || `<div style="color:var(--t3);font-size:0.8rem;padding:4px 0">Belum ada pesan. Mulai diskusi!</div>`;
+    el.innerHTML = `
+      <div class="rv-thread-hd">💬 Thread Task</div>
+      <div class="rv-thread-msgs" id="rtm-${taskId}">${msgsHtml}</div>
+      <div class="rv-thread-input">
+        <input id="rti-${taskId}" type="text" placeholder="Balas di thread..."
+          onkeydown="if(event.key==='Enter')sendTaskThread('${taskId}','${assignedId}','${esc(taskTitle)}')">
+        <button class="btn btn-primary btn-sm" onclick="sendTaskThread('${taskId}','${assignedId}','${esc(taskTitle)}')" style="padding:5px 12px">↑</button>
+      </div>`;
+    const msgsEl = document.getElementById(`rtm-${taskId}`);
+    if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+
+  async function sendTaskThread(taskId, assignedId, taskTitle) {
+    const input = document.getElementById(`rti-${taskId}`);
+    const content = input?.value.trim();
+    if (!content) return;
+    input.value = '';
+    await db.from('messages').insert({ sender_id: adminProfile.id, task_id: taskId, content });
+    if (assignedId) {
+      await db.from('notifications').insert({
+        recipient_id: assignedId, sender_id: adminProfile.id,
+        type: 'task_message', task_id: taskId,
+        title: '💬 Pesan baru dari Admin',
+        message: `${content.substring(0,80)}${content.length>80?'...':''}`
+      });
+    }
+    await loadTaskThread(taskId, assignedId, taskTitle);
+  }
+
+  async function pollChatBadge() {
+    if (!adminProfile?.id) return;
+    const { count } = await db.from('messages')
+      .select('id',{count:'exact',head:true})
+      .eq('recipient_id', adminProfile.id).eq('is_read', false);
+    const badge = document.getElementById('chatBadge');
+    const btn   = document.getElementById('chatSideBtn');
+    if (count > 0) {
+      badge.textContent = count>99?'99+':count;
+      badge.style.display = 'flex';
+      if (btn) btn.style.color = 'var(--purple)';
+    } else {
+      badge.style.display = 'none';
+      if (btn) btn.style.color = '';
+    }
+    setTimeout(pollChatBadge, 30000);
   }
 
   init();
