@@ -1414,18 +1414,15 @@
                 </select>
               </div>
               <div class="form-group">
-                <label class="form-label">Upload File Bukti</label>
+                <label class="form-label">📎 Upload File Bukti</label>
                 <div class="file-drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
                   <div style="font-size:1.75rem;margin-bottom:6px">📁</div>
                   <div style="font-size:0.8125rem;color:var(--t2)">Klik atau drag file ke sini</div>
-                  <div style="font-size:0.6875rem;color:var(--t3);margin-top:3px">PNG, JPG, PDF, ZIP · Max 50MB</div>
+                  <div style="font-size:0.6875rem;color:var(--t3);margin-top:3px">PNG, JPG, PDF, ZIP · Max 50MB · Multi-file</div>
                 </div>
-                <input type="file" id="fileInput" style="display:none" onchange="onFileSelect(this)">
-                <div class="file-selected" id="fileSelectedBox" style="display:none">
-                  ✓ <span id="fileSelectedName"
-                    style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-                  <button type="button" class="btn btn-ghost btn-sm" onclick="clearFile()">✕</button>
-                </div>
+                <input type="file" id="fileInput" style="display:none" multiple accept="image/*,.pdf,.zip,.rar" onchange="onFileSelect(this)">
+                <!-- Multi-file preview grid -->
+                <div id="filePreviewGrid" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>
               </div>
               <div class="form-group">
                 <label class="form-label">Catatan</label>
@@ -1529,7 +1526,7 @@
   </div>
 
   <script>
-    let CU = null, CP = null, selectedFile = null, currentTab = 'all';
+    let CU = null, CP = null, selectedFiles = [], currentTab = 'all';
     let allMyTasks = [];
 
     // ── INIT ─────────────────────────────────────────────
@@ -1723,25 +1720,64 @@
       document.getElementById('qsTaskSel').innerHTML = `<option value="">Pilih task...</option>` + (data || []).map(t => `<option value="${t.id}">${esc(t.title)}</option>`).join('');
     }
 
+    // ── MULTI-FILE HANDLING ───────────────────────────
+    let selectedFiles = []; // array of File objects
+
     function onFileSelect(input) {
-      selectedFile = input.files[0];
-      if (selectedFile) {
-        document.getElementById('fileSelectedBox').style.display = 'flex';
-        document.getElementById('fileSelectedName').textContent = selectedFile.name;
-        document.getElementById('fileDrop').style.display = 'none';
-      }
+      const newFiles = Array.from(input.files);
+      newFiles.forEach(f => { if (!selectedFiles.find(x => x.name === f.name)) selectedFiles.push(f); });
+      renderFilePreview();
     }
-    function clearFile() {
-      selectedFile = null;
+
+    function renderFilePreview() {
+      const grid = document.getElementById('filePreviewGrid');
+      const drop = document.getElementById('fileDrop');
+      grid.innerHTML = '';
+      selectedFiles.forEach((f, i) => {
+        const item = document.createElement('div');
+        item.style.cssText = 'position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1px solid var(--border2);background:var(--card);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;flex-shrink:0';
+        const isImg = f.type.startsWith('image/');
+        if (isImg) {
+          const reader = new FileReader();
+          reader.onload = e2 => {
+            item.innerHTML = `<img src="${e2.target.result}" style="width:100%;height:100%;object-fit:cover" alt="${esc(f.name)}">
+              <button type="button" onclick="removeFile(${i})" style="position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:rgba(248,113,113,0.9);color:white;border:none;cursor:pointer;font-size:0.55rem;display:flex;align-items:center;justify-content:center;">✕</button>`;
+          };
+          reader.readAsDataURL(f);
+        } else {
+          const icon = f.name.endsWith('.pdf') ? '📄' : '🗜️';
+          item.innerHTML = `<div style="font-size:1.4rem">${icon}</div>
+            <div style="font-size:0.5rem;color:var(--t2);text-align:center;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%">${esc(f.name)}</div>
+            <button type="button" onclick="removeFile(${i})" style="position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:rgba(248,113,113,0.9);color:white;border:none;cursor:pointer;font-size:0.55rem;display:flex;align-items:center;justify-content:center;">✕</button>`;
+        }
+        grid.appendChild(item);
+      });
+      // Show/hide drop zone based on file count
+      drop.style.display = selectedFiles.length >= 5 ? 'none' : '';
+    }
+
+    function removeFile(i) {
+      selectedFiles.splice(i, 1);
       document.getElementById('fileInput').value = '';
-      document.getElementById('fileSelectedBox').style.display = 'none';
-      document.getElementById('fileDrop').style.display = 'block';
+      renderFilePreview();
+    }
+
+    function clearFile() {
+      selectedFiles = [];
+      document.getElementById('fileInput').value = '';
+      document.getElementById('filePreviewGrid').innerHTML = '';
+      document.getElementById('fileDrop').style.display = '';
     }
 
     const fd = document.getElementById('fileDrop');
     fd.addEventListener('dragover', e => { e.preventDefault(); fd.classList.add('dragover'); });
     fd.addEventListener('dragleave', () => fd.classList.remove('dragover'));
-    fd.addEventListener('drop', e => { e.preventDefault(); fd.classList.remove('dragover'); const f = e.dataTransfer.files[0]; if (f) { selectedFile = f; document.getElementById('fileInput').files = e.dataTransfer.files; onFileSelect(document.getElementById('fileInput')); } });
+    fd.addEventListener('drop', e => {
+      e.preventDefault(); fd.classList.remove('dragover');
+      const files = Array.from(e.dataTransfer.files);
+      files.forEach(f => { if (!selectedFiles.find(x => x.name === f.name)) selectedFiles.push(f); });
+      renderFilePreview();
+    });
 
     async function handleSubmit(e) {
       e.preventDefault();
@@ -1753,16 +1789,34 @@
 
       setBtn(btn, true, 'Mengirim...');
       try {
-        let fileUrl = null, fileName = null;
-        if (selectedFile) {
-          const path = `${CU.id}/${taskId}_${Date.now()}.${selectedFile.name.split('.').pop()}`;
-          const { error: upErr } = await db.storage.from('task-submissions').upload(path, selectedFile);
-          if (upErr) throw new Error('Upload gagal: ' + upErr.message);
-          const { data: { publicUrl } } = db.storage.from('task-submissions').getPublicUrl(path);
-          fileUrl = publicUrl; fileName = selectedFile.name;
+        const note = document.getElementById('subNote').value.trim() || null;
+        const newStatus = document.getElementById('subNewStatus').value;
+
+        if (selectedFiles.length > 0) {
+          // Upload each file and insert a submission record
+          for (let i = 0; i < selectedFiles.length; i++) {
+            const f = selectedFiles[i];
+            const path = `${CU.id}/${taskId}_${Date.now()}_${f.name}`;
+            const { error: upErr } = await db.storage.from('task-submissions').upload(path, f);
+            if (upErr) throw new Error('Upload gagal: ' + upErr.message);
+            const { data: { publicUrl } } = db.storage.from('task-submissions').getPublicUrl(path);
+            await db.from('task_submissions').insert({
+              task_id: taskId, submitted_by: CU.id,
+              file_url: publicUrl, file_name: f.name,
+              note: i === 0 ? note : null // only attach note to first file
+            });
+          }
+        } else {
+          // No file — just insert note submission
+          await db.from('task_submissions').insert({
+            task_id: taskId, submitted_by: CU.id,
+            file_url: null, file_name: null, note
+          });
         }
-        await db.from('task_submissions').insert({ task_id: taskId, submitted_by: CU.id, file_url: fileUrl, file_name: fileName, note: document.getElementById('subNote').value.trim() || null });
-        const { error } = await db.from('tasks').update({ status: document.getElementById('subNewStatus').value, updated_at: new Date().toISOString() }).eq('id', taskId);
+
+        const { error } = await db.from('tasks').update({
+          status: newStatus, updated_at: new Date().toISOString()
+        }).eq('id', taskId);
         if (error) throw new Error(error.message);
 
         toast('✓ Task berhasil disubmit!', 'success');
@@ -1826,14 +1880,23 @@
       ${subs?.length ? `
       <div style="margin-top:14px">
         <div style="font-size:0.625rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--t3);margin-bottom:8px">Submissions (${subs.length})</div>
-        ${subs.map(s => `<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px">
+        ${subs.map(s => {
+          const isImg = s.file_url && /\.(png|jpg|jpeg|gif|webp|svg)(\?|$)/i.test(s.file_url);
+          return `<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px">
           <div style="display:flex;justify-content:space-between;margin-bottom:4px">
             <span style="font-size:0.8125rem;font-weight:600">${esc(s.submitted_by?.full_name || '?')}</span>
             <span style="font-size:0.6875rem;color:var(--t3)">${timeAgo(s.submitted_at)}</span>
           </div>
-          ${s.note ? `<p style="font-size:0.8125rem;color:var(--t2)">${esc(s.note)}</p>` : ''}
-          ${s.file_url ? `<a href="${s.file_url}" target="_blank" style="font-size:0.75rem;color:var(--gold);display:inline-flex;align-items:center;gap:4px;margin-top:4px">📎 ${esc(s.file_name || 'File')}</a>` : ''}
-        </div>`).join('')}
+          ${s.note ? `<p style="font-size:0.8125rem;color:var(--t2);margin-bottom:6px">${esc(s.note)}</p>` : ''}
+          ${s.file_url ? isImg
+            ? `<img src="${s.file_url}" alt="${esc(s.file_name||'img')}"
+                style="width:100%;max-height:200px;object-fit:contain;border-radius:6px;border:1px solid var(--border);cursor:zoom-in;margin-top:4px"
+                onclick="window.open('${s.file_url}','_blank')">`
+            : `<a href="${s.file_url}" target="_blank" style="font-size:0.75rem;color:var(--gold);display:inline-flex;align-items:center;gap:4px;margin-top:4px">📎 ${esc(s.file_name||'File')}</a>`
+            : ''
+          }
+        </div>`;
+        }).join('')}
       </div>` : ''}`;
 
       if (t.status !== 'processed') {
