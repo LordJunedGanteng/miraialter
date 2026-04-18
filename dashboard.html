@@ -1251,6 +1251,51 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* ── NOTIFICATIONS ── */
+    .notif-btn-wrap { position: relative; display: inline-flex; }
+    .notif-badge {
+      position: absolute; top: 1px; right: 1px;
+      background: var(--red); color: white;
+      border-radius: 100px; font-size: 0.5rem; font-weight: 800;
+      min-width: 14px; height: 14px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 3px; pointer-events: none;
+      border: 2px solid var(--surf); z-index: 1;
+    }
+    .notif-backdrop {
+      position: fixed; inset: 0; z-index: 490;
+      display: none; background: rgba(0,0,0,0.4);
+    }
+    .notif-backdrop.open { display: block; }
+    .notif-panel {
+      position: fixed; right: 0; top: 0; bottom: 0;
+      width: 320px; background: var(--surf);
+      border-left: 1px solid var(--border);
+      z-index: 495; display: flex; flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.22s cubic-bezier(.4,0,.2,1);
+      box-shadow: -8px 0 32px rgba(0,0,0,0.5);
+    }
+    .notif-panel.open { transform: translateX(0); }
+    .notif-panel-hd {
+      padding: 16px 14px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .notif-panel-title { font-size: 0.9375rem; font-weight: 700; }
+    .notif-body { flex: 1; overflow-y: auto; padding: 8px; }
+    .ni {
+      padding: 11px 12px; border-radius: var(--r-sm);
+      margin-bottom: 4px; cursor: pointer;
+      border: 1px solid transparent; transition: all var(--ease);
+    }
+    .ni:hover { background: var(--card); border-color: var(--border); }
+    .ni.unread { background: rgba(232,184,75,0.07); border-color: rgba(232,184,75,0.2); }
+    .ni-title { font-size: 0.8125rem; font-weight: 600; margin-bottom: 2px; }
+    .ni-msg { font-size: 0.75rem; color: var(--t2); line-height: 1.4; }
+    .ni-time { font-size: 0.625rem; color: var(--t3); margin-top: 4px; }
   </style>
 </head>
 
@@ -1268,6 +1313,10 @@
         <button class="ds-btn" onclick="switchSection('submit')" title="Submit Task">📤</button>
       </nav>
       <div class="ds-bottom">
+        <div class="notif-btn-wrap">
+          <button class="ds-btn" onclick="toggleNotifPanel()" title="Notifikasi" id="bellBtn">🔔</button>
+          <span class="notif-badge" id="notifBadge" style="display:none">0</span>
+        </div>
         <button class="ds-btn" onclick="switchSection('profile')" title="Profile">⚙️</button>
         <button class="ds-btn" onclick="signOut()" title="Logout">🚪</button>
       </div>
@@ -1513,6 +1562,21 @@
 
   </div>
 
+  <!-- Notification Panel -->
+  <div class="notif-backdrop" id="notifBackdrop" onclick="toggleNotifPanel()"></div>
+  <div class="notif-panel" id="notifPanel">
+    <div class="notif-panel-hd">
+      <div class="notif-panel-title">🔔 Notifikasi</div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-ghost btn-sm" onclick="markAllNotifRead()" style="font-size:0.6875rem;padding:4px 8px">Baca semua</button>
+        <button class="modal-x" onclick="toggleNotifPanel()">✕</button>
+      </div>
+    </div>
+    <div class="notif-body" id="notifList">
+      <div class="page-loader"><span class="spinner-dark"></span></div>
+    </div>
+  </div>
+
   <!-- Task Detail Modal -->
   <div class="modal-overlay" id="taskModal">
     <div class="modal-box">
@@ -1557,6 +1621,7 @@
       await loadHome();
       loadSubmitDropdowns();
       loadUpcoming();
+      pollNotifications();
     }
 
     // ── NAVIGATION ────────────────────────────────────────
@@ -1849,6 +1914,16 @@
         }).eq('id', taskId);
         if (error) throw new Error(error.message);
 
+        if (newStatus === 'on_review') {
+          const taskTitle = document.getElementById('subTaskSel').options[document.getElementById('subTaskSel').selectedIndex]?.text.replace(/^\[.*?\]\s*/,'') || taskId;
+          const adminIds = await getAdminIds();
+          if (adminIds.length) await db.from('notifications').insert(adminIds.map(aid => ({
+            recipient_id: aid, sender_id: CU.id, type: 'task_submitted',
+            task_id: taskId, title: '📤 Task Disubmit',
+            message: `${CP.full_name} submit: ${taskTitle}`
+          })));
+        }
+
         toast('✓ Task berhasil disubmit!', 'success');
         document.getElementById('submitForm').reset();
         clearFile();
@@ -1870,6 +1945,15 @@
       const { error } = await db.from('tasks').update({ status, updated_at: new Date().toISOString() }).eq('id', taskId);
       btn.disabled = false; btn.textContent = 'Submit Task';
       if (error) { toast('Gagal: ' + error.message, 'error'); return; }
+      if (status === 'on_review') {
+        const taskName = document.getElementById('qsTaskSel').options[document.getElementById('qsTaskSel').selectedIndex]?.text || taskId;
+        const adminIds = await getAdminIds();
+        if (adminIds.length) await db.from('notifications').insert(adminIds.map(aid => ({
+          recipient_id: aid, sender_id: CU.id, type: 'task_submitted',
+          task_id: taskId, title: '📤 Task Disubmit',
+          message: `${CP.full_name} submit: ${taskName}`
+        })));
+      }
       toast('✓ Task disubmit!', 'success');
       loadSubmitDropdowns(); loadHome(); loadUpcoming();
     }
@@ -1952,9 +2036,14 @@
         }).join('')}
       </div>` : ''}`;
 
-      if (t.status !== 'processed') {
-        document.getElementById('modalActions').innerHTML = `
-        <button class="btn btn-primary btn-sm" onclick="closeModal();switchSection('submit');setTimeout(()=>document.getElementById('subTaskSel').value='${taskId}',100)">📤 Submit</button>`;
+      const acts = document.getElementById('modalActions');
+      if (t.status === 'ongoing' || t.status === 'revision') {
+        acts.innerHTML = `
+        <button class="btn btn-primary btn-sm" onclick="inlineSubmit('${t.id}','${esc(t.title)}')">📤 Submit Task</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal();switchSection('submit');setTimeout(()=>document.getElementById('subTaskSel').value='${t.id}',100)">📎 + File</button>`;
+      } else if (t.status === 'on_review') {
+        acts.innerHTML = `
+        <button class="btn btn-danger btn-sm" onclick="inlineUnsubmit('${t.id}','${esc(t.title)}')">↩ Unsubmit (Revision)</button>`;
       }
     }
 
@@ -1986,6 +2075,104 @@
     function roleBadge(role) { const r = ROLES[role]; if (!r) return `<span class="badge">${role}</span>`; return `<span class="badge badge-${role}">${r.icon} ${r.label}</span>`; }
     function toast(msg, type = 'info') { document.querySelectorAll('.toast').forEach(t => t.remove()); const el = document.createElement('div'); el.className = `toast toast-${type}`; el.textContent = msg; document.body.appendChild(el); requestAnimationFrame(() => el.classList.add('show')); setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3500); }
     function setBtn(btn, on, txt = '') { if (on) { btn._orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = `<span class="spinner"></span> ${txt}`; } else { btn.disabled = false; btn.innerHTML = btn._orig || txt; } }
+
+    // ── NOTIFICATION SYSTEM ───────────────────────────
+    let _notifOpen = false;
+
+    function toggleNotifPanel() {
+      _notifOpen = !_notifOpen;
+      document.getElementById('notifPanel').classList.toggle('open', _notifOpen);
+      document.getElementById('notifBackdrop').classList.toggle('open', _notifOpen);
+      if (_notifOpen) loadNotifications();
+    }
+
+    async function loadNotifications() {
+      const el = document.getElementById('notifList');
+      el.innerHTML = `<div class="page-loader"><span class="spinner-dark"></span></div>`;
+      const { data } = await db.from('notifications')
+        .select('*').eq('recipient_id', CU.id)
+        .order('created_at', { ascending: false }).limit(40);
+      if (!data?.length) {
+        el.innerHTML = `<div class="empty">🔔 Belum ada notifikasi</div>`; return;
+      }
+      el.innerHTML = data.map(n => `
+        <div class="ni ${n.is_read ? '' : 'unread'}" onclick="onNotifClick('${n.id}','${n.task_id || ''}')">
+          <div class="ni-title">${esc(n.title)}</div>
+          ${n.message ? `<div class="ni-msg">${esc(n.message)}</div>` : ''}
+          <div class="ni-time">${timeAgo(n.created_at)}</div>
+        </div>`).join('');
+    }
+
+    async function onNotifClick(notifId, taskId) {
+      db.from('notifications').update({ is_read: true }).eq('id', notifId);
+      if (taskId && taskId !== 'null' && taskId !== 'undefined') {
+        toggleNotifPanel();
+        openTaskModal(taskId);
+      }
+      pollNotifications();
+    }
+
+    async function markAllNotifRead() {
+      await db.from('notifications').update({ is_read: true })
+        .eq('recipient_id', CU.id).eq('is_read', false);
+      loadNotifications();
+      pollNotifications();
+    }
+
+    let _notifTimer = null;
+    async function pollNotifications() {
+      if (_notifTimer) clearTimeout(_notifTimer);
+      const { count } = await db.from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('recipient_id', CU.id).eq('is_read', false);
+      const badge = document.getElementById('notifBadge');
+      const bell  = document.getElementById('bellBtn');
+      if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.style.display = 'flex';
+        bell.style.color = 'var(--gold)';
+      } else {
+        badge.style.display = 'none';
+        bell.style.color = '';
+      }
+      _notifTimer = setTimeout(pollNotifications, 30000);
+    }
+
+    async function getAdminIds() {
+      const { data } = await db.from('profiles').select('id').eq('role', 'admin');
+      return (data || []).map(a => a.id);
+    }
+
+    async function inlineSubmit(taskId, taskTitle) {
+      const { error } = await db.from('tasks')
+        .update({ status: 'on_review', updated_at: new Date().toISOString() })
+        .eq('id', taskId);
+      if (error) { toast('Gagal: ' + error.message, 'error'); return; }
+      await db.from('task_submissions').insert({ task_id: taskId, submitted_by: CU.id, note: 'Quick Submit' });
+      const adminIds = await getAdminIds();
+      if (adminIds.length) await db.from('notifications').insert(adminIds.map(aid => ({
+        recipient_id: aid, sender_id: CU.id, type: 'task_submitted',
+        task_id: taskId, title: '📤 Task Disubmit',
+        message: `${CP.full_name} submit: ${taskTitle}`
+      })));
+      toast('✓ Task disubmit ke On Review!', 'success');
+      closeModal(); loadHome(); loadSubmitDropdowns();
+    }
+
+    async function inlineUnsubmit(taskId, taskTitle) {
+      const { error } = await db.from('tasks')
+        .update({ status: 'revision', updated_at: new Date().toISOString() })
+        .eq('id', taskId);
+      if (error) { toast('Gagal: ' + error.message, 'error'); return; }
+      const adminIds = await getAdminIds();
+      if (adminIds.length) await db.from('notifications').insert(adminIds.map(aid => ({
+        recipient_id: aid, sender_id: CU.id, type: 'task_unsubmitted',
+        task_id: taskId, title: '↩ Task Unsubmit',
+        message: `${CP.full_name} unsubmit: ${taskTitle}`
+      })));
+      toast('Task dikembalikan ke Revision.', 'info');
+      closeModal(); loadHome(); loadSubmitDropdowns();
+    }
 
     init();
   </script>

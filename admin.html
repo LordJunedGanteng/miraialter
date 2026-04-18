@@ -506,6 +506,52 @@
 
     @media (max-width: 1100px) { .kb-board { grid-template-columns: repeat(2,1fr); } }
     @media (max-width: 768px) { .kb-board { grid-template-columns: 1fr; } .grid-2 { grid-template-columns: 1fr; } .form-row { grid-template-columns: 1fr; } }
+
+    /* ── NOTIFICATIONS ── */
+    .notif-btn-wrap { position: relative; display: inline-flex; }
+    .notif-badge-btn {
+      position: absolute; top: -2px; right: -2px;
+      background: var(--red); color: white;
+      border-radius: 100px; font-size: 0.5rem; font-weight: 800;
+      min-width: 14px; height: 14px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 3px; pointer-events: none;
+      border: 2px solid var(--surf); z-index: 1;
+    }
+    .notif-backdrop {
+      position: fixed; inset: 0; z-index: 490;
+      display: none; background: rgba(0,0,0,0.4);
+    }
+    .notif-backdrop.open { display: block; }
+    .notif-panel {
+      position: fixed; right: 0; top: 0; bottom: 0;
+      width: 340px; background: var(--surf);
+      border-left: 1px solid var(--border);
+      z-index: 495; display: flex; flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.22s cubic-bezier(.4,0,.2,1);
+      box-shadow: -8px 0 32px rgba(0,0,0,0.5);
+    }
+    .notif-panel.open { transform: translateX(0); }
+    .notif-panel-hd {
+      padding: 16px 14px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .notif-panel-title { font-size: 0.9375rem; font-weight: 700; }
+    .notif-body { flex: 1; overflow-y: auto; padding: 8px; }
+    .ni {
+      padding: 11px 12px; border-radius: var(--rsm);
+      margin-bottom: 5px; cursor: pointer;
+      border: 1px solid transparent; transition: all var(--ease);
+    }
+    .ni:hover { background: var(--card); border-color: var(--border); }
+    .ni.unread { background: rgba(232,184,75,0.07); border-color: rgba(232,184,75,0.2); }
+    .ni-title { font-size: 0.8125rem; font-weight: 600; margin-bottom: 2px; }
+    .ni-msg { font-size: 0.75rem; color: var(--t2); line-height: 1.4; margin-bottom: 4px; }
+    .ni-time { font-size: 0.625rem; color: var(--t3); }
+    .ni-actions { display: flex; gap: 6px; margin-top: 8px; }
   </style>
 </head>
 
@@ -537,6 +583,10 @@
       <div class="top-header-title" id="topTitle">Admin Overview</div>
       <div class="top-header-right">
         <span style="font-size:0.75rem;color:var(--t2)" id="topDate"></span>
+        <div class="notif-btn-wrap">
+          <button class="btn btn-ghost btn-sm" onclick="toggleAdminNotifPanel()" id="adminBellBtn" style="padding:6px 10px;font-size:1rem">🔔</button>
+          <span class="notif-badge-btn" id="adminNotifBadge" style="display:none">0</span>
+        </div>
         <span class="badge bg-admin">👑 Admin</span>
         <span style="font-size:0.8125rem;color:var(--t2);font-weight:600" id="topName"></span>
       </div>
@@ -965,6 +1015,21 @@
   </div>
 </div>
 
+<!-- ── Notification Panel ── -->
+<div class="notif-backdrop" id="adminNotifBackdrop" onclick="toggleAdminNotifPanel()"></div>
+<div class="notif-panel" id="adminNotifPanel">
+  <div class="notif-panel-hd">
+    <div class="notif-panel-title">🔔 Notifikasi Admin</div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <button class="btn btn-ghost btn-sm" onclick="markAllAdminNotifRead()" style="font-size:0.6875rem;padding:4px 8px">Baca semua</button>
+      <button class="modal-x" onclick="toggleAdminNotifPanel()">✕</button>
+    </div>
+  </div>
+  <div class="notif-body" id="adminNotifList">
+    <div class="page-loader"><span class="spinner"></span></div>
+  </div>
+</div>
+
 <!-- ── Lightbox ── -->
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
   <img id="lightboxImg" src="" alt="Preview">
@@ -997,6 +1062,7 @@
     });
 
     await Promise.all([loadOverview(), loadUserDropdowns()]);
+    pollAdminNotifications();
   }
 
   // ── NAVIGATION ─────────────────────────────────────
@@ -1303,6 +1369,15 @@
       }
     }
 
+    if (task && assigned_to) {
+      await db.from('notifications').insert({
+        recipient_id: assigned_to, sender_id: adminProfile.id,
+        type: 'task_assigned', task_id: task.id,
+        title: '📋 Task Baru Untukmu',
+        message: `Admin assign task: "${title}"`
+      });
+    }
+
     setLoading(btn, false);
     showToast('✓ Task berhasil dibuat!','success');
     document.getElementById('createTaskForm').reset();
@@ -1387,6 +1462,20 @@
 
     setLoading(btn, false);
     if(error){showToast('Gagal: '+error.message,'error');return;}
+
+    if ((newStatus === 'processed' || newStatus === 'revision') && assigned_to) {
+      const taskTitle = document.getElementById('etTitle').value.trim();
+      await db.from('notifications').insert({
+        recipient_id: assigned_to, sender_id: adminProfile.id,
+        type: newStatus === 'processed' ? 'task_approved' : 'task_revision',
+        task_id: id,
+        title: newStatus === 'processed' ? '✅ Task Disetujui!' : '🔄 Task Perlu Revisi',
+        message: newStatus === 'processed'
+          ? `Task "${taskTitle}" telah disetujui admin`
+          : `Task "${taskTitle}" perlu revisi dari admin`
+      });
+    }
+
     showToast('Task diupdate!','success');
     closeModal('editTaskModal');
     loadAllTasks(); loadOverview();
@@ -1588,6 +1677,22 @@
     }
 
     showToast(`✓ Task → ${STATUS_LABELS[newStatus]}`, 'success');
+
+    if (newStatus === 'processed' || newStatus === 'revision') {
+      const { data: task } = await db.from('tasks').select('title,assigned_to').eq('id', dragTaskId).single();
+      if (task?.assigned_to) {
+        await db.from('notifications').insert({
+          recipient_id: task.assigned_to, sender_id: adminProfile.id,
+          type: newStatus === 'processed' ? 'task_approved' : 'task_revision',
+          task_id: dragTaskId,
+          title: newStatus === 'processed' ? '✅ Task Disetujui!' : '🔄 Task Perlu Revisi',
+          message: newStatus === 'processed'
+            ? `Task "${task.title}" telah disetujui admin`
+            : `Task "${task.title}" perlu revisi dari admin`
+        });
+      }
+    }
+
     loadAdminKanban(); // reload for accuracy
     loadOverview();    // refresh stats
   }
@@ -1642,6 +1747,101 @@
   }
 
   // showToast, setLoading, openModal, closeModal → dari utils.js
+
+  // ── ADMIN NOTIFICATION SYSTEM ──────────────────────
+  let _adminNotifOpen = false;
+
+  function toggleAdminNotifPanel() {
+    _adminNotifOpen = !_adminNotifOpen;
+    document.getElementById('adminNotifPanel').classList.toggle('open', _adminNotifOpen);
+    document.getElementById('adminNotifBackdrop').classList.toggle('open', _adminNotifOpen);
+    if (_adminNotifOpen) loadAdminNotifications();
+  }
+
+  async function loadAdminNotifications() {
+    const el = document.getElementById('adminNotifList');
+    el.innerHTML = `<div class="page-loader"><span class="spinner"></span></div>`;
+    const { data } = await db.from('notifications')
+      .select('*').eq('recipient_id', adminProfile.id)
+      .order('created_at', { ascending: false }).limit(40);
+    if (!data?.length) {
+      el.innerHTML = `<div class="empty-state" style="padding:24px 16px"><div class="ei">🔔</div><div class="et">Belum ada notifikasi</div></div>`;
+      return;
+    }
+    el.innerHTML = data.map(n => {
+      const isSubmit = n.type === 'task_submitted' || n.type === 'task_unsubmitted';
+      return `
+        <div class="ni ${n.is_read ? '' : 'unread'}" onclick="onAdminNotifClick('${n.id}','${n.task_id || ''}','${n.type}')">
+          <div class="ni-title">${esc(n.title)}</div>
+          ${n.message ? `<div class="ni-msg">${esc(n.message)}</div>` : ''}
+          <div class="ni-time">${timeAgo(n.created_at)}</div>
+          ${isSubmit && n.task_id ? `
+          <div class="ni-actions">
+            <button class="btn btn-primary btn-sm" style="font-size:0.6875rem;padding:4px 10px"
+              onclick="event.stopPropagation();quickReview('${n.task_id}','${n.id}','processed')">✅ Setujui</button>
+            <button class="btn btn-danger btn-sm" style="font-size:0.6875rem;padding:4px 10px"
+              onclick="event.stopPropagation();quickReview('${n.task_id}','${n.id}','revision')">🔄 Revisi</button>
+          </div>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  async function onAdminNotifClick(notifId, taskId, type) {
+    db.from('notifications').update({ is_read: true }).eq('id', notifId);
+    if (taskId && taskId !== 'null' && (type === 'task_submitted' || type === 'task_unsubmitted')) {
+      toggleAdminNotifPanel();
+      openEditTask(taskId);
+    }
+    pollAdminNotifications();
+  }
+
+  async function quickReview(taskId, notifId, newStatus) {
+    const { data: task } = await db.from('tasks').select('title,assigned_to').eq('id', taskId).single();
+    if (!task) return;
+    await db.from('tasks').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', taskId);
+    db.from('notifications').update({ is_read: true }).eq('id', notifId);
+    if (task.assigned_to) {
+      await db.from('notifications').insert({
+        recipient_id: task.assigned_to, sender_id: adminProfile.id,
+        type: newStatus === 'processed' ? 'task_approved' : 'task_revision',
+        task_id: taskId,
+        title: newStatus === 'processed' ? '✅ Task Disetujui!' : '🔄 Task Perlu Revisi',
+        message: newStatus === 'processed'
+          ? `Task "${task.title}" telah disetujui admin`
+          : `Task "${task.title}" perlu revisi dari admin`
+      });
+    }
+    showToast(newStatus === 'processed' ? '✅ Task disetujui!' : '🔄 Revisi dikirim!', 'success');
+    loadAdminNotifications();
+    pollAdminNotifications();
+    loadOverview();
+  }
+
+  async function markAllAdminNotifRead() {
+    await db.from('notifications').update({ is_read: true })
+      .eq('recipient_id', adminProfile.id).eq('is_read', false);
+    loadAdminNotifications();
+    pollAdminNotifications();
+  }
+
+  let _adminNotifTimer = null;
+  async function pollAdminNotifications() {
+    if (_adminNotifTimer) clearTimeout(_adminNotifTimer);
+    const { count } = await db.from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('recipient_id', adminProfile.id).eq('is_read', false);
+    const badge = document.getElementById('adminNotifBadge');
+    const bell  = document.getElementById('adminBellBtn');
+    if (count > 0) {
+      badge.textContent = count > 99 ? '99+' : count;
+      badge.style.display = 'flex';
+      bell.style.color = 'var(--gold)';
+    } else {
+      badge.style.display = 'none';
+      bell.style.color = '';
+    }
+    _adminNotifTimer = setTimeout(pollAdminNotifications, 30000);
+  }
 
   init();
 </script>
