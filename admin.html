@@ -713,10 +713,10 @@
               <label class="form-label">📎 Lampiran (Referensi / Brief)</label>
               <div class="file-drop-zone" id="ctFileDrop" onclick="document.getElementById('ctFileInput').click()">
                 <div class="fdi">📁</div>
-                <div class="fdt">Drag file ke sini atau klik untuk pilih</div>
-                <div class="fdh">PNG, JPG, PDF, ZIP · Max 50MB per file</div>
+                <div class="fdt">Drag, klik, atau <kbd style="background:rgba(255,255,255,0.08);border:1px solid var(--brd2);border-radius:4px;padding:1px 5px;font-size:0.7rem;font-family:inherit">Ctrl+V</kbd> paste screenshot</div>
+                <div class="fdh">PNG, JPG, PDF, MP4, ZIP · Max 200MB per file</div>
               </div>
-              <input type="file" id="ctFileInput" style="display:none" multiple accept="image/*,.pdf,.zip,.rar" onchange="onCtFileSelect(this)">
+              <input type="file" id="ctFileInput" style="display:none" multiple accept="image/*,video/*,.pdf,.zip,.rar" onchange="onCtFileSelect(this)">
               <div class="file-preview-list" id="ctFilePreviewList"></div>
             </div>
 
@@ -1196,19 +1196,24 @@
     ctFiles.forEach((f, i) => {
       const item = document.createElement('div');
       item.className = 'file-preview-item';
-      const isImg = f.type.startsWith('image/');
-      if (isImg) {
+      const del = `<button class="fp-del" onclick="removeCtFile(${i})">✕</button>`;
+      if (f.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onload = e => {
-          item.innerHTML = `<img src="${e.target.result}" alt="${esc(f.name)}">
-            <button class="fp-del" onclick="removeCtFile(${i})">✕</button>`;
+          item.innerHTML = `<img src="${e.target.result}" alt="${esc(f.name)}">${del}`;
         };
         reader.readAsDataURL(f);
+      } else if (f.type.startsWith('video/')) {
+        const url = URL.createObjectURL(f);
+        item.style.position = 'relative';
+        item.innerHTML = `<video src="${url}" style="width:100%;height:100%;object-fit:cover" muted preload="metadata"></video>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+            <span style="font-size:1.2rem;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.8))">▶️</span>
+          </div>${del}`;
       } else {
         const icon = f.name.endsWith('.pdf') ? '📄' : '🗜️';
         item.innerHTML = `<div class="fp-type">${icon}</div>
-          <div class="fp-name">${esc(f.name)}</div>
-          <button class="fp-del" onclick="removeCtFile(${i})">✕</button>`;
+          <div class="fp-name">${esc(f.name)}</div>${del}`;
       }
       list.appendChild(item);
     });
@@ -1226,6 +1231,32 @@
     const files = Array.from(e.dataTransfer.files);
     files.forEach(f=>{ if(!ctFiles.find(x=>x.name===f.name)) ctFiles.push(f); });
     renderCtFilePreviews();
+  });
+
+  // ── PASTE (Ctrl+V) screenshot support ─────────────
+  document.addEventListener('paste', e => {
+    // Only when not typing in an input/textarea
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    const items = Array.from(e.clipboardData?.items || []);
+    const imgItems = items.filter(it => it.type.startsWith('image/'));
+    if (!imgItems.length) return;
+
+    e.preventDefault();
+    imgItems.forEach(it => {
+      const raw = it.getAsFile();
+      if (!raw) return;
+      const ext  = raw.type === 'image/png' ? 'png' : raw.type === 'image/jpeg' ? 'jpg' : 'png';
+      const name = `screenshot_${Date.now()}.${ext}`;
+      const file = new File([raw], name, { type: raw.type });
+      ctFiles.push(file);
+    });
+
+    renderCtFilePreviews();
+    ctDrop.classList.add('dragover');
+    setTimeout(() => ctDrop.classList.remove('dragover'), 600);
+    showToast('📋 Screenshot ditambahkan!', 'success');
   });
 
   async function handleCreateTask(e) {
@@ -1414,6 +1445,8 @@
                   onclick="openLightbox('${s.file_url}')" title="Klik untuk zoom"
                   style="width:100%;max-height:220px;object-fit:contain;border-radius:var(--rsm);border:1px solid var(--border);cursor:zoom-in;display:block;margin-bottom:8px">
                </div>`
+            : /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(s.file_url||'')
+              ? `<video src="${s.file_url}" controls style="width:100%;max-height:240px;border-radius:var(--rsm);border:1px solid var(--border);display:block;margin-bottom:8px" preload="metadata"></video>`
             : isPdf(s.file_url)
               ? `<div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--card2);border-radius:var(--rsm);margin-bottom:8px">
                   <span style="font-size:1.5rem">📄</span>

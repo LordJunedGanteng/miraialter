@@ -1417,10 +1417,10 @@
                 <label class="form-label">📎 Upload File Bukti</label>
                 <div class="file-drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
                   <div style="font-size:1.75rem;margin-bottom:6px">📁</div>
-                  <div style="font-size:0.8125rem;color:var(--t2)">Klik atau drag file ke sini</div>
-                  <div style="font-size:0.6875rem;color:var(--t3);margin-top:3px">PNG, JPG, PDF, ZIP · Max 50MB · Multi-file</div>
+                  <div style="font-size:0.8125rem;color:var(--t2)">Klik, drag, atau <kbd style="background:var(--card2);border:1px solid var(--border2);border-radius:4px;padding:1px 5px;font-size:0.75rem">Ctrl+V</kbd> paste screenshot</div>
+                  <div style="font-size:0.6875rem;color:var(--t3);margin-top:3px">PNG, JPG, PDF, MP4, ZIP · Max 50MB · Multi-file</div>
                 </div>
-                <input type="file" id="fileInput" style="display:none" multiple accept="image/*,.pdf,.zip,.rar" onchange="onFileSelect(this)">
+                <input type="file" id="fileInput" style="display:none" multiple accept="image/*,video/*,.pdf,.zip,.rar" onchange="onFileSelect(this)">
                 <!-- Multi-file preview grid -->
                 <div id="filePreviewGrid" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>
               </div>
@@ -1735,23 +1735,27 @@
       selectedFiles.forEach((f, i) => {
         const item = document.createElement('div');
         item.style.cssText = 'position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1px solid var(--border2);background:var(--card);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;flex-shrink:0';
-        const isImg = f.type.startsWith('image/');
-        if (isImg) {
+        const del = `<button type="button" onclick="removeFile(${i})" style="position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:rgba(248,113,113,0.9);color:white;border:none;cursor:pointer;font-size:0.55rem;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>`;
+        const name = `<div style="font-size:0.5rem;color:var(--t2);text-align:center;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%">${esc(f.name)}</div>`;
+
+        if (f.type.startsWith('image/')) {
           const reader = new FileReader();
           reader.onload = e2 => {
-            item.innerHTML = `<img src="${e2.target.result}" style="width:100%;height:100%;object-fit:cover" alt="${esc(f.name)}">
-              <button type="button" onclick="removeFile(${i})" style="position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:rgba(248,113,113,0.9);color:white;border:none;cursor:pointer;font-size:0.55rem;display:flex;align-items:center;justify-content:center;">✕</button>`;
+            item.innerHTML = `<img src="${e2.target.result}" style="width:100%;height:100%;object-fit:cover" alt="${esc(f.name)}">${del}`;
           };
           reader.readAsDataURL(f);
+        } else if (f.type.startsWith('video/')) {
+          const url = URL.createObjectURL(f);
+          item.innerHTML = `<video src="${url}" style="width:100%;height:100%;object-fit:cover" muted preload="metadata"></video>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+              <span style="font-size:1.1rem;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.8))">▶️</span>
+            </div>${del}`;
         } else {
           const icon = f.name.endsWith('.pdf') ? '📄' : '🗜️';
-          item.innerHTML = `<div style="font-size:1.4rem">${icon}</div>
-            <div style="font-size:0.5rem;color:var(--t2);text-align:center;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%">${esc(f.name)}</div>
-            <button type="button" onclick="removeFile(${i})" style="position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:rgba(248,113,113,0.9);color:white;border:none;cursor:pointer;font-size:0.55rem;display:flex;align-items:center;justify-content:center;">✕</button>`;
+          item.innerHTML = `<div style="font-size:1.4rem">${icon}</div>${name}${del}`;
         }
         grid.appendChild(item);
       });
-      // Show/hide drop zone based on file count
       drop.style.display = selectedFiles.length >= 5 ? 'none' : '';
     }
 
@@ -1776,6 +1780,33 @@
       const files = Array.from(e.dataTransfer.files);
       files.forEach(f => { if (!selectedFiles.find(x => x.name === f.name)) selectedFiles.push(f); });
       renderFilePreview();
+    });
+
+    // ── PASTE (Ctrl+V) screenshot support ──────────────
+    document.addEventListener('paste', e => {
+      // Only capture if not focused on a text input/textarea
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      const items = Array.from(e.clipboardData?.items || []);
+      const imgItems = items.filter(it => it.type.startsWith('image/'));
+      if (!imgItems.length) return;
+
+      e.preventDefault();
+      imgItems.forEach(it => {
+        const raw = it.getAsFile();
+        if (!raw) return;
+        const ext  = raw.type === 'image/png' ? 'png' : raw.type === 'image/jpeg' ? 'jpg' : 'png';
+        const name = `screenshot_${Date.now()}.${ext}`;
+        const file = new File([raw], name, { type: raw.type });
+        selectedFiles.push(file);
+      });
+
+      renderFilePreview();
+      // Visual flash on the drop zone
+      fd.classList.add('dragover');
+      setTimeout(() => fd.classList.remove('dragover'), 600);
+      toast('📋 Screenshot ditambahkan!', 'success');
     });
 
     async function handleSubmit(e) {
