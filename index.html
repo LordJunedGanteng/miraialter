@@ -38,6 +38,48 @@
   html { scroll-behavior:smooth; }
   body { font-family:'Inter',sans-serif; background:#111319; color:#e1e2e9; overflow-x:hidden; }
 
+  /* ── SPLASH ── */
+  #web-splash {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #0b0e13;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.6s ease;
+  }
+  #web-splash.hide { opacity: 0; pointer-events: none; }
+
+  #web-splash video {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  #splash-skip {
+    position: absolute; bottom: 32px; right: 32px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.5);
+    font-family: 'Inter', sans-serif;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 10px 20px; border-radius: 99px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, opacity 0.3s;
+    opacity: 0;
+    animation: fadeInBtn 0.4s ease 1s forwards;
+  }
+  #splash-skip:hover { background: rgba(255,255,255,0.13); color: #fff; }
+  @keyframes fadeInBtn { to { opacity: 1; } }
+
+  /* Corner deco */
+  #web-splash::before, #web-splash::after {
+    content: ''; position: absolute;
+    width: 64px; height: 64px;
+    border-color: rgba(232,184,75,0.2); border-style: solid;
+    pointer-events: none;
+  }
+  #web-splash::before { top: 28px; left: 28px; border-width: 1px 0 0 1px; }
+  #web-splash::after  { bottom: 28px; right: 28px; border-width: 0 1px 1px 0; }
+
   /* ── SCROLLBAR ── */
   ::-webkit-scrollbar { width:5px; }
   ::-webkit-scrollbar-track { background:#111319; }
@@ -129,6 +171,12 @@
 </style>
 </head>
 <body class="font-body overflow-x-hidden selection:bg-primary/30 selection:text-white">
+
+<!-- ── WEB SPLASH ── -->
+<div id="web-splash">
+  <video id="splash-vid" autoplay muted playsinline src="assets/splash.mp4"></video>
+  <button id="splash-skip" onclick="dismissSplash()">Skip ›</button>
+</div>
 
 <!-- ════════════════════════════
      NAVBAR
@@ -484,6 +532,27 @@
 
 
 <script>
+  // ── SPLASH ──
+  function dismissSplash() {
+    const el = document.getElementById('web-splash');
+    el.classList.add('hide');
+    setTimeout(() => el.remove(), 650);
+    sessionStorage.setItem('splash_shown', '1');
+  }
+
+  (function () {
+    // Jangan putar lagi kalau sudah pernah di sesi ini
+    if (sessionStorage.getItem('splash_shown')) {
+      document.getElementById('web-splash').remove();
+      return;
+    }
+    const vid = document.getElementById('splash-vid');
+    vid.addEventListener('ended', dismissSplash);
+    vid.addEventListener('error', dismissSplash);
+    // Fallback: max 12 detik
+    setTimeout(dismissSplash, 12000);
+  })();
+
   // Hero image load — trigger zoom-out animation
   const heroBg = document.getElementById('heroBg');
   const img = new Image();

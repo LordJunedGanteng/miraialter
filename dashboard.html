@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>
+  <script src="js/titlebar.js" defer></script>
   <script src="js/utils.js"></script>
   <style>
     *,
@@ -47,20 +48,30 @@
 
     .ms { font-family:'Material Symbols Outlined'; font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24; font-size:1.25rem; line-height:1; user-select:none; }
 
+    html { height: 100%; }
     body {
       font-family: 'Inter', sans-serif;
       background: var(--bg);
       color: var(--t1);
-      height: 100vh;
+      height: 100%;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
       -webkit-font-smoothing: antialiased;
       font-weight: 300;
     }
 
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(78,70,54,0.45); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(232,184,75,0.4); }
+
     /* ── LAYOUT ── */
     .dash-wrap {
       display: flex;
-      height: 100vh;
+      flex: 1;
+      min-height: 0;
     }
 
     /* ── LEFT SIDEBAR (Noir Atelier) ── */

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MIRAI ATELIER</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: #111319;
+      overflow: hidden;
+    }
+
+    video {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Fade-out overlay */
+    #fadeOut {
+      position: fixed;
+      inset: 0;
+      background: #111319;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    #fadeOut.active { opacity: 1; }
+  </style>
+</head>
+<body>
+  <video id="splashVid" autoplay muted playsinline src="assets/splash.mp4"></video>
+  <div id="fadeOut"></div>
+
+  <script>
+    const vid = document.getElementById('splashVid');
+    const fade = document.getElementById('fadeOut');
+
+    vid.addEventListener('ended', () => {
+      // Fade to black, then tell main process to open login
+      fade.classList.add('active');
+      setTimeout(() => {
+        window.close();
+      }, 520);
+    });
+
+    // Fallback: kalau video gagal load, langsung close setelah 3s
+    vid.addEventListener('error', () => setTimeout(() => window.close(), 500));
+    setTimeout(() => { if (!vid.ended) window.close(); }, 10000);
+  </script>
+</body>
+</html>
