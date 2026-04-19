@@ -5,7 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — Mirai Atelier Hub</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>
   <script src="js/utils.js"></script>
@@ -13,27 +14,31 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:     #0e1116;
-      --surf:   #161b22;
-      --card:   #1c2130;
-      --card2:  #212840;
-      --border: #2a3040;
-      --brd2:   #353f55;
+      --bg:     #111319;
+      --surf:   #191c21;
+      --card:   #1d2025;
+      --card2:  #272a30;
+      --card3:  #32353a;
+      --border: rgba(78,70,54,0.18);
+      --brd2:   rgba(78,70,54,0.30);
       --gold:   #e8b84b;
-      --gold-d: #c97d2e;
-      --t1:     #f0f4ff;
-      --t2:     #7a8aaa;
-      --t3:     #3a4560;
-      --purple: #7c6fff;
-      --pink:   #ff6584;
-      --teal:   #3dd9ad;
+      --gold-l: #ffd57e;
+      --t1:     #e1e2e9;
+      --t2:     #d2c5b0;
+      --t3:     #9b8f7c;
+      --t4:     #4e4636;
+      --purple: #c5c0ff;
+      --pink:   #ffb4ab;
+      --teal:   #5ef3c5;
       --amber:  #fbbf24;
-      --red:    #f87171;
-      --r:      14px;
+      --red:    #ffb4ab;
+      --r:      12px;
       --rsm:    8px;
-      --rlg:    18px;
+      --rlg:    16px;
       --ease:   0.18s ease;
     }
+
+    .ms { font-family:'Material Symbols Outlined'; font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24; font-size:1.25rem; line-height:1; user-select:none; }
 
     body {
       font-family: 'Inter', sans-serif;
@@ -42,77 +47,144 @@
       height: 100vh;
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
+      font-weight: 300;
     }
 
     /* ── LAYOUT ── */
     .wrap { display: flex; height: 100vh; }
 
-    /* ── SIDEBAR (icon only) ── */
+    /* ── SIDEBAR (Noir Atelier) ── */
     .sidebar {
-      width: 68px;
-      background: var(--surf);
-      border-right: 1px solid var(--border);
+      width: 72px;
+      background: linear-gradient(to right, #191c21, #111319);
+      box-shadow: 40px 0 40px -15px rgba(240,192,82,0.07);
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 18px 0;
+      padding: 28px 0 20px;
       gap: 6px;
       flex-shrink: 0;
-      z-index: 10;
+      z-index: 50;
     }
 
     .sa {
-      width: 40px; height: 40px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, var(--gold-d), var(--gold));
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold), var(--gold-l));
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.8125rem; font-weight: 800; color: #0e1116;
-      margin-bottom: 16px; cursor: pointer; flex-shrink: 0;
+      font-size: 0.75rem; font-weight: 800; color: #111319;
+      cursor: pointer; flex-shrink: 0;
+      ring: 2px; outline: 2px solid rgba(232,184,75,0.2);
     }
 
-    .snav { display: flex; flex-direction: column; gap: 4px; flex: 1; align-items: center; }
+    .snav { display: flex; flex-direction: column; gap: 6px; flex: 1; align-items: center; padding-top: 8px; }
 
     .sb {
-      width: 44px; height: 44px; border-radius: 12px;
+      width: 44px; height: 44px; border-radius: 10px;
       border: none; background: transparent; cursor: pointer;
-      font-size: 1.1rem;
       display: flex; align-items: center; justify-content: center;
-      color: var(--t3); transition: all var(--ease); position: relative;
+      color: #4e4e6a; transition: all 0.2s ease; position: relative;
     }
-    .sb:hover { background: var(--card); color: var(--t2); }
-    .sb.active { background: var(--card2); color: var(--t1); }
-    .sb.active::before {
-      content: ''; position: absolute; left: -1px; top: 25%; bottom: 25%;
-      width: 3px; border-radius: 0 3px 3px 0; background: var(--gold);
-    }
+    .sb .ms { font-size: 1.35rem; transition: color 0.2s ease; }
+    .sb:hover { background: rgba(255,255,255,0.05); color: #e1e2e9; }
+    .sb:hover .ms { color: #e1e2e9; }
+    .sb.active { background: rgba(255,213,126,0.1); color: var(--gold-l); }
+    .sb.active .ms { color: var(--gold-l); }
     .sb[title]:hover::after {
-      content: attr(title); position: absolute; left: 56px;
+      content: attr(title); position: absolute; left: 54px;
       background: var(--card2); color: var(--t1);
       padding: 5px 10px; border-radius: var(--rsm);
-      font-size: 0.75rem; font-weight: 500; white-space: nowrap;
-      z-index: 200; border: 1px solid var(--brd2);
+      font-size: 0.6875rem; font-weight: 500; white-space: nowrap;
+      z-index: 200; pointer-events: none;
     }
-    .sbot { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+    .sbot { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+    .s-brand { font-size: 0.5625rem; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; }
 
     /* ── MAIN ── */
     .main { flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; }
 
-    .sec { display: none; padding: 28px; flex: 1; }
+    .sec { display: none; padding: 32px; flex: 1; }
     .sec.active { display: block; }
 
     /* ── HEADER ── */
     .top-header {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 28px; border-bottom: 1px solid var(--border);
-      background: var(--surf); position: sticky; top: 0; z-index: 9;
+      padding: 0 32px; height: 72px;
+      background: rgba(17,19,25,0.85); backdrop-filter: blur(20px);
+      position: sticky; top: 0; z-index: 9;
     }
-    .top-header-title { font-size: 0.9375rem; font-weight: 600; }
-    .top-header-right { display: flex; align-items: center; gap: 10px; }
+    .top-header-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em; color: var(--gold); }
+    .top-header-right { display: flex; align-items: center; gap: 12px; }
 
     /* ── SECTION HEADER ── */
-    .shd { margin-bottom: 22px; }
-    .shd h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 4px; }
-    .shd p { font-size: 0.8125rem; color: var(--t2); }
+    .shd { margin-bottom: 28px; }
+    .shd h2 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 4px; }
+    .shd p { font-size: 0.8125rem; color: var(--t3); font-weight: 300; }
+
+    /* ── BENTO STATS ── */
+    .bento-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 28px; }
+    .bento-card {
+      background: var(--surf); border-radius: var(--rlg); padding: 28px 24px;
+      display: flex; flex-direction: column; gap: 10px;
+      transition: background var(--ease);
+    }
+    .bento-card:hover { background: var(--card); }
+    .bento-card.clickable { cursor: pointer; }
+    .bento-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--t3); }
+    .bento-val { font-size: 2.75rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1; color: var(--t1); }
+    .bento-sub { font-size: 0.75rem; font-weight: 500; color: var(--teal); }
+
+    /* ── STREAM CARDS ── */
+    .streams-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 28px; }
+    .stream-card {
+      background: var(--card); border-radius: var(--rlg); padding: 24px;
+      cursor: pointer; position: relative; overflow: hidden;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .stream-card:hover { transform: scale(1.02); background: var(--card2); }
+    .stream-pill {
+      display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 6px;
+      font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em;
+      margin-bottom: 24px;
+    }
+    .sp-ongoing   { background: rgba(197,192,255,.15); color: #c5c0ff; }
+    .sp-review    { background: rgba(255,213,126,.15); color: #ffd57e; }
+    .sp-processed { background: rgba(94,243,197,.15);  color: #5ef3c5; }
+    .stream-count { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 4px; }
+    .stream-sub   { font-size: 0.6875rem; color: var(--t3); font-weight: 300; }
+    .stream-glow  { position: absolute; right:-20px; top:-20px; width:80px; height:80px; border-radius:50%; filter:blur(30px); opacity:0.15; }
+
+    /* ── ACTIVITY FEED ── */
+    .act-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .act-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 14px; border-radius: 10px;
+      transition: background var(--ease); cursor: pointer;
+    }
+    .act-item:hover { background: var(--card); }
+    .act-ava { width: 36px; height: 36px; border-radius: 50%; background: var(--card2); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+    .act-tag { font-size: 0.55rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; padding: 2px 7px; border-radius: 5px; white-space: nowrap; flex-shrink: 0; }
+    .act-tag.updated  { background: rgba(197,192,255,.12); color: #c5c0ff; }
+    .act-tag.pending  { background: rgba(255,213,126,.12); color: #ffd57e; }
+    .act-tag.finished { background: rgba(94,243,197,.12);  color: #5ef3c5; }
+    .act-tag.revision { background: rgba(255,180,171,.12); color: #ffb4ab; }
+
+    /* ── DEADLINE CARDS ── */
+    .deadline-card {
+      border-radius: 12px; padding: 18px 20px;
+      background: var(--surf); border-left: 4px solid;
+      margin-bottom: 10px; transition: background var(--ease);
+    }
+    .deadline-card:hover { background: var(--card); }
+
+    /* ── MILESTONE TIMELINE ── */
+    .milestone-track { position: relative; padding-left: 28px; }
+    .milestone-track::before { content:''; position:absolute; left:5px; top:4px; bottom:4px; width:1px; background: rgba(78,70,54,0.2); }
+    .milestone-item { position: relative; margin-bottom: 28px; }
+    .milestone-dot { position: absolute; left: -28px; top: 3px; width: 12px; height: 12px; border-radius: 50%; }
+    .md-done { background: var(--teal); box-shadow: 0 0 14px rgba(94,243,197,0.5); }
+    .md-active { background: var(--purple); box-shadow: 0 0 14px rgba(197,192,255,0.4); }
+    .md-pending { background: var(--card3); border: 1.5px solid var(--t4); }
 
     /* ── STAT CARDS ── */
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
@@ -621,26 +693,27 @@
 
   <!-- ── SIDEBAR ── -->
   <aside class="sidebar">
-    <div class="sa" id="sidebarAvatar" title="Admin Profile">A</div>
+    <span class="s-brand">MIRAI</span>
     <nav class="snav">
-      <button class="sb active" onclick="goSec('overview')" title="Overview">📊</button>
-      <button class="sb" onclick="goSec('users')" title="User Control">👥</button>
-      <button class="sb" onclick="goSec('create-task')" title="Buat Task">➕</button>
-      <button class="sb" onclick="goSec('all-tasks')" title="Semua Task">📋</button>
+      <button class="sb active" onclick="goSec('overview')" title="Overview"><span class="ms">grid_view</span></button>
+      <button class="sb" onclick="goSec('users')" title="User Control"><span class="ms">group</span></button>
+      <button class="sb" onclick="goSec('create-task')" title="Buat Task"><span class="ms">add_circle</span></button>
+      <button class="sb" onclick="goSec('all-tasks')" title="Semua Task"><span class="ms">assignment</span></button>
       <div class="notif-btn-wrap">
-        <button class="sb" onclick="goSec('review')" title="Review Queue" id="reviewBtn">🔍</button>
+        <button class="sb" onclick="goSec('review')" title="Review Queue" id="reviewBtn"><span class="ms">rate_review</span></button>
         <span class="notif-badge-btn" id="reviewBadge" style="display:none">0</span>
       </div>
       <div class="notif-btn-wrap">
-        <button class="sb" onclick="goSec('chat')" title="Chat" id="chatSideBtn">💬</button>
+        <button class="sb" onclick="goSec('chat')" title="Chat" id="chatSideBtn"><span class="ms">forum</span></button>
         <span class="notif-badge-btn" id="chatBadge" style="display:none">0</span>
       </div>
-      <button class="sb" onclick="goSec('kanban')" title="Kanban Board">🗂️</button>
-      <button class="sb" onclick="goSec('leaderboard')" title="Leaderboard">🏆</button>
+      <button class="sb" onclick="goSec('kanban')" title="Kanban Board"><span class="ms">view_kanban</span></button>
+      <button class="sb" onclick="goSec('leaderboard')" title="Leaderboard"><span class="ms">leaderboard</span></button>
     </nav>
     <div class="sbot">
-      <button class="sb" onclick="window.location.href='dashboard.html'" title="Lihat sebagai User">↗️</button>
-      <button class="sb" onclick="signOut()" title="Logout">🚪</button>
+      <button class="sb" onclick="window.location.href='dashboard.html'" title="Lihat sebagai User"><span class="ms">open_in_new</span></button>
+      <button class="sb" onclick="signOut()" title="Logout"><span class="ms">logout</span></button>
+      <div class="sa" id="sidebarAvatar" title="Admin Profile">A</div>
     </div>
   </aside>
 
@@ -649,93 +722,94 @@
 
     <!-- Sticky Top Header -->
     <div class="top-header">
-      <div class="top-header-title" id="topTitle">Admin Overview</div>
+      <div class="top-header-title" id="topTitle">Mirai Atelier Hub</div>
       <div class="top-header-right">
-        <span style="font-size:0.75rem;color:var(--t2)" id="topDate"></span>
+        <span style="font-size:0.75rem;color:var(--t3);font-weight:300;letter-spacing:0.02em" id="topDate"></span>
         <div class="notif-btn-wrap">
-          <button class="btn btn-ghost btn-sm" onclick="toggleAdminNotifPanel()" id="adminBellBtn" style="padding:6px 10px;font-size:1rem">🔔</button>
+          <button class="sb" onclick="toggleAdminNotifPanel()" id="adminBellBtn" title="Notifikasi"><span class="ms">notifications</span></button>
           <span class="notif-badge-btn" id="adminNotifBadge" style="display:none">0</span>
         </div>
-        <span class="badge bg-admin">👑 Admin</span>
-        <span style="font-size:0.8125rem;color:var(--t2);font-weight:600" id="topName"></span>
+        <span class="badge bg-admin"><span class="ms" style="font-size:0.65rem">auto_awesome</span> Admin</span>
+        <span style="font-size:0.8125rem;color:var(--t2);font-weight:500" id="topName"></span>
       </div>
     </div>
 
     <!-- ═══ OVERVIEW ═══ -->
     <section class="sec active" id="sec-overview">
-      <div class="shd">
-        <h2>Admin Overview</h2>
-        <p>Ringkasan keseluruhan tim dan progress project</p>
-      </div>
 
       <!-- Review Banner (shown when ada task on_review) -->
       <div id="reviewBanner" style="display:none" onclick="goSec('review')"></div>
 
-      <!-- Colored feat cards -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px" id="featCards">
-        <div class="feat-card fc-purple" onclick="goSec('all-tasks')">
-          <div class="fc-ico">⚡</div>
-          <div class="fc-label">On Going</div>
-          <div class="fc-val" id="fcOngoing">—</div>
-          <div class="fc-sub">task aktif</div>
+      <!-- Display Hero -->
+      <div style="margin-bottom:32px">
+        <span class="bento-label" style="display:block;margin-bottom:8px">PROJECT ALPHA</span>
+        <h2 style="font-size:2.75rem;font-weight:800;letter-spacing:-0.04em;line-height:1;color:var(--t1);margin-bottom:6px">Mirai Atelier Hub</h2>
+        <p style="font-size:0.875rem;color:var(--t3);font-weight:300">Ringkasan keseluruhan tim dan progress project</p>
+      </div>
+
+      <!-- Bento Stats Row -->
+      <div class="bento-grid">
+        <div class="bento-card">
+          <span class="bento-label">Total Developer</span>
+          <span class="bento-val" id="stUsers">—</span>
+          <span class="bento-sub">member aktif</span>
         </div>
-        <div class="feat-card fc-amber" onclick="goSec('review')">
-          <div class="fc-ico">🔍</div>
-          <div class="fc-label">On Review</div>
-          <div class="fc-val" id="fcReview">—</div>
-          <div class="fc-sub">menunggu review</div>
+        <div class="bento-card">
+          <span class="bento-label">Total Task</span>
+          <span class="bento-val" id="stTotal">—</span>
+          <span class="bento-sub" style="color:var(--t3)">semua task</span>
         </div>
-        <div class="feat-card fc-teal" onclick="goSec('all-tasks')">
-          <div class="fc-ico">✅</div>
-          <div class="fc-label">Processed</div>
-          <div class="fc-val" id="fcDone">—</div>
-          <div class="fc-sub">task selesai</div>
+        <div class="bento-card">
+          <span class="bento-label">Revision</span>
+          <span class="bento-val" id="stRevision" style="color:var(--pink)">—</span>
+          <span class="bento-sub" style="color:var(--pink)">perlu perbaikan</span>
+        </div>
+        <div class="bento-card clickable" onclick="goSec('review')" style="background:linear-gradient(135deg,rgba(232,184,75,0.12),rgba(232,184,75,0.04));border:1px solid rgba(232,184,75,0.2)">
+          <span class="bento-label" style="color:var(--gold)">Review Queue</span>
+          <span class="bento-val" style="color:var(--gold)" id="fcReview">—</span>
+          <span class="bento-sub" style="color:var(--gold)">menunggu review →</span>
         </div>
       </div>
 
-      <!-- Stats row -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-up">
-            <div class="stat-label">Total Developer</div>
-            <div class="stat-icon" style="background:rgba(124,111,255,.15)">👥</div>
-          </div>
-          <div class="stat-val" id="stUsers">—</div>
-          <div class="stat-sub">member aktif</div>
+      <!-- Stream Cards -->
+      <div class="streams-grid">
+        <div class="stream-card" onclick="goSec('all-tasks')">
+          <div class="stream-glow" style="background:var(--purple)"></div>
+          <span class="stream-pill sp-ongoing">Ongoing</span>
+          <div class="stream-count" id="fcOngoing">—</div>
+          <div class="stream-sub">task sedang dikerjakan</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-up">
-            <div class="stat-label">Total Task</div>
-            <div class="stat-icon" style="background:rgba(61,217,173,.15)">📋</div>
-          </div>
-          <div class="stat-val" id="stTotal">—</div>
-          <div class="stat-sub">semua task</div>
+        <div class="stream-card" onclick="goSec('review')">
+          <div class="stream-glow" style="background:var(--gold)"></div>
+          <span class="stream-pill sp-review">On Review</span>
+          <div class="stream-count" id="fcReview2">—</div>
+          <div class="stream-sub">menunggu persetujuan admin</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-up">
-            <div class="stat-label">Revision</div>
-            <div class="stat-icon" style="background:rgba(248,113,113,.15)">🔄</div>
-          </div>
-          <div class="stat-val" style="color:#f87171" id="stRevision">—</div>
-          <div class="stat-sub">perlu perbaikan</div>
+        <div class="stream-card" onclick="goSec('all-tasks')">
+          <div class="stream-glow" style="background:var(--teal)"></div>
+          <span class="stream-pill sp-processed">Processed</span>
+          <div class="stream-count" id="fcDone">—</div>
+          <div class="stream-sub">task telah selesai</div>
         </div>
       </div>
 
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-hd">
-            <div class="card-title">🕐 Task Terbaru</div>
-            <button class="btn btn-ghost btn-sm" onclick="goSec('all-tasks')">Lihat semua →</button>
+      <!-- Activity + Urgent -->
+      <div class="act-row" style="margin-bottom:24px">
+        <div style="background:var(--surf);border-radius:var(--rlg);padding:24px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+            <span class="bento-label">Task Terbaru</span>
+            <button class="btn btn-ghost btn-sm" onclick="goSec('all-tasks')" style="font-size:0.6875rem">Lihat semua</button>
           </div>
           <div id="ovRecentList"><div class="page-loader"><span class="spinner"></span></div></div>
         </div>
-        <div class="card">
-          <div class="card-hd">
-            <div class="card-title">🔴 Butuh Perhatian</div>
+        <div style="background:var(--surf);border-radius:var(--rlg);padding:24px">
+          <div style="margin-bottom:18px">
+            <span class="bento-label">Butuh Perhatian</span>
           </div>
           <div id="ovUrgentList"><div class="page-loader"><span class="spinner"></span></div></div>
         </div>
       </div>
+
     </section>
 
     <!-- ═══ USER CONTROL ═══ -->
@@ -902,12 +976,12 @@
 
     <!-- ═══ REVIEW QUEUE ═══ -->
     <section class="sec" id="sec-review">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px">
         <div class="shd" style="margin-bottom:0">
-          <h2>🔍 Review Queue</h2>
+          <h2>Review Queue</h2>
           <p>Task yang sudah selesai dari developer — cek dan beri feedback</p>
         </div>
-        <button class="btn btn-secondary btn-sm" onclick="loadReviewQueue()">🔄 Refresh</button>
+        <button class="btn btn-secondary btn-sm" onclick="loadReviewQueue()"><span class="ms">refresh</span> Refresh</button>
       </div>
       <div id="reviewList">
         <div class="page-loader"><span class="spinner"></span></div>
@@ -1231,7 +1305,8 @@
     document.getElementById('fcDone').textContent    = (tasks||[]).filter(t=>t.status==='processed').length;
 
     const onReviewCount = (tasks||[]).filter(t=>t.status==='on_review').length;
-    document.getElementById('fcReview').textContent = onReviewCount;
+    document.getElementById('fcReview').textContent  = onReviewCount;
+    document.getElementById('fcReview2').textContent = onReviewCount;
 
     // Review banner
     const banner = document.getElementById('reviewBanner');
@@ -1998,60 +2073,59 @@
       const cnt = subCount[t.id] || 0;
       const assignedId = t.assigned_to?.id || '';
 
+      const imgPreview = sub && isImg(sub.file_url)
+        ? `<img src="${sub.file_url}" style="width:100%;height:100%;object-fit:cover;opacity:0.7;transition:transform 0.5s ease;cursor:zoom-in" onclick="openLightbox('${sub.file_url}')">`
+        : `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--t4)"><span class="ms" style="font-size:2rem">draft</span><span style="font-size:0.6rem;margin-top:8px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase">No Preview</span></div>`;
+
       return `
-      <div class="rv-card" id="rvc-${t.id}">
-        <div class="rv-hd">
-          <div class="rv-info">
-            <div class="rv-title">${esc(t.title)}</div>
-            <div class="rv-meta">
-              ${t.assigned_to ? `
-                <span style="display:flex;align-items:center;gap:5px">
-                  <span class="mini-ava">${ini(t.assigned_to.full_name)}</span>
-                  <span style="font-weight:600">${esc(t.assigned_to.full_name)}</span>
-                </span>
-                ${t.assigned_to.role ? `<span class="badge bg-${t.assigned_to.role}">${ROLES[t.assigned_to.role]?.icon||''} ${ROLES[t.assigned_to.role]?.label||t.assigned_to.role}</span>` : ''}
-              ` : '<span class="text-tiny">Unassigned</span>'}
-              <span class="badge bg-${t.priority}">${t.priority}</span>
-              ${t.due_date ? `<span style="font-size:0.6875rem;color:${isOverdue(t.due_date)?'#f87171':'var(--t3)'}">📅 ${fmtDate(t.due_date)}</span>` : ''}
-              ${cnt > 1 ? `<span style="font-size:0.6875rem;color:var(--amber)">↺ ${cnt}x submit</span>` : ''}
+      <div class="rv-card" id="rvc-${t.id}" style="padding:0;overflow:hidden;display:flex;flex-direction:column">
+        <!-- Main row: image + content -->
+        <div style="display:flex;flex-direction:row;min-height:180px">
+          <!-- Left: image preview -->
+          <div style="width:180px;flex-shrink:0;background:var(--card2);position:relative;overflow:hidden">
+            ${imgPreview}
+            <div style="position:absolute;inset:0;background:linear-gradient(to right,transparent,rgba(17,19,25,0.3))"></div>
+            <div style="position:absolute;bottom:12px;left:12px">
+              <span class="badge bg-${t.status}">${STATUS_LABELS[t.status]||t.status}</span>
             </div>
           </div>
-          <div class="rv-actions">
-            <span class="badge bg-${t.status}" style="font-size:0.6875rem">${STATUS_LABELS[t.status]||t.status}</span>
-            <button class="btn btn-ghost btn-sm" onclick="toggleTaskThread('${t.id}','${assignedId}','${esc(t.title)}')" title="Thread Chat">💬</button>
-            ${t.status === 'on_review' ? `
-              <button class="btn btn-primary btn-sm" onclick="adminApprove('${t.id}','${assignedId}','${esc(t.title)}',${t.points_reward||10})">✅ Setujui</button>
-              <button class="btn btn-danger btn-sm" onclick="toggleRevisionForm('${t.id}')">🔄 Revisi</button>
-            ` : t.status === 'processed' ? `
-              <button class="btn btn-sm" style="background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.25)" onclick="toggleRevisionForm('${t.id}')">🔄 Revisi</button>
-            ` : ''}
+          <!-- Right: content -->
+          <div style="flex:1;padding:20px 22px;display:flex;flex-direction:column;gap:10px;min-width:0">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+                  ${t.assigned_to?.role ? `<span class="badge bg-${t.assigned_to.role}">${ROLES[t.assigned_to.role]?.label||t.assigned_to.role}</span>` : ''}
+                  <span class="badge bg-${t.priority}">${t.priority}</span>
+                  ${cnt > 1 ? `<span style="font-size:0.6rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--amber)">↺ ${cnt}x submit</span>` : ''}
+                </div>
+                <div style="font-size:1.125rem;font-weight:700;letter-spacing:-0.02em;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.title)}</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="toggleTaskThread('${t.id}','${assignedId}','${esc(t.title)}')" title="Thread Chat" style="flex-shrink:0"><span class="ms">forum</span></button>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:0.8125rem;color:var(--t2)">
+              ${t.assigned_to ? `<span style="display:flex;align-items:center;gap:6px"><span class="mini-ava">${ini(t.assigned_to.full_name)}</span><span style="font-weight:500">${esc(t.assigned_to.full_name)}</span></span>` : '<span class="text-tiny">Unassigned</span>'}
+              ${t.due_date ? `<span style="display:flex;align-items:center;gap:4px;color:${isOverdue(t.due_date)?'var(--pink)':'var(--t3)'}"><span class="ms" style="font-size:0.875rem">calendar_today</span>${fmtDate(t.due_date)}</span>` : ''}
+            </div>
+            ${sub?.note ? `<p style="font-size:0.8125rem;color:var(--t2);font-weight:300;line-height:1.5;border-left:2px solid rgba(197,192,255,0.3);padding-left:10px">${esc(sub.note)}</p>` : ''}
+            ${sub && !isImg(sub.file_url) && sub.file_url ? `<a href="${sub.file_url}" target="_blank" class="btn btn-secondary btn-sm" style="align-self:flex-start"><span class="ms">download</span> ${esc(sub.file_name||'Download File')}</a>` : ''}
+            ${cnt > 1 ? `<button class="btn btn-ghost btn-sm" style="align-self:flex-start;font-size:0.75rem" onclick="openSubs('${t.id}','${esc(t.title)}')"><span class="ms" style="font-size:0.875rem">history</span> Lihat semua ${cnt} submission</button>` : ''}
+            ${!sub ? `<span style="font-size:0.75rem;color:var(--t3)">Belum ada file submission</span>` : ''}
+            <div style="display:flex;gap:8px;margin-top:auto;flex-wrap:wrap">
+              ${t.status === 'on_review' ? `
+                <button class="btn btn-sm" style="background:linear-gradient(135deg,#5ef3c5,#44deb2);color:#002117;font-weight:700" onclick="adminApprove('${t.id}','${assignedId}','${esc(t.title)}',${t.points_reward||10})"><span class="ms">check_circle</span> Setujui</button>
+                <button class="btn btn-danger btn-sm" style="border:1px solid rgba(255,180,171,0.3)" onclick="toggleRevisionForm('${t.id}')"><span class="ms">sync</span> Revisi</button>
+              ` : t.status === 'processed' ? `
+                <button class="btn btn-sm" style="background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.25)" onclick="toggleRevisionForm('${t.id}')"><span class="ms">sync</span> Revisi</button>
+              ` : ''}
+            </div>
           </div>
         </div>
-
-        ${sub ? `
-        <div class="rv-sub">
-          <div style="font-size:0.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:8px">
-            Submission terbaru · ${timeAgo(sub.submitted_at)} · oleh ${esc(sub.submitted_by?.full_name||'?')}
-          </div>
-          ${sub.note ? `<p style="font-size:0.8125rem;color:var(--t2);margin-bottom:8px">💬 ${esc(sub.note)}</p>` : ''}
-          ${sub.file_url ? `
-            ${isImg(sub.file_url)
-              ? `<img src="${sub.file_url}" class="sub-img-preview"
-                  style="max-height:200px;cursor:zoom-in"
-                  onclick="openLightbox('${sub.file_url}')">`
-              : `<a href="${sub.file_url}" target="_blank" class="btn btn-secondary btn-sm">⬇️ ${esc(sub.file_name||'Download File')}</a>`
-            }` : '<span style="font-size:0.75rem;color:var(--t3)">Tidak ada file</span>'}
-          ${cnt > 1 ? `<div style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="openSubs('${t.id}','${esc(t.title)}')">📋 Lihat semua ${cnt} submission →</button></div>` : ''}
-        </div>` : `<div style="font-size:0.8125rem;color:var(--t3);padding:8px 0">Belum ada file submission</div>`}
-
-        <!-- Revision form -->
-        <div class="rv-revision-form" id="rvf-${t.id}" style="display:none">
-          <div style="font-size:0.8125rem;font-weight:600;margin-bottom:8px;color:var(--amber)">🔄 Feedback Revisi</div>
-          <textarea class="form-textarea" id="rvnote-${t.id}"
-            placeholder="Tulis catatan revisi untuk developer... (opsional)"
-            style="min-height:72px;margin-bottom:10px"></textarea>
+        <!-- Revision form (full-width, below the row) -->
+        <div class="rv-revision-form" id="rvf-${t.id}" style="display:none;background:var(--card2);padding:14px 18px;border-top:1px solid var(--border)">
+          <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--amber);margin-bottom:8px">Feedback Revisi</div>
+          <textarea class="form-textarea" id="rvnote-${t.id}" placeholder="Tulis catatan revisi untuk developer..." style="min-height:64px;margin-bottom:8px"></textarea>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-danger btn-sm" onclick="adminRevision('${t.id}','${assignedId}','${esc(t.title)}')">🔄 Kirim Revisi</button>
+            <button class="btn btn-danger btn-sm" onclick="adminRevision('${t.id}','${assignedId}','${esc(t.title)}')"><span class="ms">sync</span> Kirim Revisi</button>
             <button class="btn btn-ghost btn-sm" onclick="toggleRevisionForm('${t.id}')">Batal</button>
           </div>
         </div>

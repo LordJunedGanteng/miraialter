@@ -5,8 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — Mirai Atelier Hub</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>
   <script src="js/utils.js"></script>
@@ -20,27 +20,32 @@
     }
 
     :root {
-      --bg: #0e1116;
-      --surf: #161b22;
-      --card: #1c2130;
-      --card2: #212840;
-      --border: #2a3040;
-      --border2: #353f55;
-      --gold: #e8b84b;
+      --bg:     #111319;
+      --surf:   #191c21;
+      --card:   #1d2025;
+      --card2:  #272a30;
+      --card3:  #32353a;
+      --border: rgba(78,70,54,0.18);
+      --border2: rgba(78,70,54,0.30);
+      --gold:   #e8b84b;
+      --gold-l: #ffd57e;
       --gold-d: #c97d2e;
-      --t1: #f0f4ff;
-      --t2: #7a8aaa;
-      --t3: #3a4560;
-      --purple: #7c6fff;
-      --pink: #ff6584;
-      --teal: #3dd9ad;
-      --amber: #fbbf24;
-      --red: #f87171;
-      --r: 14px;
+      --t1:     #e1e2e9;
+      --t2:     #d2c5b0;
+      --t3:     #9b8f7c;
+      --t4:     #4e4636;
+      --purple: #c5c0ff;
+      --pink:   #ffb4ab;
+      --teal:   #5ef3c5;
+      --amber:  #fbbf24;
+      --red:    #ffb4ab;
+      --r: 12px;
       --r-sm: 8px;
-      --r-lg: 18px;
+      --r-lg: 16px;
       --ease: 0.18s ease;
     }
+
+    .ms { font-family:'Material Symbols Outlined'; font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24; font-size:1.25rem; line-height:1; user-select:none; }
 
     body {
       font-family: 'Inter', sans-serif;
@@ -49,6 +54,7 @@
       height: 100vh;
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
+      font-weight: 300;
     }
 
     /* ── LAYOUT ── */
@@ -57,99 +63,96 @@
       height: 100vh;
     }
 
-    /* ── LEFT SIDEBAR (icon only) ── */
+    /* ── LEFT SIDEBAR (Noir Atelier) ── */
     .dash-sidebar {
-      width: 68px;
-      background: var(--surf);
-      border-right: 1px solid var(--border);
+      width: 72px;
+      background: linear-gradient(to right, #191c21, #111319);
+      box-shadow: 40px 0 40px -15px rgba(240,192,82,0.07);
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 18px 0;
+      padding: 28px 0 20px;
       gap: 6px;
       flex-shrink: 0;
+      z-index: 50;
+    }
+
+    .ds-brand {
+      font-size: 0.5625rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 20px;
     }
 
     .ds-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, var(--gold-d), var(--gold));
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold), var(--gold-l));
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.8125rem;
+      font-size: 0.75rem;
       font-weight: 800;
-      color: #0e1116;
-      margin-bottom: 16px;
+      color: #111319;
       cursor: pointer;
       flex-shrink: 0;
+      outline: 2px solid rgba(232,184,75,0.2);
     }
 
     .ds-nav {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
       flex: 1;
       align-items: center;
+      padding-top: 8px;
     }
 
     .ds-btn {
       width: 44px;
       height: 44px;
-      border-radius: 12px;
+      border-radius: 10px;
       border: none;
       background: transparent;
       cursor: pointer;
-      font-size: 1.1rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--t3);
-      transition: all var(--ease);
+      color: #4e4e6a;
+      transition: all 0.2s ease;
       position: relative;
     }
 
-    .ds-btn:hover {
-      background: var(--card);
-      color: var(--t2);
-    }
+    .ds-btn .ms { font-size: 1.35rem; transition: color 0.2s ease; }
 
-    .ds-btn.active {
-      background: var(--card2);
-      color: var(--t1);
-    }
+    .ds-btn:hover { background: rgba(255,255,255,0.05); color: var(--t1); }
+    .ds-btn:hover .ms { color: var(--t1); }
 
-    .ds-btn.active::before {
-      content: '';
-      position: absolute;
-      left: -1px;
-      top: 25%;
-      bottom: 25%;
-      width: 3px;
-      border-radius: 0 3px 3px 0;
-      background: var(--gold);
-    }
+    .ds-btn.active { background: rgba(255,213,126,0.1); color: var(--gold-l); }
+    .ds-btn.active .ms { color: var(--gold-l); }
 
     .ds-btn[title]:hover::after {
       content: attr(title);
       position: absolute;
-      left: 56px;
+      left: 54px;
       background: var(--card2);
       color: var(--t1);
       padding: 5px 10px;
       border-radius: var(--r-sm);
-      font-size: 0.75rem;
+      font-size: 0.6875rem;
       font-weight: 500;
       white-space: nowrap;
-      z-index: 100;
-      border: 1px solid var(--border2);
+      z-index: 200;
+      pointer-events: none;
     }
 
     .ds-bottom {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
       align-items: center;
     }
 
@@ -178,31 +181,42 @@
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      margin-bottom: 24px;
+      margin-bottom: 36px;
     }
 
     .ds-greeting {
-      font-size: 1.375rem;
+      font-size: 0.6rem;
       font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--t3);
       margin-bottom: 8px;
     }
 
-    .ds-greeting span {
-      color: var(--gold);
+    .ds-greeting-name {
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: var(--t1);
+      margin-bottom: 16px;
     }
+
+    .ds-greeting-name span { color: var(--gold); }
 
     .ds-progress-row {
       display: flex;
       align-items: center;
       gap: 12px;
       font-size: 0.8125rem;
-      color: var(--t2);
+      color: var(--t3);
+      font-weight: 300;
     }
 
     .ds-progress-track {
-      width: 140px;
-      height: 5px;
-      background: var(--border);
+      width: 160px;
+      height: 4px;
+      background: rgba(78,70,54,0.25);
       border-radius: 3px;
       overflow: hidden;
     }
@@ -210,7 +224,7 @@
     .ds-progress-fill {
       height: 100%;
       border-radius: 3px;
-      background: linear-gradient(90deg, var(--gold-d), var(--gold));
+      background: linear-gradient(90deg, var(--gold), var(--gold-l));
       transition: width 0.5s ease;
     }
 
@@ -219,56 +233,45 @@
     }
 
     .ds-date-day {
-      font-size: 0.75rem;
+      font-size: 0.6rem;
       color: var(--t3);
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.12em;
+      font-weight: 700;
     }
 
     .ds-date-full {
-      font-size: 0.875rem;
-      font-weight: 500;
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
       color: var(--t2);
-      margin-top: 2px;
+      margin-top: 4px;
     }
 
-    /* ── FEATURED CARDS ── */
+    /* ── FEATURED CARDS (Stitch stream style) ── */
     .ds-cards {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 14px;
-      margin-bottom: 28px;
+      margin-bottom: 32px;
     }
 
     .ds-feat-card {
+      background: var(--card);
       border-radius: var(--r);
-      padding: 20px;
+      padding: 24px;
       position: relative;
       overflow: hidden;
       cursor: pointer;
-      transition: transform var(--ease), box-shadow var(--ease);
+      transition: transform 0.2s ease, background 0.2s ease;
       min-height: 130px;
     }
+    .ds-feat-card:hover { transform: scale(1.02); background: var(--card2); }
 
-    .ds-feat-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
-    }
-
-    .ds-feat-card.purple {
-      background: linear-gradient(135deg, #5b4fe9, #7c6fff);
-    }
-
-    .ds-feat-card.pink {
-      background: linear-gradient(135deg, #c94070, #ff6584);
-    }
-
-    .ds-feat-card.teal {
-      background: linear-gradient(135deg, #1a9e7a, #3dd9ad);
-    }
+    .ds-feat-card .stream-glow { position:absolute; right:-20px; top:-20px; width:80px; height:80px; border-radius:50%; filter:blur(30px); opacity:0.15; }
 
     .dfc-label {
-      font-size: 0.6875rem;
+      font-size: 0.6rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.1em;
@@ -286,12 +289,14 @@
     .dfc-count {
       font-size: 2rem;
       font-weight: 800;
+      letter-spacing: -0.03em;
       line-height: 1;
     }
 
     .dfc-sub {
-      font-size: 0.75rem;
-      opacity: 0.7;
+      font-size: 0.6875rem;
+      color: var(--t3);
+      font-weight: 300;
       margin-top: 4px;
     }
 
@@ -1328,24 +1333,25 @@
 
     <!-- ── LEFT SIDEBAR ── -->
     <aside class="dash-sidebar">
-      <div class="ds-avatar" id="sidebarAvatar" onclick="switchSection('profile')" title="Profile">MA</div>
+      <span class="ds-brand">MIRAI</span>
       <nav class="ds-nav">
-        <button class="ds-btn active" onclick="switchSection('home')" title="Overview">🏠</button>
-        <button class="ds-btn" onclick="switchSection('kanban')" title="Kanban Board">📊</button>
-        <button class="ds-btn" onclick="switchSection('leaderboard')" title="Leaderboard">🏆</button>
-        <button class="ds-btn" onclick="switchSection('submit')" title="Submit Task">📤</button>
+        <button class="ds-btn active" onclick="switchSection('home')" title="Overview"><span class="ms">grid_view</span></button>
+        <button class="ds-btn" onclick="switchSection('kanban')" title="Kanban Board"><span class="ms">view_kanban</span></button>
+        <button class="ds-btn" onclick="switchSection('leaderboard')" title="Leaderboard"><span class="ms">leaderboard</span></button>
+        <button class="ds-btn" onclick="switchSection('submit')" title="Submit Task"><span class="ms">upload_file</span></button>
       </nav>
       <div class="ds-bottom">
         <div class="notif-btn-wrap">
-          <button class="ds-btn" onclick="toggleChatPanel()" title="Chat" id="chatBtn">💬</button>
+          <button class="ds-btn" onclick="toggleChatPanel()" title="Chat" id="chatBtn"><span class="ms">forum</span></button>
           <span class="notif-badge" id="chatBadge" style="display:none">0</span>
         </div>
         <div class="notif-btn-wrap">
-          <button class="ds-btn" onclick="toggleNotifPanel()" title="Notifikasi" id="bellBtn">🔔</button>
+          <button class="ds-btn" onclick="toggleNotifPanel()" title="Notifikasi" id="bellBtn"><span class="ms">notifications</span></button>
           <span class="notif-badge" id="notifBadge" style="display:none">0</span>
         </div>
-        <button class="ds-btn" onclick="switchSection('profile')" title="Profile">⚙️</button>
-        <button class="ds-btn" onclick="signOut()" title="Logout">🚪</button>
+        <button class="ds-btn" onclick="switchSection('profile')" title="Profile"><span class="ms">settings</span></button>
+        <button class="ds-btn" onclick="signOut()" title="Logout"><span class="ms">logout</span></button>
+        <div class="ds-avatar" id="sidebarAvatar" onclick="switchSection('profile')" title="Profile">MA</div>
       </div>
     </aside>
 
@@ -1356,7 +1362,8 @@
       <section class="ds-section active" id="sec-home">
         <div class="ds-header">
           <div>
-            <div class="ds-greeting">Halo, <span id="greetName">...</span> 👋</div>
+            <div class="ds-greeting">Selamat datang kembali</div>
+            <div class="ds-greeting-name">Halo, <span id="greetName">...</span></div>
             <div class="ds-progress-row">
               <span id="progressText">Loading...</span>
               <div class="ds-progress-track">
@@ -1370,25 +1377,25 @@
           </div>
         </div>
 
-        <!-- Featured Cards -->
+        <!-- Stream Stat Cards -->
         <div class="ds-cards">
-          <div class="ds-feat-card purple" onclick="setTab('ongoing')">
-            <div class="dfc-icon">⚡</div>
-            <div class="dfc-label"><span class="dfc-dot"></span>On Going</div>
-            <div class="dfc-count" id="fcOngoing">—</div>
-            <div class="dfc-sub">task aktif</div>
+          <div class="ds-feat-card" onclick="setTab('ongoing')">
+            <div class="stream-glow" style="background:var(--purple)"></div>
+            <div class="dfc-label" style="font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(197,192,255,0.7);margin-bottom:20px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--purple)"></span>Ongoing</div>
+            <div class="dfc-count" style="color:var(--purple)" id="fcOngoing">—</div>
+            <div class="dfc-sub">task sedang aktif</div>
           </div>
-          <div class="ds-feat-card pink" onclick="setTab('on_review')">
-            <div class="dfc-icon">🔍</div>
-            <div class="dfc-label"><span class="dfc-dot"></span>On Review</div>
-            <div class="dfc-count" id="fcReview">—</div>
-            <div class="dfc-sub">menunggu review</div>
+          <div class="ds-feat-card" onclick="setTab('on_review')">
+            <div class="stream-glow" style="background:var(--gold)"></div>
+            <div class="dfc-label" style="font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,213,126,0.7);margin-bottom:20px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold)"></span>On Review</div>
+            <div class="dfc-count" style="color:var(--gold-l)" id="fcReview">—</div>
+            <div class="dfc-sub">menunggu persetujuan</div>
           </div>
-          <div class="ds-feat-card teal" onclick="setTab('processed')">
-            <div class="dfc-icon">✅</div>
-            <div class="dfc-label"><span class="dfc-dot"></span>Completed</div>
-            <div class="dfc-count" id="fcDone">—</div>
-            <div class="dfc-sub">task selesai</div>
+          <div class="ds-feat-card" onclick="setTab('processed')">
+            <div class="stream-glow" style="background:var(--teal)"></div>
+            <div class="dfc-label" style="font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(94,243,197,0.7);margin-bottom:20px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--teal)"></span>Completed</div>
+            <div class="dfc-count" style="color:var(--teal)" id="fcDone">—</div>
+            <div class="dfc-sub">task telah selesai</div>
           </div>
         </div>
 
