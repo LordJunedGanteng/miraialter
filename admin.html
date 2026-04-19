@@ -678,6 +678,79 @@
     .msg-meta { font-size:0.5625rem; color:var(--t3); margin-top:3px; }
     .msg-row.mine .msg-meta { text-align:right; }
     .msg-avatar-sm { width:24px; height:24px; border-radius:50%; background:var(--purple); color:#fff; font-size:0.55rem; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; }
+    /* ── SUPPORT CHAT WIDGET ── */
+    .chat-fab {
+      position:fixed; bottom:24px; right:24px; z-index:500;
+      width:52px; height:52px; border-radius:50%;
+      background:linear-gradient(135deg,#7c6fff,#5b4de8);
+      border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;
+      box-shadow:0 4px 24px rgba(124,111,255,0.45);
+      transition:transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .chat-fab:hover { transform:scale(1.08); box-shadow:0 6px 32px rgba(124,111,255,0.6); }
+    .chat-fab .ms { color:#fff; font-size:1.375rem; transition:transform 0.2s ease; }
+    .chat-fab.open .ms { transform:rotate(90deg); }
+    .chat-fab-badge {
+      position:absolute; top:-4px; right:-4px;
+      background:var(--red); color:#fff; border-radius:99px;
+      font-size:0.55rem; font-weight:800; padding:1px 5px;
+      min-width:16px; height:16px; display:none; align-items:center; justify-content:center;
+      border:2px solid var(--bg);
+    }
+    .admin-chat-float {
+      position:fixed; bottom:88px; right:24px; z-index:499;
+      width:360px; height:500px; border-radius:16px;
+      background:var(--card); display:flex; flex-direction:column;
+      box-shadow:0 12px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05);
+      transform:scale(0.88) translateY(24px); transform-origin:bottom right;
+      opacity:0; pointer-events:none;
+      transition:transform 0.25s cubic-bezier(.34,1.56,.64,1), opacity 0.2s ease;
+      overflow:hidden;
+    }
+    .admin-chat-float.open { transform:scale(1) translateY(0); opacity:1; pointer-events:all; }
+    .acf-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:13px 16px; flex-shrink:0;
+      background:linear-gradient(135deg,#7c6fff,#5b4de8);
+    }
+    .acf-title { font-size:0.875rem; font-weight:700; color:#fff; display:flex; align-items:center; gap:8px; }
+    .acf-title .ms { font-size:1.1rem; }
+    .acf-body { display:flex; flex:1; overflow:hidden; }
+    /* User list inside widget */
+    .acf-body .chat-users-panel { background:var(--card2); border-right:1px solid var(--border); }
+    .acf-body .chat-up-hd { font-size:0.6rem; padding:10px 12px; }
+    .acf-body .chat-user-item { padding:9px 12px; }
+    /* Messages inside widget */
+    .acf-body .chat-msgs { padding:10px 14px; gap:7px; }
+    .acf-body .chat-input-row { padding:8px 12px; }
+    /* FAB pulse on new message */
+    @keyframes fab-ping {
+      0%   { box-shadow:0 4px 24px rgba(124,111,255,0.45), 0 0 0 0 rgba(124,111,255,0.6); }
+      70%  { box-shadow:0 4px 24px rgba(124,111,255,0.45), 0 0 0 12px rgba(124,111,255,0); }
+      100% { box-shadow:0 4px 24px rgba(124,111,255,0.45), 0 0 0 0 rgba(124,111,255,0); }
+    }
+    .chat-fab.ping { animation:fab-ping 0.8s ease 3; }
+    /* Chat toast popup */
+    .chat-toast {
+      position:fixed; bottom:88px; right:24px; z-index:498;
+      width:300px; background:var(--card2);
+      border:1px solid rgba(124,111,255,0.3);
+      border-radius:14px; padding:12px 14px;
+      display:flex; align-items:flex-start; gap:10px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.6);
+      transform:translateY(16px) scale(0.95); opacity:0;
+      transition:transform 0.25s cubic-bezier(.34,1.56,.64,1), opacity 0.2s ease;
+      pointer-events:none; cursor:pointer;
+    }
+    .chat-toast.show { transform:translateY(0) scale(1); opacity:1; pointer-events:all; }
+    .chat-toast-ava {
+      width:36px; height:36px; border-radius:50%; flex-shrink:0;
+      background:var(--purple); color:#fff; font-size:0.75rem; font-weight:700;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .chat-toast-name { font-size:0.75rem; font-weight:700; color:var(--t1); margin-bottom:2px; }
+    .chat-toast-msg  { font-size:0.75rem; color:var(--t2); font-weight:300; line-height:1.4;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:210px; }
     /* Task thread inside review card */
     .rv-thread { border-top:1px solid var(--border); margin-top:12px; padding-top:12px; }
     .rv-thread-hd { font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--t3); margin-bottom:8px; }
@@ -704,7 +777,7 @@
         <span class="notif-badge-btn" id="reviewBadge" style="display:none">0</span>
       </div>
       <div class="notif-btn-wrap">
-        <button class="sb" onclick="goSec('chat')" title="Chat" id="chatSideBtn"><span class="ms">forum</span></button>
+        <button class="sb" onclick="toggleAdminChatFloat()" title="Chat" id="chatSideBtn"><span class="ms">forum</span></button>
         <span class="notif-badge-btn" id="chatBadge" style="display:none">0</span>
       </div>
       <button class="sb" onclick="goSec('kanban')" title="Kanban Board"><span class="ms">view_kanban</span></button>
@@ -1073,27 +1146,51 @@
     </section>
 
     <!-- ═══ CHAT ═══ -->
-    <section class="sec" id="sec-chat">
-      <div class="shd">
-        <h2>💬 Chat</h2>
-        <p>Pesan langsung dengan anggota tim</p>
-      </div>
-      <div class="chat-layout">
-        <div class="chat-users-panel">
-          <div class="chat-up-hd">Anggota Tim</div>
-          <div id="chatUserList"><div class="page-loader"><span class="spinner"></span></div></div>
-        </div>
-        <div class="chat-main" id="chatMain">
-          <div class="chat-no-sel">
-            <div><div style="font-size:2.5rem;margin-bottom:10px">💬</div>
-            <div>Pilih anggota tim untuk memulai chat</div></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
   </div><!-- /main -->
 </div><!-- /wrap -->
+
+<!-- ── Chat Toast Notification ── -->
+<div class="chat-toast" id="chatToast" onclick="handleChatToastClick()">
+  <div class="chat-toast-ava" id="chatToastAva">?</div>
+  <div style="flex:1;min-width:0">
+    <div class="chat-toast-name" id="chatToastName">—</div>
+    <div class="chat-toast-msg"  id="chatToastMsg">—</div>
+  </div>
+  <button onclick="event.stopPropagation();dismissChatToast()" style="background:none;border:none;color:var(--t3);cursor:pointer;padding:0;flex-shrink:0;line-height:1">
+    <span class="ms" style="font-size:1rem">close</span>
+  </button>
+</div>
+
+<!-- ── Support Chat Widget ── -->
+<button class="chat-fab" id="chatFab" onclick="toggleAdminChatFloat()" title="Chat Tim">
+  <span class="ms" id="chatFabIcon">forum</span>
+  <span class="chat-fab-badge" id="chatFloatBadge">0</span>
+</button>
+<div class="admin-chat-float" id="adminChatFloat">
+  <div class="acf-header">
+    <div class="acf-title">
+      <span class="ms">forum</span>
+      Chat Tim
+    </div>
+    <button onclick="toggleAdminChatFloat()" style="background:rgba(255,255,255,0.15);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+      <span class="ms" style="color:#fff;font-size:1rem">close</span>
+    </button>
+  </div>
+  <div class="acf-body">
+    <div class="chat-users-panel" style="width:150px">
+      <div class="chat-up-hd">Tim</div>
+      <div id="chatUserList"><div class="page-loader"><span class="spinner"></span></div></div>
+    </div>
+    <div class="chat-main" id="chatMain">
+      <div class="chat-no-sel" style="font-size:0.8125rem">
+        <div style="text-align:center">
+          <span class="ms" style="font-size:2rem;color:var(--t3)">forum</span>
+          <div style="margin-top:8px;color:var(--t2)">Pilih anggota tim</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ── Edit Task Modal ── -->
 <div class="modal-overlay" id="editTaskModal">
@@ -1266,6 +1363,7 @@
     await Promise.all([loadOverview(), loadUserDropdowns()]);
     pollAdminNotifications();
     pollChatBadge();
+    subscribeAdminGlobalDM();
   }
 
   // ── NAVIGATION ─────────────────────────────────────
@@ -1286,7 +1384,6 @@
     if (name === 'users')       loadUsers();
     if (name === 'all-tasks')   loadAllTasks();
     if (name === 'review')      loadReviewQueue();
-    if (name === 'chat')        loadChatSection();
     if (name === 'kanban')      loadAdminKanban();
     if (name === 'leaderboard') loadAdminLeaderboard();
   }
@@ -2066,7 +2163,8 @@
       }
     }
 
-    const isImg = url => /\.(png|jpg|jpeg|gif|webp|svg)(\?|$)/i.test(url||'');
+    const isImg   = url => /\.(png|jpg|jpeg|gif|webp|svg)(\?|$)/i.test(url||'');
+    const isVideo = url => /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(url||'');
 
     el.innerHTML = tasks.map(t => {
       const sub = latestSub[t.id];
@@ -2075,6 +2173,15 @@
 
       const imgPreview = sub && isImg(sub.file_url)
         ? `<img src="${sub.file_url}" style="width:100%;height:100%;object-fit:cover;opacity:0.7;transition:transform 0.5s ease;cursor:zoom-in" onclick="openLightbox('${sub.file_url}')">`
+        : sub && isVideo(sub.file_url)
+        ? `<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:pointer" onclick="window.open('${sub.file_url}','_blank')">
+             <video src="${sub.file_url}" style="width:100%;height:100%;object-fit:cover;opacity:0.75;display:block" muted playsinline preload="metadata" onloadedmetadata="this.currentTime=0.1"></video>
+             <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.25)">
+               <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,213,126,0.15);border:1.5px solid rgba(255,213,126,0.4);display:flex;align-items:center;justify-content:center">
+                 <span class="ms" style="font-size:1.1rem;color:#ffd57e;margin-left:2px">play_arrow</span>
+               </div>
+             </div>
+           </div>`
         : `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--t4)"><span class="ms" style="font-size:2rem">draft</span><span style="font-size:0.6rem;margin-top:8px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase">No Preview</span></div>`;
 
       return `
@@ -2320,6 +2427,16 @@
   // ── CHAT SYSTEM ─────────────────────────────────────────
   let _chatCurrentUserId = null;
   let _chatChannel = null;
+  let _adminChatOpen = false;
+
+  function toggleAdminChatFloat() {
+    _adminChatOpen = !_adminChatOpen;
+    document.getElementById('adminChatFloat').classList.toggle('open', _adminChatOpen);
+    document.getElementById('chatFab').classList.toggle('open', _adminChatOpen);
+    document.getElementById('chatFabIcon').textContent = _adminChatOpen ? 'close' : 'forum';
+    document.getElementById('chatSideBtn').classList.toggle('active', _adminChatOpen);
+    if (_adminChatOpen) loadChatSection();
+  }
 
   async function loadChatSection() {
     await loadChatUserList();
@@ -2340,7 +2457,7 @@
     }
     el.innerHTML = users.map(u => {
       const cnt = unreadMap[u.id]||0;
-      return `<div class="chat-user-item ${_chatCurrentUserId===u.id?'active':''}" id="cui-${u.id}"
+      return `<div class="chat-user-item ${_chatCurrentUserId===u.id?'active':''}" id="cui-${u.id}" data-uid="${u.id}"
         onclick="openAdminChat('${u.id}','${esc(u.full_name)}')">
         <div class="mini-ava">${ini(u.full_name)}</div>
         <div style="flex:1;min-width:0">
@@ -2480,19 +2597,85 @@
     await loadTaskThread(taskId, assignedId, taskTitle);
   }
 
+  // ── Global realtime: fires for ANY new inbound DM to admin ──
+  let _globalChatChannel = null;
+  let _chatToastTimer = null;
+  let _chatToastSenderId = null;
+
+  function subscribeAdminGlobalDM() {
+    if (_globalChatChannel) db.removeChannel(_globalChatChannel);
+    _globalChatChannel = db.channel(`admin-global-dm-${adminProfile.id}`)
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'messages',
+          filter:`recipient_id=eq.${adminProfile.id}` }, async payload => {
+        const m = payload.new;
+        if (m.task_id) return; // skip task threads
+        if (_adminChatOpen && _chatCurrentUserId === m.sender_id) return; // already viewing
+        // Fetch sender name
+        const { data: sender } = await db.from('profiles')
+          .select('full_name').eq('id', m.sender_id).single();
+        const name = sender?.full_name || 'Tim';
+        const preview = m.content?.substring(0, 60) + (m.content?.length > 60 ? '…' : '');
+        showChatToast(m.sender_id, name, preview);
+        pollChatBadge();
+      }).subscribe();
+  }
+
+  function showChatToast(senderId, name, msg) {
+    _chatToastSenderId = senderId;
+    const ini = name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    document.getElementById('chatToastAva').textContent  = ini;
+    document.getElementById('chatToastName').textContent = name;
+    document.getElementById('chatToastMsg').textContent  = msg;
+    const toast = document.getElementById('chatToast');
+    const fab   = document.getElementById('chatFab');
+    // Position above panel if open, else above FAB
+    toast.style.bottom = _adminChatOpen ? '596px' : '88px';
+    toast.classList.add('show');
+    fab.classList.remove('ping');
+    void fab.offsetWidth; // reflow to restart animation
+    fab.classList.add('ping');
+    clearTimeout(_chatToastTimer);
+    _chatToastTimer = setTimeout(dismissChatToast, 5000);
+  }
+
+  function dismissChatToast() {
+    document.getElementById('chatToast').classList.remove('show');
+    clearTimeout(_chatToastTimer);
+  }
+
+  function handleChatToastClick() {
+    dismissChatToast();
+    if (!_adminChatOpen) toggleAdminChatFloat();
+    // Select that user's thread after panel loads
+    setTimeout(() => openAdminDMByUserId(_chatToastSenderId), _adminChatOpen ? 0 : 300);
+  }
+
+  async function openAdminDMByUserId(userId) {
+    // Trigger click on the user item if visible, otherwise load thread directly
+    const item = document.querySelector(`.chat-user-item[data-uid="${userId}"]`);
+    if (item) { item.click(); return; }
+    const { data: u } = await db.from('profiles').select('full_name').eq('id', userId).single();
+    if (u) openAdminChat(userId, u.full_name);
+  }
+
   async function pollChatBadge() {
     if (!adminProfile?.id) return;
     const { count } = await db.from('messages')
       .select('id',{count:'exact',head:true})
       .eq('recipient_id', adminProfile.id).eq('is_read', false);
-    const badge = document.getElementById('chatBadge');
-    const btn   = document.getElementById('chatSideBtn');
+    const badge      = document.getElementById('chatBadge');
+    const floatBadge = document.getElementById('chatFloatBadge');
+    const btn        = document.getElementById('chatSideBtn');
     if (count > 0) {
-      badge.textContent = count>99?'99+':count;
+      const label = count > 99 ? '99+' : count;
+      badge.textContent = label;
       badge.style.display = 'flex';
+      floatBadge.textContent = label;
+      floatBadge.style.display = 'flex';
       if (btn) btn.style.color = 'var(--purple)';
     } else {
       badge.style.display = 'none';
+      floatBadge.style.display = 'none';
       if (btn) btn.style.color = '';
     }
     setTimeout(pollChatBadge, 30000);
