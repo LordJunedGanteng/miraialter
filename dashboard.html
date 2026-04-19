@@ -381,16 +381,24 @@
       padding: 11px 14px;
       background: var(--surf);
       border: 1px solid var(--border);
+      border-left: 3px solid transparent;
       border-radius: var(--r-sm);
       margin-bottom: 6px;
       cursor: pointer;
-      transition: all var(--ease);
+      transition: background var(--ease), border-color var(--ease);
     }
 
-    .task-row:hover {
-      border-color: var(--border2);
-      background: var(--card);
-    }
+    .task-row:hover { background: var(--card); }
+
+    .task-row.pri-urgent { border-left-color:#f87171; background:rgba(248,113,113,0.05); }
+    .task-row.pri-high   { border-left-color:#fbbf24; background:rgba(251,191,36,0.05);  }
+    .task-row.pri-medium { border-left-color:#9d8fff; background:rgba(124,111,255,0.05); }
+    .task-row.pri-low    { border-left-color:var(--border2); }
+
+    .task-row.pri-urgent:hover { background:rgba(248,113,113,0.09); }
+    .task-row.pri-high:hover   { background:rgba(251,191,36,0.09);  }
+    .task-row.pri-medium:hover { background:rgba(124,111,255,0.09); }
+    .task-row.pri-low:hover    { background:var(--card); }
 
     .task-num {
       width: 28px;
@@ -1747,7 +1755,7 @@
       renderTaskList(filtered);
     }
 
-    const numColors = ['#7c6fff', '#ff6584', '#3dd9ad', '#fbbf24', '#f87171', '#fb923c', '#22d3ee', '#c084fc'];
+    const PRIO_COLOR = { urgent:'#f87171', high:'#fbbf24', medium:'#9d8fff', low:'#6b7280' };
 
     function renderTaskList(tasks) {
       const el = document.getElementById('taskListMain');
@@ -1756,9 +1764,9 @@
       }
       el.innerHTML = tasks.map((t, i) => {
         const over = t.due_date && new Date(t.due_date) < new Date() && t.status !== 'processed';
-        const color = numColors[i % numColors.length];
-        return `<div class="task-row" onclick="openTaskModal('${t.id}')">
-        <div class="task-num" style="background:${color}22;color:${color}">${i + 1}</div>
+        const pc = PRIO_COLOR[t.priority] || '#6b7280';
+        return `<div class="task-row pri-${t.priority}" onclick="openTaskModal('${t.id}')">
+        <div class="task-num" style="background:${pc}22;color:${pc}">${i + 1}</div>
         <div class="task-row-info">
           <div class="task-row-title">${esc(t.title)}</div>
           <div class="task-row-sub">${t.assigned_by?.full_name ? 'dari ' + esc(t.assigned_by.full_name) : 'Role task'}</div>
