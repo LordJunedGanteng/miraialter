@@ -1183,6 +1183,27 @@
       font-size: 0.875rem;
     }
 
+    /* ── NOTIFICATION TOAST STACK ── */
+    #notifToastStack { position:fixed; bottom:24px; left:24px; z-index:600; display:flex; flex-direction:column-reverse; gap:10px; pointer-events:none; }
+    .notif-toast {
+      width:310px; background:var(--card2);
+      border:1px solid rgba(255,255,255,0.07); border-radius:12px;
+      padding:12px 14px; display:flex; align-items:flex-start; gap:10px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.55);
+      transform:translateX(-20px) scale(0.96); opacity:0;
+      transition:transform 0.3s cubic-bezier(.34,1.56,.64,1), opacity 0.25s ease;
+      pointer-events:all; position:relative; overflow:hidden;
+    }
+    .notif-toast.show { transform:translateX(0) scale(1); opacity:1; }
+    .notif-toast-icon { font-size:1.3rem; flex-shrink:0; margin-top:1px; }
+    .notif-toast-type { font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:2px; }
+    .notif-toast-title { font-size:0.8125rem; font-weight:700; color:var(--t1); margin-bottom:2px; line-height:1.3; }
+    .notif-toast-msg { font-size:0.75rem; color:var(--t2); font-weight:300; line-height:1.4; }
+    .notif-toast-close { background:none; border:none; cursor:pointer; color:var(--t3); flex-shrink:0; padding:0; display:flex; align-items:center; }
+    .notif-toast-close .ms { font-size:0.875rem; }
+    .notif-toast-bar { position:absolute; bottom:0; left:0; height:2px; width:100%; transform-origin:left; animation:ntbar 4.5s linear forwards; }
+    @keyframes ntbar { from{transform:scaleX(1)} to{transform:scaleX(0)} }
+
     .toast {
       position: fixed;
       bottom: 24px;
@@ -1586,6 +1607,7 @@
   </div>
 
   <!-- Notification Panel -->
+  <div id="notifToastStack"></div>
   <div class="notif-backdrop" id="notifBackdrop" onclick="toggleNotifPanel()"></div>
   <div class="notif-panel" id="notifPanel">
     <div class="notif-panel-hd">
@@ -1672,6 +1694,7 @@
       loadUpcoming();
       pollNotifications();
       pollDashChatBadge();
+      subscribeDashNotifications();
     }
 
     // ── NAVIGATION ────────────────────────────────────────
@@ -2477,6 +2500,78 @@
         if (btn) btn.style.color = '';
       }
       _dashChatTimer = setTimeout(pollDashChatBadge, 30000);
+    }
+
+    // ── WEB AUDIO NOTIFICATION SOUNDS ──────────────────────
+    let _audioCtx = null;
+    function _ac() {
+      if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      return _audioCtx;
+    }
+    function _tone(ctx, freq, t, dur, vol=0.22, type='sine') {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = type; o.frequency.value = freq;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vol, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      o.start(t); o.stop(t + dur + 0.05);
+    }
+    function playNotifSound(type) {
+      try {
+        const ctx = _ac();
+        if (ctx.state === 'suspended') ctx.resume();
+        const t = ctx.currentTime;
+        ({
+          task_message:     () => { _tone(ctx,880,t,0.09); _tone(ctx,1100,t+0.13,0.1); },
+          task_submitted:   () => [440,554,659].forEach((f,i) => _tone(ctx,f,t+i*0.11,0.13)),
+          task_approved:    () => [523,659,784,1047].forEach((f,i) => _tone(ctx,f,t+i*0.09,0.22,0.18)),
+          task_revision:    () => { _tone(ctx,440,t,0.16,0.18,'sawtooth'); _tone(ctx,330,t+0.2,0.22,0.14,'sawtooth'); },
+          task_assigned:    () => { _tone(ctx,600,t,0.06,0.15); _tone(ctx,800,t+0.07,0.16,0.2); },
+          task_unsubmitted: () => _tone(ctx,330,t,0.22,0.15),
+        }[type] || (() => _tone(ctx,660,t,0.12)))();
+      } catch(e) {}
+    }
+
+    // ── NOTIFICATION TOAST ───────────────────────────────
+    const _NCFG = {
+      task_submitted:   { icon:'upload_file',    color:'#a78bfa', label:'Submission Baru' },
+      task_approved:    { icon:'check_circle',   color:'#5ef3c5', label:'Disetujui'       },
+      task_revision:    { icon:'sync',           color:'#fbbf24', label:'Revisi'          },
+      task_assigned:    { icon:'assignment_ind', color:'#ffd57e', label:'Task Baru'       },
+      task_message:     { icon:'forum',          color:'#a78bfa', label:'Pesan Baru'      },
+      task_unsubmitted: { icon:'remove_circle',  color:'#ff7eb3', label:'Dibatalkan'      },
+    };
+    let _ntsq = 0;
+    function showNotifToast(title, message, type) {
+      const cfg = _NCFG[type] || { icon:'notifications', color:'#a78bfa', label:'Notifikasi' };
+      const id = `nts${++_ntsq}`;
+      const el = document.createElement('div');
+      el.className = 'notif-toast'; el.id = id;
+      el.innerHTML = `
+        <span class="ms notif-toast-icon" style="color:${cfg.color}">${cfg.icon}</span>
+        <div style="flex:1;min-width:0">
+          <div class="notif-toast-type" style="color:${cfg.color}">${cfg.label}</div>
+          <div class="notif-toast-title">${title}</div>
+          ${message ? `<div class="notif-toast-msg">${String(message).substring(0,80)}</div>` : ''}
+        </div>
+        <button class="notif-toast-close" onclick="document.getElementById('${id}').remove()"><span class="ms">close</span></button>
+        <div class="notif-toast-bar" style="background:${cfg.color}"></div>`;
+      document.getElementById('notifToastStack').appendChild(el);
+      requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+      setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 350); }, 4500);
+      playNotifSound(type);
+    }
+
+    // ── REALTIME SUBSCRIPTION: notifications table ───────
+    function subscribeDashNotifications() {
+      db.channel(`dash-notif-${CU.id}`)
+        .on('postgres_changes', { event:'INSERT', schema:'public', table:'notifications',
+            filter:`recipient_id=eq.${CU.id}` }, payload => {
+          const n = payload.new;
+          showNotifToast(n.title, n.message, n.type);
+          pollNotifications();
+        }).subscribe();
     }
 
     init();
