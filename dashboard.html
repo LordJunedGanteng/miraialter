@@ -1079,17 +1079,51 @@
     }
 
     .prof-avatar-lg {
-      width: 56px;
-      height: 56px;
+      width: 56px; height: 56px;
       border-radius: 16px;
       background: linear-gradient(135deg, var(--gold-d), var(--gold));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: #0e1116;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem; font-weight: 800; color: #0e1116;
     }
+
+    /* Profile avatar upload */
+    .prof-ava-wrap {
+      position: relative; width: 88px; height: 88px; flex-shrink: 0; cursor: pointer;
+    }
+    .prof-ava-wrap img, .prof-ava-init {
+      width: 88px; height: 88px; border-radius: 50%;
+      object-fit: cover;
+      background: linear-gradient(135deg, var(--gold-d), var(--gold));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.75rem; font-weight: 800; color: #0e1116;
+    }
+    .prof-ava-overlay {
+      position: absolute; inset: 0; border-radius: 50%;
+      background: rgba(0,0,0,0.5);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.2s;
+      color: #fff; font-size: 0.55rem; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase; gap: 3px;
+    }
+    .prof-ava-wrap:hover .prof-ava-overlay { opacity: 1; }
+
+    .prof-divider {
+      border: none; border-top: 1px solid var(--border);
+      margin: 20px 0;
+    }
+    .prof-section-label {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--t3); margin-bottom: 12px;
+    }
+    .prof-reset-btn {
+      width: 100%; padding: 10px;
+      background: rgba(255,180,171,0.08); border: 1px solid rgba(255,180,171,0.2);
+      color: var(--pink); border-radius: var(--r-sm);
+      font-size: 0.75rem; font-weight: 600; cursor: pointer;
+      transition: background 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .prof-reset-btn:hover { background: rgba(255,180,171,0.15); }
 
     /* ── MODAL ── */
     .modal-overlay {
@@ -1575,13 +1609,20 @@
             <p>Edit informasi akun kamu</p>
           </div>
           <div class="prof-card">
+            <!-- Avatar + nama -->
             <div class="prof-top">
-              <div class="prof-avatar-lg" id="profAvaLg">MA</div>
+              <input type="file" id="profAvaInput" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+              <div class="prof-ava-wrap" id="profAvaWrap" onclick="document.getElementById('profAvaInput').click()" title="Ganti foto">
+                <div class="prof-ava-init" id="profAvaLg">MA</div>
+                <div class="prof-ava-overlay"><span class="ms" style="font-size:1.2rem">photo_camera</span>Ganti</div>
+              </div>
               <div>
                 <div style="font-weight:700;font-size:1rem;margin-bottom:4px" id="profNameDisplay">...</div>
                 <div id="profRoleBadge"></div>
               </div>
             </div>
+
+            <!-- Info form -->
             <form id="profForm" onsubmit="saveProfile(event)">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
                 <div class="form-group">
@@ -1597,8 +1638,35 @@
                 <label class="form-label">Bio</label>
                 <textarea class="form-textarea" id="profBio" placeholder="Ceritakan tentang dirimu..."></textarea>
               </div>
-              <button type="submit" class="btn btn-primary" id="profSaveBtn">Simpan</button>
+              <button type="submit" class="btn btn-primary" id="profSaveBtn">Simpan Profil</button>
             </form>
+
+            <hr class="prof-divider">
+
+            <!-- Ganti password -->
+            <div class="prof-section-label">Ganti Password</div>
+            <form id="pwForm" onsubmit="changePassword(event)">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="form-group">
+                  <label class="form-label">Password Baru</label>
+                  <input type="password" class="form-input" id="pwNew" placeholder="Min. 8 karakter" minlength="8" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Konfirmasi Password</label>
+                  <input type="password" class="form-input" id="pwConfirm" placeholder="Ulangi password" required>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-secondary" id="pwSaveBtn">Ubah Password</button>
+            </form>
+
+            <hr class="prof-divider">
+
+            <!-- Request reset via admin -->
+            <div class="prof-section-label">Reset Password via Admin</div>
+            <p style="font-size:0.75rem;color:var(--t3);margin-bottom:10px">Lupa password lama? Minta admin untuk mereset password kamu.</p>
+            <button class="prof-reset-btn" id="resetReqBtn" onclick="requestPasswordReset()">
+              <span class="ms" style="font-size:1rem">lock_reset</span> Kirim Request Reset ke Admin
+            </button>
           </div>
         </div>
       </section>
@@ -1692,6 +1760,7 @@
       document.getElementById('profName').value = CP.full_name || '';
       document.getElementById('profUsername').value = CP.username || '';
       document.getElementById('profBio').value = CP.bio || '';
+      _refreshAvatar(CP);
 
       await loadHome();
       loadSubmitDropdowns();
@@ -2275,6 +2344,65 @@
     document.getElementById('taskModal').addEventListener('click', e => { if (e.target === document.getElementById('taskModal')) closeModal(); });
 
     // ── PROFILE ───────────────────────────────────────────
+    function _refreshAvatar(profile) {
+      const wrap = document.getElementById('profAvaWrap');
+      const sideEl = document.getElementById('sidebarAvatar');
+      if (profile.avatar_url) {
+        // large avatar
+        const existing = wrap ? wrap.querySelector('img') : null;
+        if (!existing) {
+          const initEl = document.getElementById('profAvaLg');
+          if (initEl) { initEl.style.display = 'none'; }
+          const img = document.createElement('img');
+          img.id = 'profAvaImg';
+          img.src = profile.avatar_url;
+          img.style.cssText = 'width:88px;height:88px;border-radius:50%;object-fit:cover;display:block';
+          img.onerror = () => { img.remove(); if (initEl) initEl.style.display = ''; };
+          if (wrap) wrap.prepend(img);
+        } else {
+          existing.src = profile.avatar_url;
+        }
+        // sidebar
+        if (sideEl) {
+          sideEl.style.backgroundImage = `url(${profile.avatar_url})`;
+          sideEl.style.backgroundSize = 'cover';
+          sideEl.style.backgroundPosition = 'center';
+          sideEl.textContent = '';
+        }
+      } else {
+        if (sideEl) {
+          sideEl.style.backgroundImage = '';
+          sideEl.textContent = ini(profile.full_name);
+        }
+      }
+    }
+
+    async function uploadAvatar(input) {
+      const file = input.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { toast('Pilih file gambar.', 'error'); return; }
+      if (file.size > 5 * 1024 * 1024) { toast('Foto maks 5MB.', 'error'); return; }
+
+      const ext = file.name.split('.').pop();
+      const path = `${CU.id}/avatar.${ext}`;
+      toast('Mengupload foto...', 'info');
+
+      const { error: upErr } = await db.storage.from('avatars').upload(path, file, { upsert: true });
+      if (upErr) { toast('Upload gagal: ' + upErr.message, 'error'); return; }
+
+      const { data: { publicUrl } } = db.storage.from('avatars').getPublicUrl(path);
+      const urlWithBust = publicUrl + '?t=' + Date.now();
+
+      const { error } = await db.from('profiles').update({ avatar_url: urlWithBust }).eq('id', CU.id);
+      if (error) { toast('Gagal simpan: ' + error.message, 'error'); return; }
+
+      CP = await getProfile(CU.id);
+      CP.avatar_url = urlWithBust;
+      _refreshAvatar(CP);
+      toast('Foto profile diupdate!', 'success');
+      input.value = '';
+    }
+
     async function saveProfile(e) {
       e.preventDefault();
       const btn = document.getElementById('profSaveBtn');
@@ -2284,11 +2412,43 @@
         username: document.getElementById('profUsername').value.trim().toLowerCase(),
         bio: document.getElementById('profBio').value.trim()
       }).eq('id', CU.id);
-      setBtn(btn, false, 'Simpan');
+      setBtn(btn, false, 'Simpan Profil');
       if (error) { toast('Gagal: ' + error.message, 'error'); return; }
       toast('Profile diupdate!', 'success');
       CP = await getProfile(CU.id);
-      document.getElementById('sidebarAvatar').textContent = ini(CP.full_name);
+      document.getElementById('profNameDisplay').textContent = CP.full_name;
+      _refreshAvatar(CP);
+    }
+
+    async function changePassword(e) {
+      e.preventDefault();
+      const newPw = document.getElementById('pwNew').value;
+      const confirm = document.getElementById('pwConfirm').value;
+      if (newPw !== confirm) { toast('Password tidak cocok.', 'error'); return; }
+      const btn = document.getElementById('pwSaveBtn');
+      setBtn(btn, true, 'Mengubah...');
+      const { error } = await db.auth.updateUser({ password: newPw });
+      setBtn(btn, false, 'Ubah Password');
+      if (error) { toast('Gagal: ' + error.message, 'error'); return; }
+      toast('Password berhasil diubah!', 'success');
+      document.getElementById('pwForm').reset();
+    }
+
+    async function requestPasswordReset() {
+      const btn = document.getElementById('resetReqBtn');
+      btn.disabled = true;
+      // Check if there's already a pending request
+      const { data: existing } = await db.from('password_reset_requests')
+        .select('id,status').eq('user_id', CU.id).eq('status', 'pending').maybeSingle();
+      if (existing) {
+        toast('Kamu sudah punya request yang belum diproses.', 'error');
+        btn.disabled = false;
+        return;
+      }
+      const { error } = await db.from('password_reset_requests').insert({ user_id: CU.id });
+      btn.disabled = false;
+      if (error) { toast('Gagal: ' + error.message, 'error'); return; }
+      toast('Request terkirim! Admin akan mereset password kamu.', 'success');
     }
 
     // ── HELPERS ───────────────────────────────────────────

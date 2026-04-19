@@ -945,6 +945,14 @@
 
     <!-- ═══ USER CONTROL ═══ -->
     <section class="sec" id="sec-users">
+      <!-- Password Reset Requests -->
+      <div id="resetReqSection" style="display:none;margin-bottom:24px">
+        <div class="shd" style="margin-bottom:12px">
+          <h2>🔑 Password Reset Requests <span id="resetReqBadge" style="background:rgba(255,180,171,0.15);color:var(--pink,#ffb4ab);font-size:0.7rem;font-weight:700;padding:2px 10px;border-radius:99px;margin-left:8px"></span></h2>
+        </div>
+        <div id="resetReqList" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
       <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px">
         <div class="shd" style="margin-bottom:0">
           <h2>👥 User Control</h2>
@@ -1354,6 +1362,27 @@
   </div>
 </div>
 
+<!-- ── Reset Password Modal ── -->
+<div class="modal-overlay" id="resetPwModal">
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-hd">
+      <div class="modal-title">🔑 Reset Password</div>
+      <button class="modal-x" onclick="closeModal('resetPwModal')">✕</button>
+    </div>
+    <input type="hidden" id="resetPwUserId">
+    <input type="hidden" id="resetPwReqId">
+    <p style="font-size:0.8125rem;color:var(--t2);margin-bottom:16px">Set password baru untuk <strong id="resetPwUserName"></strong>.</p>
+    <div class="form-group">
+      <label class="form-label">Password Baru</label>
+      <input type="password" class="form-input" id="resetPwInput" placeholder="Min. 8 karakter" minlength="8">
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" id="resetPwSaveBtn" onclick="handleResetPassword()">Reset Password</button>
+      <button class="btn btn-secondary" onclick="closeModal('resetPwModal')">Batal</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Submissions Modal ── -->
 <div class="modal-overlay" id="subsModal">
   <div class="modal-box" style="max-width:600px">
@@ -1457,7 +1486,7 @@
     event?.currentTarget?.classList.add('active');
     document.getElementById('topTitle').textContent = SEC_TITLES[name] || name;
 
-    if (name === 'users')       loadUsers();
+    if (name === 'users')       { loadUsers(); loadResetRequests(); }
     if (name === 'all-tasks')   loadAllTasks();
     if (name === 'review')      loadReviewQueue();
     if (name === 'kanban')      loadAdminKanban();
@@ -1539,6 +1568,70 @@
   }
 
   // ── USERS ──────────────────────────────────────────
+  // ── PASSWORD RESET REQUESTS ────────────────────────
+  async function loadResetRequests() {
+    const { data } = await db.from('password_reset_requests')
+      .select('id, status, requested_at, user_id, profiles!password_reset_requests_user_id_fkey(full_name, username, role)')
+      .eq('status', 'pending')
+      .order('requested_at', { ascending: true });
+
+    const section = document.getElementById('resetReqSection');
+    const list = document.getElementById('resetReqList');
+    const badge = document.getElementById('resetReqBadge');
+
+    if (!data?.length) { section.style.display = 'none'; return; }
+
+    section.style.display = '';
+    badge.textContent = data.length + ' pending';
+    list.innerHTML = data.map(r => `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(255,180,171,0.06);border:1px solid rgba(255,180,171,0.15);border-radius:10px;padding:12px 16px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#c97d2e,#e8b84b);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.875rem;color:#0e1116;flex-shrink:0">${ini(r.profiles?.full_name||'?')}</div>
+          <div>
+            <div style="font-weight:600;font-size:0.875rem">${esc(r.profiles?.full_name||'?')}</div>
+            <div style="font-size:0.75rem;color:var(--t3)">${r.profiles?.username?'@'+r.profiles.username+' · ':''}${timeAgo(r.requested_at)}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary btn-sm" onclick="openResetPwModal('${r.id}','${r.user_id}','${esc(r.profiles?.full_name||'')}')">🔑 Set Password</button>
+          <button class="btn btn-ghost btn-sm" onclick="rejectResetRequest('${r.id}')">Tolak</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function openResetPwModal(reqId, userId, userName) {
+    document.getElementById('resetPwReqId').value = reqId;
+    document.getElementById('resetPwUserId').value = userId;
+    document.getElementById('resetPwUserName').textContent = userName;
+    document.getElementById('resetPwInput').value = '';
+    openModal('resetPwModal');
+  }
+
+  async function handleResetPassword() {
+    const userId = document.getElementById('resetPwUserId').value;
+    const reqId  = document.getElementById('resetPwReqId').value;
+    const pw     = document.getElementById('resetPwInput').value;
+    if (pw.length < 8) { showToast('Password minimal 8 karakter.', 'error'); return; }
+
+    const btn = document.getElementById('resetPwSaveBtn');
+    btn.disabled = true; btn.textContent = 'Mereset...';
+
+    const { error } = await db.rpc('admin_reset_password', { target_user_id: userId, new_password: pw });
+    if (error) { showToast('Gagal: ' + error.message, 'error'); btn.disabled = false; btn.textContent = 'Reset Password'; return; }
+
+    await db.from('password_reset_requests').update({ status: 'approved', resolved_at: new Date().toISOString(), resolved_by: CU.id }).eq('id', reqId);
+    btn.disabled = false; btn.textContent = 'Reset Password';
+    closeModal('resetPwModal');
+    showToast('Password berhasil direset!', 'success');
+    loadResetRequests();
+  }
+
+  async function rejectResetRequest(reqId) {
+    await db.from('password_reset_requests').update({ status: 'rejected', resolved_at: new Date().toISOString(), resolved_by: CU.id }).eq('id', reqId);
+    showToast('Request ditolak.', 'info');
+    loadResetRequests();
+  }
+
   async function loadUsers() {
     const grid = document.getElementById('userGrid');
     grid.innerHTML = `<div class="page-loader" style="grid-column:1/-1"><span class="spinner"></span></div>`;
