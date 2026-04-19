@@ -1,1601 +1,523 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mirai Atelier — Where Adventure Begins</title>
-  <meta name="description" content="Mirai Atelier — An enchanting adventure game where you explore magical forests with your feline companion. Join the journey."/>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mirai Atelier — Where Adventure Begins</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary":       "#e8b84b",
+          "primary-light": "#ffd57e",
+          "background":    "#111319",
+          "surface":       "#191c21",
+          "card":          "#1d2025",
+          "text-main":     "#e1e2e9",
+          "text-sec":      "#d2c5b0",
+          "text-muted":    "#9b8f7c",
+          "purple-accent": "#c5c0ff",
+          "teal-accent":   "#5ef3c5",
+          "pink-accent":   "#ffb4ab",
+          "outline-var":   "rgba(78,70,54,0.20)"
+        },
+        borderRadius: { "lg":"0.5rem","xl":"1rem","2xl":"1.25rem","3xl":"1.5rem" },
+        fontFamily: { "display":["Cormorant Garamond","serif"],"body":["Inter","sans-serif"] }
+      }
+    }
+  }
+</script>
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { font-family:'Inter',sans-serif; background:#111319; color:#e1e2e9; overflow-x:hidden; }
 
-  <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width:5px; }
+  ::-webkit-scrollbar-track { background:#111319; }
+  ::-webkit-scrollbar-thumb { background:#2a2a1e; border-radius:3px; }
 
-    :root {
-      --cream:    #f5efe6;
-      --sage:     #7a9e7e;
-      --forest:   #2d5016;
-      --deep:     #0f1f0a;
-      --amber:    #c97d2e;
-      --gold:     #e8b84b;
-      --soft-wht: rgba(255,255,255,0.88);
-      --glass:    rgba(255,255,255,0.08);
-      --glass-b:  rgba(255,255,255,0.15);
-    }
+  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
 
-    html { scroll-behavior: smooth; }
+  /* ── NAVBAR ── */
+  #navbar { transition: background 0.5s ease, backdrop-filter 0.5s ease; }
+  #navbar.scrolled { background:rgba(17,19,25,0.88); backdrop-filter:blur(20px); }
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--deep);
-      color: var(--cream);
-      overflow-x: hidden;
-    }
+  /* ── HERO ── */
+  .hero-section {
+    position:relative; min-height:100vh;
+    display:flex; flex-direction:column;
+    justify-content:flex-end; align-items:center;
+    overflow:hidden;
+  }
+  .hero-bg {
+    position:absolute; inset:0; z-index:0;
+    background-image: url('assets/hero.jpg');
+    background-size:cover; background-position:center top;
+    transform:scale(1.04);
+    transition:transform 8s ease;
+  }
+  .hero-bg.loaded { transform:scale(1); }
+  /* Cinematic CSS fallback when image not loaded */
+  .hero-bg-fallback {
+    position:absolute; inset:0; z-index:0;
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 30%, rgba(120,180,80,0.25) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 20% 60%, rgba(80,50,20,0.3) 0%, transparent 50%),
+      radial-gradient(ellipse 40% 60% at 80% 60%, rgba(60,40,20,0.3) 0%, transparent 50%),
+      linear-gradient(180deg, #8fb86a 0%, #5a9440 20%, #2d5a1a 55%, #111319 100%);
+  }
 
-    /* ─── SCROLLBAR ─── */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: var(--deep); }
-    ::-webkit-scrollbar-thumb { background: var(--sage); border-radius: 3px; }
+  /* Bottom gradient blending hero into dark bg */
+  .hero-fade {
+    position:absolute; bottom:0; left:0; right:0; z-index:2;
+    height:55%;
+    background:linear-gradient(to bottom, transparent 0%, rgba(17,19,25,0.6) 50%, #111319 100%);
+    pointer-events:none;
+  }
 
-    /* ══════════════════════════════════════
-       NAVBAR
-    ══════════════════════════════════════ */
-    nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px 60px;
-      transition: background 0.4s, backdrop-filter 0.4s;
-    }
-    nav.scrolled {
-      background: rgba(15,31,10,0.85);
-      backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(122,158,126,0.15);
-    }
+  /* Top vignette */
+  .hero-vignette {
+    position:absolute; inset:0; z-index:1;
+    background:
+      radial-gradient(ellipse at top, transparent 50%, rgba(0,0,0,0.3) 100%),
+      linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, transparent 30%);
+    pointer-events:none;
+  }
 
-    .nav-logo {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.6rem;
-      font-weight: 300;
-      letter-spacing: 0.12em;
-      color: var(--soft-wht);
-      text-decoration: none;
-      position: relative;
-    }
-    .nav-logo span { color: var(--gold); }
-    .nav-logo::after {
-      content: '';
-      position: absolute;
-      bottom: -3px; left: 0;
-      width: 0; height: 1px;
-      background: var(--gold);
-      transition: width 0.3s;
-    }
-    .nav-logo:hover::after { width: 100%; }
+  /* ── LOGO IMAGE ── */
+  .hero-logo-img {
+    max-width:min(640px, 80vw);
+    width:100%;
+    filter: drop-shadow(0 4px 32px rgba(255,255,255,0.15)) drop-shadow(0 0 80px rgba(255,255,255,0.08));
+    animation: logoFloat 6s ease-in-out infinite;
+  }
+  .hero-logo-fallback {
+    font-family:'Cormorant Garamond',serif;
+    font-size:clamp(3.5rem, 8vw, 7rem);
+    font-weight:300; font-style:italic;
+    letter-spacing:0.04em; line-height:1;
+    color:rgba(255,255,255,0.92);
+    text-shadow:
+      0 2px 40px rgba(255,255,255,0.2),
+      0 0 80px rgba(255,255,255,0.1);
+    animation: logoFloat 6s ease-in-out infinite;
+  }
+  @keyframes logoFloat {
+    0%,100% { transform:translateY(0px); }
+    50%      { transform:translateY(-8px); }
+  }
 
-    .nav-links {
-      display: flex;
-      gap: 36px;
-      list-style: none;
-    }
-    .nav-links a {
-      font-size: 0.85rem;
-      font-weight: 500;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: rgba(245,239,230,0.75);
-      text-decoration: none;
-      position: relative;
-      transition: color 0.3s;
-    }
-    .nav-links a::after {
-      content: '';
-      position: absolute;
-      bottom: -4px; left: 0;
-      width: 0; height: 1px;
-      background: var(--gold);
-      transition: width 0.3s;
-    }
-    .nav-links a:hover { color: var(--cream); }
-    .nav-links a:hover::after { width: 100%; }
+  /* ── GLASS PANEL ── */
+  .glass-panel { background:rgba(29,32,37,0.75); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); }
 
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .btn-sound {
-      background: none; border: none; cursor: pointer;
-      color: rgba(245,239,230,0.6);
-      font-size: 1.2rem;
-      transition: color 0.3s, transform 0.3s;
-    }
-    .btn-sound:hover { color: var(--gold); transform: scale(1.15); }
+  /* ── GRADIENT CTA ── */
+  .primary-gradient { background:linear-gradient(135deg,#ffd57e 0%,#e8b84b 100%); }
 
-    .btn-login {
-      padding: 10px 22px;
-      background: transparent;
-      color: rgba(245,239,230,0.85);
-      border: 1px solid rgba(245,239,230,0.3);
-      border-radius: 30px;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.8rem;
-      font-weight: 500;
-      letter-spacing: 0.06em;
-      text-decoration: none;
-      transition: all 0.3s;
-    }
-    .btn-login:hover {
-      background: rgba(255,255,255,0.1);
-      border-color: rgba(245,239,230,0.6);
-      color: var(--cream);
-    }
-    .btn-connect {
-      padding: 10px 28px;
-      background: linear-gradient(135deg, var(--amber), var(--gold));
-      color: var(--deep);
-      border: none;
-      border-radius: 30px;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.8rem;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: transform 0.3s, box-shadow 0.3s;
-      box-shadow: 0 4px 20px rgba(232,184,75,0.3);
-    }
-    .btn-connect:hover {
-      transform: translateY(-2px) scale(1.04);
-      box-shadow: 0 8px 32px rgba(232,184,75,0.5);
-    }
+  /* ── SCROLL REVEAL ── */
+  .reveal { opacity:0; transform:translateY(28px); transition:opacity 0.8s cubic-bezier(0.16,1,0.3,1),transform 0.8s cubic-bezier(0.16,1,0.3,1); }
+  .reveal.revealed { opacity:1; transform:translateY(0); }
 
-    /* ══════════════════════════════════════
-       HERO
-    ══════════════════════════════════════ */
-    .hero {
-      position: relative;
-      width: 100%;
-      height: 100vh;
-      min-height: 700px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      background: url('hero.png') center / cover no-repeat;
-    }
-    /* Overlay for readability */
-    .hero-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        180deg,
-        rgba(0,0,0,0.30) 0%,
-        rgba(0,0,0,0.04) 42%,
-        rgba(0,0,0,0.50) 100%
-      );
-      z-index: 5;
-    }
-    /* Hero logo image */
-    .hero-logo-img {
-      width: clamp(260px, 50vw, 660px);
-      height: auto;
-      filter: drop-shadow(0 0 40px rgba(255,255,255,0.35))
-              drop-shadow(0 4px 16px rgba(0,0,0,0.4));
-      animation: fadeDown 0.9s 0.15s ease both;
-      margin-bottom: -4px;
-    }
-    /* Nav logo image */
-    .nav-logo-img {
-      height: 28px;
-      width: auto;
-      filter: drop-shadow(0 0 8px rgba(255,255,255,0.15));
-      transition: filter 0.3s;
-      vertical-align: middle;
-    }
-    .nav-logo:hover .nav-logo-img {
-      filter: drop-shadow(0 0 14px rgba(232,184,75,0.55));
-    }
-    /* Hide CSS-drawn decorations (replaced by real artwork) */
-    .hero-sky, .hero-sun, .cloud, .cloud-1, .cloud-2, .cloud-3,
-    .forest-layer, .forest-back, .forest-mid, .forest-front,
-    .hero-ground, .particles { display: none !important; }
-
-    /* Sky gradient */
-    .hero-sky {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        180deg,
-        #1a3a0d 0%,
-        #2a5c1a 20%,
-        #4a8c30 40%,
-        #88b84a 55%,
-        #d4c47a 65%,
-        #f0d898 70%,
-        #f5e8b0 75%,
-        #e8d090 80%,
-        #b89048 90%,
-        #6b4a18 100%
-      );
-    }
-
-    /* Sun glow */
-    .hero-sun {
-      position: absolute;
-      top: 38%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 280px;
-      height: 280px;
-      background: radial-gradient(circle, rgba(255,240,180,0.95) 0%, rgba(255,220,100,0.6) 35%, rgba(255,190,60,0.2) 65%, transparent 80%);
-      border-radius: 50%;
-      animation: sunPulse 5s ease-in-out infinite;
-    }
-    @keyframes sunPulse {
-      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
-      50%       { transform: translate(-50%, -50%) scale(1.12); opacity: 1; }
-    }
-
-    /* Clouds */
-    .cloud {
-      position: absolute;
-      background: rgba(255,255,255,0.55);
-      border-radius: 50px;
-      filter: blur(8px);
-      animation: cloudDrift linear infinite;
-    }
-    .cloud::before, .cloud::after {
-      content: '';
-      position: absolute;
-      background: inherit;
-      border-radius: 50%;
-    }
-    .cloud-1 { width:220px; height:50px; top:20%; left:-10%; animation-duration:80s; opacity:0.6; }
-    .cloud-1::before { width:100px; height:80px; top:-35px; left:30px; }
-    .cloud-1::after  { width:70px;  height:60px; top:-20px; right:40px; }
-    .cloud-2 { width:160px; height:38px; top:14%; left:15%; animation-duration:110s; animation-delay:-30s; opacity:0.45; }
-    .cloud-2::before { width:80px; height:65px; top:-28px; left:20px; }
-    .cloud-3 { width:200px; height:45px; top:28%; right:-5%; animation-duration:95s; animation-delay:-50s; opacity:0.5; }
-    .cloud-3::before { width:90px; height:72px; top:-32px; left:35px; }
-    @keyframes cloudDrift {
-      from { transform: translateX(0); }
-      to   { transform: translateX(110vw); }
-    }
-
-    /* Forest layers */
-    .forest-layer {
-      position: absolute;
-      bottom: 0;
-      left: 0; right: 0;
-    }
-    /* Back trees */
-    .forest-back {
-      height: 55%;
-      background:
-        radial-gradient(ellipse 60px 200px at 5%   100%, #1a4010 0%, transparent 70%),
-        radial-gradient(ellipse 80px 260px at 12%  100%, #1e4a14 0%, transparent 70%),
-        radial-gradient(ellipse 70px 230px at 18%  100%, #163508 0%, transparent 70%),
-        radial-gradient(ellipse 90px 280px at 25%  100%, #224c18 0%, transparent 70%),
-        radial-gradient(ellipse 65px 210px at 32%  100%, #1a4010 0%, transparent 70%),
-        radial-gradient(ellipse 100px 300px at 40% 100%, #264e1a 0%, transparent 70%),
-        radial-gradient(ellipse 75px 240px at 48%  100%, #1c4212 0%, transparent 70%),
-        radial-gradient(ellipse 85px 270px at 56%  100%, #204816 0%, transparent 70%),
-        radial-gradient(ellipse 70px 220px at 63%  100%, #1a4010 0%, transparent 70%),
-        radial-gradient(ellipse 95px 290px at 70%  100%, #244e18 0%, transparent 70%),
-        radial-gradient(ellipse 80px 250px at 78%  100%, #1e4a14 0%, transparent 70%),
-        radial-gradient(ellipse 68px 215px at 85%  100%, #163508 0%, transparent 70%),
-        radial-gradient(ellipse 88px 275px at 92%  100%, #224c18 0%, transparent 70%),
-        radial-gradient(ellipse 60px 195px at 98%  100%, #1a4010 0%, transparent 70%);
-      opacity: 0.75;
-    }
-    /* Mid trees */
-    .forest-mid {
-      height: 48%;
-      background:
-        radial-gradient(ellipse 90px 260px at 2%   100%, #2a5c1a 0%, transparent 70%),
-        radial-gradient(ellipse 110px 310px at 8%  100%, #326620 0%, transparent 70%),
-        radial-gradient(ellipse 80px 240px at 15%  100%, #285a18 0%, transparent 70%),
-        radial-gradient(ellipse 120px 340px at 22% 100%, #366824 0%, transparent 70%),
-        radial-gradient(ellipse 85px 255px at 30%  100%, #2c601c 0%, transparent 70%),
-        radial-gradient(ellipse 100px 290px at 38% 100%, #306422 0%, transparent 70%),
-        radial-gradient(ellipse 115px 330px at 46% 100%, #346826 0%, transparent 70%),
-        radial-gradient(ellipse 88px 262px at 54%  100%, #2a5c1a 0%, transparent 70%),
-        radial-gradient(ellipse 105px 300px at 62% 100%, #326620 0%, transparent 70%),
-        radial-gradient(ellipse 92px 270px at 70%  100%, #2e621e 0%, transparent 70%),
-        radial-gradient(ellipse 118px 335px at 78% 100%, #366824 0%, transparent 70%),
-        radial-gradient(ellipse 83px 248px at 86%  100%, #285a18 0%, transparent 70%),
-        radial-gradient(ellipse 108px 308px at 94% 100%, #326620 0%, transparent 70%);
-      opacity: 0.85;
-    }
-    /* Front trees - dark silhouette */
-    .forest-front {
-      height: 42%;
-      background:
-        radial-gradient(ellipse 130px 380px at 0%   100%, #0f2a06 0%, transparent 65%),
-        radial-gradient(ellipse 150px 420px at 6%   100%, #122e08 0%, transparent 65%),
-        radial-gradient(ellipse 120px 360px at 12%  100%, #0d2804 0%, transparent 65%),
-        radial-gradient(ellipse 160px 450px at 18%  100%, #153008 0%, transparent 65%),
-        radial-gradient(ellipse 110px 340px at 25%  100%, #0f2a06 0%, transparent 65%),
-
-        radial-gradient(ellipse 130px 380px at 74%  100%, #0f2a06 0%, transparent 65%),
-        radial-gradient(ellipse 150px 420px at 80%  100%, #122e08 0%, transparent 65%),
-        radial-gradient(ellipse 120px 360px at 86%  100%, #0d2804 0%, transparent 65%),
-        radial-gradient(ellipse 160px 450px at 92%  100%, #153008 0%, transparent 65%),
-        radial-gradient(ellipse 110px 340px at 98%  100%, #0f2a06 0%, transparent 65%);
-    }
-
-    /* Ground */
-    .hero-ground {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 22%;
-      background: linear-gradient(
-        180deg,
-        #3a7a24 0%,
-        #2d6018 40%,
-        #1e4010 70%,
-        #122808 100%
-      );
-      border-radius: 60% 60% 0 0 / 20% 20% 0 0;
-    }
-    /* Grass highlights */
-    .hero-ground::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 30%;
-      background: radial-gradient(ellipse 70% 100% at 50% 0%, rgba(100,200,60,0.35) 0%, transparent 70%);
-    }
-
-    /* Fireflies / particles */
-    .particles {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      overflow: hidden;
-    }
-    .particle {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(232,184,75,0.85);
-      animation: floatUp linear infinite, twinkle ease-in-out infinite;
-    }
-    @keyframes floatUp {
-      0%   { transform: translateY(0) translateX(0); opacity: 0; }
-      10%  { opacity: 1; }
-      90%  { opacity: 0.8; }
-      100% { transform: translateY(-80vh) translateX(40px); opacity: 0; }
-    }
-    @keyframes twinkle {
-      0%, 100% { box-shadow: 0 0 4px 2px rgba(232,184,75,0.6); }
-      50%       { box-shadow: 0 0 12px 5px rgba(232,184,75,0.9); }
-    }
-
-    /* Hero Content */
-    .hero-content {
-      position: relative;
-      z-index: 10;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-      padding: 0 20px;
-    }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 20px;
-      background: rgba(232,184,75,0.15);
-      border: 1px solid rgba(232,184,75,0.4);
-      border-radius: 20px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.2em;
-      color: var(--gold);
-      text-transform: uppercase;
-      animation: fadeDown 0.8s ease both;
-    }
-    .hero-badge::before {
-      content: '';
-      width: 6px; height: 6px;
-      background: var(--gold);
-      border-radius: 50%;
-      animation: blink 1.5s infinite;
-    }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-    .hero-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(4rem, 10vw, 9rem);
-      font-weight: 300;
-      line-height: 1;
-      letter-spacing: 0.04em;
-      color: var(--soft-wht);
-      text-shadow:
-        0 0 60px rgba(255,240,180,0.4),
-        0 4px 30px rgba(0,0,0,0.6);
-      animation: fadeDown 0.9s 0.15s ease both;
-      position: relative;
-    }
-    .hero-title em {
-      font-style: italic;
-      color: rgba(255,245,210,0.95);
-    }
-    .hero-title-glow {
-      position: absolute;
-      inset: -20px -40px;
-      background: radial-gradient(ellipse, rgba(232,184,75,0.12) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .hero-tagline {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1rem, 2vw, 1.35rem);
-      font-weight: 300;
-      font-style: italic;
-      color: rgba(245,239,230,0.7);
-      letter-spacing: 0.08em;
-      animation: fadeDown 1s 0.3s ease both;
-    }
-
-    .hero-buttons {
-      display: flex;
-      gap: 16px;
-      margin-top: 12px;
-      animation: fadeDown 1s 0.45s ease both;
-    }
-
-    .btn-trailer {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 16px 40px;
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.3);
-      border-radius: 50px;
-      color: var(--cream);
-      font-size: 0.9rem;
-      font-weight: 500;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.35s;
-      text-decoration: none;
-    }
-    .btn-trailer:hover {
-      background: rgba(255,255,255,0.18);
-      border-color: rgba(255,255,255,0.5);
-      transform: translateY(-3px);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
-    }
-    .play-icon {
-      width: 36px; height: 36px;
-      background: linear-gradient(135deg, var(--amber), var(--gold));
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .play-icon::after {
-      content: '';
-      width: 0; height: 0;
-      border-style: solid;
-      border-width: 6px 0 6px 11px;
-      border-color: transparent transparent transparent var(--deep);
-      margin-left: 2px;
-    }
-
-    .btn-play-now {
-      padding: 16px 40px;
-      background: linear-gradient(135deg, var(--amber) 0%, var(--gold) 100%);
-      border: none;
-      border-radius: 50px;
-      color: var(--deep);
-      font-size: 0.9rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.35s;
-      box-shadow: 0 6px 30px rgba(232,184,75,0.4);
-      text-decoration: none;
-    }
-    .btn-play-now:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 40px rgba(232,184,75,0.6);
-    }
-
-    /* Scroll indicator */
-    .scroll-hint {
-      position: absolute;
-      bottom: 32px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      animation: fadeDown 1s 0.7s ease both;
-      z-index: 10;
-    }
-    .scroll-hint span {
-      font-size: 0.65rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: rgba(245,239,230,0.45);
-    }
-    .scroll-line {
-      width: 1px; height: 50px;
-      background: linear-gradient(180deg, rgba(232,184,75,0.6), transparent);
-      animation: scrollPulse 2s ease-in-out infinite;
-    }
-    @keyframes scrollPulse {
-      0%,100% { opacity: 0.4; transform: scaleY(1); }
-      50%      { opacity: 1;   transform: scaleY(1.3); }
-    }
-
-    /* Announcement card */
-    .hero-announce {
-      position: absolute;
-      top: 140px;
-      right: 60px;
-      background: rgba(15,31,10,0.75);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(232,184,75,0.3);
-      border-radius: 16px;
-      padding: 16px 20px;
-      max-width: 220px;
-      animation: fadeLeft 1s 0.5s ease both;
-      z-index: 10;
-    }
-    .hero-announce-tag {
-      font-size: 0.62rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 6px;
-    }
-    .hero-announce p {
-      font-size: 0.82rem;
-      color: rgba(245,239,230,0.85);
-      line-height: 1.5;
-      margin-bottom: 12px;
-    }
-    .btn-small {
-      display: block;
-      padding: 8px 16px;
-      background: linear-gradient(135deg, var(--amber), var(--gold));
-      color: var(--deep);
-      border-radius: 20px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      text-decoration: none;
-      text-align: center;
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-    .btn-small:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(232,184,75,0.5); }
-
-    @keyframes fadeDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeLeft {
-      from { opacity: 0; transform: translateX(30px); }
-      to   { opacity: 1; transform: translateX(0); }
-    }
-
-    /* ══════════════════════════════════════
-       FEATURES STRIP
-    ══════════════════════════════════════ */
-    .features-strip {
-      background: linear-gradient(135deg, #1a3a0d, #0f2208);
-      border-top: 1px solid rgba(122,158,126,0.2);
-      border-bottom: 1px solid rgba(122,158,126,0.2);
-      padding: 28px 60px;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-    .strip-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .strip-icon {
-      font-size: 1.6rem;
-    }
-    .strip-item h4 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--gold);
-      letter-spacing: 0.05em;
-    }
-    .strip-item p {
-      font-size: 0.75rem;
-      color: rgba(245,239,230,0.55);
-      letter-spacing: 0.04em;
-    }
-
-    /* ══════════════════════════════════════
-       ABOUT / STORY SECTION
-    ══════════════════════════════════════ */
-    .section {
-      padding: 100px 60px;
-    }
-    .section-label {
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--sage);
-      margin-bottom: 16px;
-    }
-    .section-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(2.2rem, 4vw, 3.5rem);
-      font-weight: 400;
-      line-height: 1.15;
-      color: var(--soft-wht);
-      margin-bottom: 24px;
-    }
-    .section-title em { font-style: italic; color: var(--gold); }
-    .section-body {
-      font-size: 1rem;
-      line-height: 1.85;
-      color: rgba(245,239,230,0.65);
-      max-width: 520px;
-    }
-
-    .story-section {
-      background: linear-gradient(135deg, #0d1e08 0%, #121e0a 50%, #0a1806 100%);
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      align-items: center;
-      gap: 60px;
-      padding: 100px 80px;
-    }
-
-    /* Visual Forest Scene */
-    .forest-scene {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 4/3;
-      border-radius: 24px;
-      overflow: hidden;
-      box-shadow: 0 30px 80px rgba(0,0,0,0.5);
-    }
-    .forest-scene-bg {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        180deg,
-        #d4c47a 0%,
-        #f0d898 20%,
-        #f5e8b0 35%,
-        #c8e880 50%,
-        #7ab840 65%,
-        #3d8020 80%,
-        #1e4810 100%
-      );
-    }
-    .scene-sun {
-      position: absolute;
-      top: 15%; left: 50%;
-      transform: translateX(-50%);
-      width: 100px; height: 100px;
-      background: radial-gradient(circle, rgba(255,240,160,1) 0%, rgba(255,220,80,0.5) 40%, transparent 70%);
-      border-radius: 50%;
-    }
-    .scene-tree {
-      position: absolute;
-      bottom: 0;
-      background: linear-gradient(180deg, #265c14 0%, #1a4010 100%);
-      border-radius: 60% 60% 10% 10%;
-    }
-    .scene-tree-trunk {
-      position: absolute;
-      bottom: 0;
-      background: #5c3810;
-      border-radius: 4px;
-    }
-    .scene-character {
-      position: absolute;
-      bottom: 22%;
-      left: 50%;
-      transform: translateX(-30%);
-      width: 70px; height: 90px;
-      animation: bounce 2s ease-in-out infinite;
-    }
-    @keyframes bounce {
-      0%,100% { transform: translateX(-30%) translateY(0); }
-      50%      { transform: translateX(-30%) translateY(-12px); }
-    }
-    /* Simple character shapes */
-    .char-body { position: absolute; bottom: 0; left: 10px; width: 50px; height: 55px; background: #c8681c; border-radius: 40% 40% 20% 20%; }
-    .char-head { position: absolute; top: 0; left: 8px; width: 54px; height: 48px; background: #e8a870; border-radius: 50%; }
-    .char-hat { position: absolute; top: -10px; left: 4px; width: 62px; height: 24px; background: #d4a040; border-radius: 50% 50% 0 0; }
-    .char-hat::after { content:''; position:absolute; bottom:-4px; left:-6px; width:74px; height:10px; background:#c89030; border-radius:6px; }
-    .char-eye-l, .char-eye-r { position: absolute; width: 8px; height: 10px; background: #1a0a00; border-radius: 50%; top: 16px; }
-    .char-eye-l { left: 12px; }
-    .char-eye-r { right: 12px; }
-    .char-smile { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); width: 22px; height: 11px; border: 2px solid #8a4a20; border-top: none; border-radius: 0 0 20px 20px; }
-    /* Cat */
-    .scene-cat {
-      position: absolute;
-      bottom: 23%;
-      left: 30%;
-      width: 45px; height: 40px;
-      animation: catBounce 2s 0.3s ease-in-out infinite;
-    }
-    @keyframes catBounce {
-      0%,100% { transform: translateY(0) rotate(-5deg); }
-      50%      { transform: translateY(-16px) rotate(5deg); }
-    }
-    .cat-body { position: absolute; bottom: 0; width: 45px; height: 30px; background: #d4601a; border-radius: 50% 50% 30% 30%; }
-    .cat-head { position: absolute; top: 0; left: 5px; width: 35px; height: 30px; background: #e07024; border-radius: 50%; }
-    .cat-ear-l, .cat-ear-r { position: absolute; top: -8px; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 14px solid #e07024; }
-    .cat-ear-l { left: 2px; }
-    .cat-ear-r { right: 2px; }
-    .cat-tail { position: absolute; bottom: 5px; right: -18px; width: 22px; height: 8px; background: #d4601a; border-radius: 0 50% 50% 0; transform: rotate(-20deg); }
-
-    /* Ground grass */
-    .scene-grass {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 25%;
-      background: linear-gradient(180deg, #5aa829 0%, #2d6014 60%, #1a3a08 100%);
-      border-radius: 50% 50% 0 0 / 30% 30% 0 0;
-    }
-
-    /* Sparkles in scene */
-    .scene-spark {
-      position: absolute;
-      width: 4px; height: 4px;
-      background: var(--gold);
-      border-radius: 50%;
-      animation: sceneSparkle 2.5s ease-in-out infinite;
-    }
-    @keyframes sceneSparkle {
-      0%,100% { opacity:0; transform: scale(0) translateY(0); }
-      30%      { opacity:1; transform: scale(1) translateY(-5px); }
-      70%      { opacity:0.6; transform: scale(0.7) translateY(-15px); }
-    }
-
-    /* ══════════════════════════════════════
-       FEATURES CARDS
-    ══════════════════════════════════════ */
-    .features-section {
-      padding: 100px 80px;
-      background: #0a1806;
-    }
-    .features-header {
-      text-align: center;
-      margin-bottom: 64px;
-    }
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 28px;
-    }
-    .feature-card {
-      background: var(--glass);
-      border: 1px solid rgba(122,158,126,0.15);
-      border-radius: 20px;
-      padding: 36px 28px;
-      transition: transform 0.35s, border-color 0.35s, box-shadow 0.35s;
-      position: relative;
-      overflow: hidden;
-    }
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--gold), transparent);
-      opacity: 0;
-      transition: opacity 0.35s;
-    }
-    .feature-card:hover {
-      transform: translateY(-8px);
-      border-color: rgba(232,184,75,0.3);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    }
-    .feature-card:hover::before { opacity: 1; }
-    .feature-icon {
-      font-size: 2.8rem;
-      margin-bottom: 20px;
-      display: block;
-    }
-    .feature-card h3 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--soft-wht);
-      margin-bottom: 12px;
-    }
-    .feature-card p {
-      font-size: 0.88rem;
-      line-height: 1.8;
-      color: rgba(245,239,230,0.55);
-    }
-
-    /* ══════════════════════════════════════
-       WORLD MAP / LORE
-    ══════════════════════════════════════ */
-    .lore-section {
-      padding: 100px 80px;
-      background: linear-gradient(135deg, #0f1e08, #1a3010, #0f1e08);
-      text-align: center;
-    }
-    .lore-map {
-      margin: 60px auto 0;
-      max-width: 860px;
-      position: relative;
-    }
-    .map-container {
-      background: linear-gradient(135deg, #1e3d12 0%, #2a5820 30%, #1a4810 60%, #0f2808 100%);
-      border: 1px solid rgba(122,158,126,0.3);
-      border-radius: 24px;
-      padding: 60px 40px;
-      position: relative;
-      overflow: hidden;
-    }
-    .map-container::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 25% 40%, rgba(232,184,75,0.08) 0%, transparent 40%),
-        radial-gradient(circle at 75% 60%, rgba(122,158,126,0.12) 0%, transparent 40%);
-    }
-    .map-regions {
-      display: flex;
-      justify-content: space-around;
-      align-items: flex-end;
-      gap: 20px;
-      position: relative;
-      z-index: 1;
-    }
-    .map-region {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      transition: transform 0.3s;
-    }
-    .map-region:hover { transform: translateY(-8px); }
-    .region-icon {
-      font-size: 2.5rem;
-      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
-    }
-    .region-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: rgba(245,239,230,0.8);
-      letter-spacing: 0.06em;
-    }
-    .region-tag {
-      font-size: 0.62rem;
-      color: var(--sage);
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-    .map-divider {
-      width: 40px; height: 1px;
-      background: rgba(122,158,126,0.3);
-    }
-
-    /* ══════════════════════════════════════
-       NEWSLETTER / JOIN
-    ══════════════════════════════════════ */
-    .join-section {
-      padding: 100px 80px;
-      background: #060f04;
-      text-align: center;
-    }
-    .join-section .section-title { margin: 0 auto 24px; }
-    .join-section .section-body { margin: 0 auto 40px; text-align: center; }
-    .join-form {
-      display: flex;
-      justify-content: center;
-      gap: 0;
-      max-width: 480px;
-      margin: 0 auto;
-    }
-    .join-form input {
-      flex: 1;
-      padding: 16px 24px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(122,158,126,0.3);
-      border-right: none;
-      border-radius: 50px 0 0 50px;
-      color: var(--cream);
-      font-family: 'Inter', sans-serif;
-      font-size: 0.9rem;
-      outline: none;
-      transition: border-color 0.3s;
-    }
-    .join-form input:focus { border-color: rgba(232,184,75,0.5); }
-    .join-form input::placeholder { color: rgba(245,239,230,0.35); }
-    .join-form button {
-      padding: 16px 32px;
-      background: linear-gradient(135deg, var(--amber), var(--gold));
-      color: var(--deep);
-      border: none;
-      border-radius: 0 50px 50px 0;
-      font-size: 0.85rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: opacity 0.3s, transform 0.3s;
-    }
-    .join-form button:hover { opacity: 0.9; transform: scale(1.02); }
-
-    /* ══════════════════════════════════════
-       FOOTER
-    ══════════════════════════════════════ */
-    footer {
-      background: #040a02;
-      border-top: 1px solid rgba(122,158,126,0.12);
-      padding: 60px 80px 30px;
-    }
-    .footer-grid {
-      display: grid;
-      grid-template-columns: 2fr 1fr 1fr 1fr;
-      gap: 40px;
-      margin-bottom: 50px;
-    }
-    .footer-brand h3 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.8rem;
-      font-weight: 300;
-      letter-spacing: 0.1em;
-      color: var(--soft-wht);
-      margin-bottom: 12px;
-    }
-    .footer-brand h3 span { color: var(--gold); }
-    .footer-brand p {
-      font-size: 0.82rem;
-      line-height: 1.8;
-      color: rgba(245,239,230,0.45);
-      max-width: 260px;
-      margin-bottom: 24px;
-    }
-    .social-links {
-      display: flex;
-      gap: 12px;
-    }
-    .social-link {
-      width: 38px; height: 38px;
-      background: var(--glass);
-      border: 1px solid rgba(122,158,126,0.2);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      font-size: 1rem;
-      color: rgba(245,239,230,0.6);
-      transition: all 0.3s;
-    }
-    .social-link:hover {
-      background: rgba(232,184,75,0.15);
-      border-color: var(--gold);
-      color: var(--gold);
-      transform: translateY(-3px);
-    }
-    .footer-col h4 {
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--sage);
-      margin-bottom: 20px;
-    }
-    .footer-col ul {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .footer-col ul a {
-      font-size: 0.85rem;
-      color: rgba(245,239,230,0.5);
-      text-decoration: none;
-      transition: color 0.3s;
-      letter-spacing: 0.03em;
-    }
-    .footer-col ul a:hover { color: var(--cream); }
-    .footer-bottom {
-      padding-top: 30px;
-      border-top: 1px solid rgba(122,158,126,0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .footer-bottom p {
-      font-size: 0.78rem;
-      color: rgba(245,239,230,0.3);
-    }
-
-    /* ══════════════════════════════════════
-       MODAL (TRAILER)
-    ══════════════════════════════════════ */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.88);
-      backdrop-filter: blur(8px);
-      z-index: 999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.4s;
-    }
-    .modal-overlay.active { opacity: 1; pointer-events: all; }
-    .modal-box {
-      background: #0f1e08;
-      border: 1px solid rgba(122,158,126,0.25);
-      border-radius: 24px;
-      padding: 28px 32px;
-      max-width: 960px;
-      width: 92%;
-      text-align: center;
-      transform: scale(0.9);
-      transition: transform 0.4s;
-    }
-    .modal-overlay.active .modal-box { transform: scale(1); }
-    .modal-box h2 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.5rem;
-      font-weight: 400;
-      margin-bottom: 6px;
-      color: var(--soft-wht);
-    }
-    .modal-box p {
-      font-size: 0.82rem;
-      color: rgba(245,239,230,0.45);
-      margin-bottom: 16px;
-    }
-    .modal-video-wrap {
-      width: 100%;
-      aspect-ratio: 16/9;
-      background: #000;
-      border-radius: 14px;
-      overflow: hidden;
-      margin-bottom: 18px;
-      border: 1px solid rgba(122,158,126,0.2);
-      position: relative;
-    }
-    .modal-video-wrap video {
-      width: 100%; height: 100%;
-      object-fit: contain;
-      display: block;
-    }
-    .video-fallback {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 10px; color: rgba(245,239,230,0.4);
-      font-size: 0.85rem;
-    }
-    .video-fallback span { font-size: 3rem; }
-    .modal-close {
-      padding: 9px 28px;
-      background: none;
-      border: 1px solid rgba(245,239,230,0.25);
-      border-radius: 30px;
-      color: rgba(245,239,230,0.6);
-      cursor: pointer;
-      font-size: 0.82rem;
-      transition: all 0.3s;
-    }
-    .modal-close:hover { border-color: var(--gold); color: var(--gold); }
-
-    /* ══════════════════════════════════════
-       REVEAL ANIMATION
-    ══════════════════════════════════════ */
-    .reveal {
-      opacity: 0;
-      transform: translateY(30px);
-      transition: opacity 0.7s ease, transform 0.7s ease;
-    }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
-
-    /* ══════════════════════════════════════
-       RESPONSIVE
-    ══════════════════════════════════════ */
-    @media (max-width: 1024px) {
-      .story-section { grid-template-columns: 1fr; }
-      .features-grid { grid-template-columns: repeat(2,1fr); }
-      .footer-grid { grid-template-columns: 1fr 1fr; }
-    }
-    @media (max-width: 768px) {
-      nav { padding: 16px 28px; }
-      .nav-links { display: none; }
-      .section, .story-section, .features-section, .lore-section, .join-section { padding: 70px 28px; }
-      .features-grid { grid-template-columns: 1fr; }
-      .footer-grid { grid-template-columns: 1fr; }
-      .hero-announce { display: none; }
-      .hero-buttons { flex-direction: column; align-items: center; }
-    }
-  </style>
+  /* ── SECTION DIVIDER (stylized, replaces line) ── */
+  .section-eyebrow { font-family:'Inter',sans-serif; font-size:0.625rem; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:#e8b84b; }
+</style>
 </head>
-<body>
+<body class="font-body overflow-x-hidden selection:bg-primary/30 selection:text-white">
 
-  <!-- ─── NAVBAR ─── -->
-  <nav id="navbar">
-    <a href="#" class="nav-logo"><img src="logo.png" alt="Mirai Atelier" class="nav-logo-img"></a>
-    <ul class="nav-links">
-      <li><a href="#story">Game Info</a></li>
-      <li><a href="#features">Features</a></li>
-      <li><a href="#lore">Lore</a></li>
-      <li><a href="#join">Community</a></li>
-    </ul>
-    <div class="nav-right">
-      <button class="btn-sound" id="soundBtn" title="Toggle ambient sound">🔇</button>
-      <a href="/login" class="btn-login">Team Login</a>
-      <button class="btn-connect" onclick="openTrailer()">Watch Trailer</button>
-    </div>
-  </nav>
-
-  <!-- ─── HERO ─── -->
-  <section class="hero" id="hero">
-    <div class="hero-overlay"></div>
-    <div class="hero-sky"></div>
-    <div class="hero-sun"></div>
-
-    <!-- Clouds -->
-    <div class="cloud cloud-1"></div>
-    <div class="cloud cloud-2"></div>
-    <div class="cloud cloud-3"></div>
-
-    <!-- Forest layers -->
-    <div class="forest-layer forest-back"></div>
-    <div class="forest-layer forest-mid"></div>
-    <div class="forest-layer forest-front"></div>
-    <div class="hero-ground"></div>
-
-    <!-- Particles -->
-    <div class="particles" id="particles"></div>
-
-    <!-- Announcement card -->
-    <div class="hero-announce">
-      <div class="hero-announce-tag">🎮 Now Available</div>
-      <p>Our first adventure chapter is now open for early access!</p>
-      <a href="#join" class="btn-small">Join Now →</a>
-    </div>
-
-    <!-- Main Content -->
-    <div class="hero-content">
-      <div class="hero-badge">✦ A Handcrafted Adventure Awaits</div>
-      <img src="logo.png" alt="Mirai Atelier" class="hero-logo-img">
-      <p class="hero-tagline">Explore enchanted forests, forge bonds, and discover your destiny.</p>
-      <div class="hero-buttons">
-        <button class="btn-trailer" onclick="openTrailer()">
-          <span class="play-icon"></span>
-          Watch Trailer
-        </button>
-        <a href="#join" class="btn-play-now">Play Now — Free</a>
+<!-- ════════════════════════════
+     NAVBAR
+════════════════════════════ -->
+<nav id="navbar" class="fixed top-0 left-0 right-0 z-[100] h-[72px] flex items-center">
+  <div class="max-w-7xl mx-auto px-6 w-full flex justify-between items-center">
+    <!-- Logo mark -->
+    <a href="#" class="flex items-center gap-3">
+      <span class="font-display font-semibold text-xl italic text-white/90 tracking-wide">Mirai Atelier</span>
+      <span class="hidden md:block text-text-muted font-light text-xs border-l border-outline-var pl-3 font-['Inter']">Hub</span>
+    </a>
+    <!-- Links + CTA -->
+    <div class="flex items-center gap-8">
+      <div class="hidden lg:flex items-center gap-8 text-[11px] font-bold tracking-[0.15em] uppercase text-text-sec font-['Inter']">
+        <a class="hover:text-primary transition-colors" href="#platform">Platform</a>
+        <a class="hover:text-primary transition-colors" href="#workflow">Workflow</a>
+        <a class="hover:text-primary transition-colors" href="#divisions">Divisi</a>
       </div>
+      <button
+        onclick="window.location.href='login.html'"
+        class="primary-gradient text-background px-5 py-2.5 rounded-[10px] text-xs font-extrabold uppercase tracking-wider hover:scale-105 transition-transform duration-300 shadow-xl shadow-primary/10 font-['Inter']">
+        Team Login
+      </button>
+    </div>
+  </div>
+</nav>
+
+
+<!-- ════════════════════════════
+     HERO — GAME IDENTITY
+════════════════════════════ -->
+<header class="hero-section">
+  <!-- Background art -->
+  <div class="hero-bg-fallback"></div>
+  <div class="hero-bg" id="heroBg"></div>
+  <div class="hero-vignette"></div>
+  <div class="hero-fade"></div>
+
+  <!-- Content pinned to bottom-center -->
+  <div class="relative z-10 w-full flex flex-col items-center pb-24 px-6 text-center">
+
+    <!-- Game logo image (or fallback text) -->
+    <div class="mb-8" id="logoContainer">
+      <img
+        src="assets/logo.png"
+        alt="Mirai Atelier"
+        class="hero-logo-img"
+        id="logoImg"
+        onerror="this.style.display='none';document.getElementById('logoFallback').style.display='block'"/>
+      <div class="hero-logo-fallback" id="logoFallback" style="display:none">Mirai Atelier</div>
     </div>
 
-    <div class="scroll-hint">
-      <div class="scroll-line"></div>
-      <span>Scroll</span>
-    </div>
-  </section>
+    <!-- Tagline -->
+    <p class="font-['Inter'] font-light text-white/70 text-base md:text-lg tracking-[0.08em] mb-10 max-w-md leading-relaxed">
+      A hand-crafted adventure about friendship, courage, and the world beyond the forest.
+    </p>
 
-  <!-- ─── FEATURES STRIP ─── -->
-  <div class="features-strip">
-    <div class="strip-item">
-      <span class="strip-icon">🌿</span>
-      <div>
-        <h4>Open World</h4>
-        <p>Explore 5+ handcrafted biomes</p>
-      </div>
-    </div>
-    <div class="strip-item">
-      <span class="strip-icon">🐾</span>
-      <div>
-        <h4>60+ Companions</h4>
-        <p>Discover rare animal friends</p>
-      </div>
-    </div>
-    <div class="strip-item">
-      <span class="strip-icon">⚗️</span>
-      <div>
-        <h4>Crafting System</h4>
-        <p>200+ recipes to master</p>
-      </div>
-    </div>
-    <div class="strip-item">
-      <span class="strip-icon">🎵</span>
-      <div>
-        <h4>Original Score</h4>
-        <p>40 tracks of atmospheric music</p>
-      </div>
-    </div>
-    <div class="strip-item">
-      <span class="strip-icon">🏘️</span>
-      <div>
-        <h4>Village Building</h4>
-        <p>Build & grow your community</p>
-      </div>
+    <!-- CTAs -->
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+      <button
+        onclick="window.location.href='login.html'"
+        class="primary-gradient text-background font-black px-10 py-4 rounded-[12px] text-sm font-['Inter'] uppercase tracking-wider hover:scale-105 transition-all duration-300 shadow-2xl shadow-primary/25">
+        ▶ Team Login
+      </button>
+      <a href="#platform"
+        class="glass-panel text-white/80 font-medium px-10 py-4 rounded-[12px] text-sm font-['Inter'] border border-white/10 hover:bg-white/10 transition-all">
+        Tentang Platform
+      </a>
     </div>
   </div>
 
-  <!-- ─── STORY ─── -->
-  <section class="story-section" id="story">
-    <div class="reveal">
-      <p class="section-label">✦ The Story</p>
-      <h2 class="section-title">An Adventure <em>Written</em><br>in the Stars</h2>
-      <p class="section-body">
-        In the world of Mirai, ancient forests are fading and the golden light that once guided travelers has grown dim. 
-        You are Kai — a young explorer with a mysterious paw-marked compass who must journey through forgotten realms 
-        alongside Luna, your spirited orange cat companion.
-        <br><br>
-        Together, you'll unravel the secrets of the Atelier — a legendary workshop said to hold the power to restore 
-        balance to a world on the brink of eternal twilight.
-      </p>
-      <div style="margin-top:36px; display:flex; gap:14px; flex-wrap:wrap;">
-        <a href="#lore" class="btn-play-now" style="padding:13px 32px; font-size:0.82rem;">Explore the Lore</a>
-        <button class="btn-trailer" style="padding:13px 32px;" onclick="openTrailer()">
-          <span class="play-icon"></span>
-          Watch Trailer
-        </button>
-      </div>
-    </div>
+  <!-- Scroll indicator -->
+  <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1 animate-bounce opacity-40">
+    <span class="text-[8px] font-bold tracking-widest uppercase text-white font-['Inter']">Scroll</span>
+    <span class="material-symbols-outlined text-white text-sm">expand_more</span>
+  </div>
+</header>
 
-    <!-- Forest Scene Illustration -->
-    <div class="reveal" style="transition-delay:0.15s">
-      <div class="forest-scene">
-        <div class="forest-scene-bg"></div>
-        <div class="scene-sun"></div>
 
-        <!-- Background trees left -->
-        <div class="scene-tree" style="width:90px;height:200px;left:0;bottom:0;opacity:0.7;border-radius:45px 45px 5px 5px;background:linear-gradient(160deg,#1a4810,#0d2a06)"></div>
-        <div class="scene-tree-trunk" style="width:18px;height:60px;left:36px;bottom:0;background:#3a2010;border-radius:6px 6px 0 0"></div>
+<!-- ════════════════════════════
+     PLATFORM INTRO BRIDGE
+════════════════════════════ -->
+<section class="bg-background py-20 px-6" id="platform">
+  <div class="max-w-4xl mx-auto text-center reveal">
+    <span class="section-eyebrow block mb-5">Mirai Atelier Hub</span>
+    <h2 class="font-['Inter'] text-4xl md:text-5xl font-black tracking-[-0.04em] text-white mb-6 leading-tight">
+      Platform Kolaborasi<br/>
+      <span class="text-primary">Tim Game Development</span>
+    </h2>
+    <p class="font-['Inter'] font-light text-text-sec text-lg leading-relaxed max-w-2xl mx-auto">
+      Kelola task, pantau progress, dan koordinasi seluruh divisi kreatif dalam satu workspace yang dirancang khusus untuk studio game.
+    </p>
+  </div>
+</section>
 
-        <!-- Background trees right -->
-        <div class="scene-tree" style="width:90px;height:200px;right:0;bottom:0;opacity:0.7;border-radius:45px 45px 5px 5px;background:linear-gradient(200deg,#1a4810,#0d2a06)"></div>
-        <div class="scene-tree-trunk" style="width:18px;height:60px;right:36px;bottom:0;background:#3a2010;border-radius:6px 6px 0 0"></div>
 
-        <!-- Mid trees -->
-        <div class="scene-tree" style="width:70px;height:160px;left:50px;bottom:0;border-radius:38px 38px 5px 5px;background:linear-gradient(160deg,#254e14,#143008)"></div>
-        <div class="scene-tree-trunk" style="width:14px;height:50px;left:78px;bottom:0;background:#4a2a10"></div>
-        <div class="scene-tree" style="width:70px;height:160px;right:50px;bottom:0;border-radius:38px 38px 5px 5px;background:linear-gradient(200deg,#254e14,#143008)"></div>
-        <div class="scene-tree-trunk" style="width:14px;height:50px;right:78px;bottom:0;background:#4a2a10"></div>
-
-        <!-- Ground -->
-        <div class="scene-grass"></div>
-
-        <!-- Sparkles -->
-        <div class="scene-spark" style="left:38%;top:45%;animation-delay:0s"></div>
-        <div class="scene-spark" style="left:55%;top:40%;animation-delay:0.8s"></div>
-        <div class="scene-spark" style="left:25%;top:55%;animation-delay:1.5s"></div>
-        <div class="scene-spark" style="left:70%;top:50%;animation-delay:0.4s"></div>
-        <div class="scene-spark" style="left:48%;top:35%;animation-delay:2s"></div>
-
-        <!-- Cat -->
-        <div class="scene-cat">
-          <div class="cat-body"></div>
-          <div class="cat-head">
-            <div class="cat-ear-l"></div>
-            <div class="cat-ear-r"></div>
-          </div>
-          <div class="cat-tail"></div>
-        </div>
-
-        <!-- Character -->
-        <div class="scene-character">
-          <div class="char-hat"></div>
-          <div class="char-head">
-            <div class="char-eye-l"></div>
-            <div class="char-eye-r"></div>
-            <div class="char-smile"></div>
-          </div>
-          <div class="char-body"></div>
-        </div>
-
-        <!-- Vignette -->
-        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center, transparent 40%, rgba(10,24,6,0.7) 100%);border-radius:24px;pointer-events:none"></div>
+<!-- ════════════════════════════
+     STATS BAR
+════════════════════════════ -->
+<section class="bg-surface py-16">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-0">
+      <div class="flex flex-col items-center lg:items-start lg:px-12 lg:border-r border-outline-var">
+        <span class="text-5xl font-black text-primary tracking-tighter font-['Inter']" data-val="7">0+</span>
+        <span class="text-[10px] font-bold tracking-[0.15em] uppercase text-text-muted mt-3 font-['Inter']">Divisi Kreatif</span>
       </div>
-    </div>
-  </section>
-
-  <!-- ─── FEATURES ─── -->
-  <section class="features-section" id="features">
-    <div class="features-header reveal">
-      <p class="section-label">✦ Core Features</p>
-      <h2 class="section-title">Everything That Makes <em>Mirai</em><br>Truly Magical</h2>
-    </div>
-    <div class="features-grid">
-      <div class="feature-card reveal" style="transition-delay:0.05s">
-        <span class="feature-icon">🌲</span>
-        <h3>Living Ecosystems</h3>
-        <p>Every forest breathes. Weather, seasons, and animal behaviors shift dynamically, creating a world that feels genuinely alive around you.</p>
+      <div class="flex flex-col items-center lg:items-start lg:px-12 lg:border-r border-outline-var">
+        <span class="text-5xl font-black text-primary tracking-tighter font-['Inter']" data-val="100">0+</span>
+        <span class="text-[10px] font-bold tracking-[0.15em] uppercase text-text-muted mt-3 font-['Inter']">Task Dikelola</span>
       </div>
-      <div class="feature-card reveal" style="transition-delay:0.1s">
-        <span class="feature-icon">🐱</span>
-        <h3>Companion Bonding</h3>
-        <p>Your companions learn from your journey. Luna evolves, unlocks new abilities, and even remembers your choices across adventures.</p>
+      <div class="flex flex-col items-center lg:items-start lg:px-12 lg:border-r border-outline-var">
+        <span class="text-5xl font-black text-primary tracking-tighter font-['Inter']">Real-time</span>
+        <span class="text-[10px] font-bold tracking-[0.15em] uppercase text-text-muted mt-3 font-['Inter']">Sinkronisasi</span>
       </div>
-      <div class="feature-card reveal" style="transition-delay:0.15s">
-        <span class="feature-icon">🏺</span>
-        <h3>Ancient Crafting</h3>
-        <p>Discover forgotten recipes passed down through village elders. Combine rare flora, minerals, and moonlight to forge legendary items.</p>
+      <div class="flex flex-col items-center lg:items-start lg:px-12">
+        <span class="text-5xl font-black text-primary tracking-tighter font-['Inter']">Supabase</span>
+        <span class="text-[10px] font-bold tracking-[0.15em] uppercase text-text-muted mt-3 font-['Inter']">Powered By</span>
       </div>
-      <div class="feature-card reveal" style="transition-delay:0.2s">
-        <span class="feature-icon">🗺️</span>
-        <h3>Procedural Secrets</h3>
-        <p>Hidden caves, mysterious shrines, and rare encounters are seeded uniquely in each playthrough — no two adventures are the same.</p>
-      </div>
-      <div class="feature-card reveal" style="transition-delay:0.25s">
-        <span class="feature-icon">🎨</span>
-        <h3>Painterly Visuals</h3>
-        <p>Hand-painted in a warm, studio-inspired aesthetic. Every scene feels like a frame from an animated film you never want to end.</p>
-      </div>
-      <div class="feature-card reveal" style="transition-delay:0.3s">
-        <span class="feature-icon">🌙</span>
-        <h3>Night Mysteries</h3>
-        <p>As day fades, a parallel world awakens. Moonlit quests, spirit companions, and nocturnal secrets reveal the deeper story of Mirai.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ─── LORE / WORLD ─── -->
-  <section class="lore-section" id="lore">
-    <div class="reveal">
-      <p class="section-label">✦ World of Mirai</p>
-      <h2 class="section-title">Five Realms, <em>Infinite</em> Stories</h2>
-      <p class="section-body" style="margin:0 auto 0; text-align:center; max-width:560px;">
-        From the sun-dappled Verdant Canopy to the crystal depths of Moonfall Grotto — each region holds ancient secrets and unique companions waiting to be found.
-      </p>
-    </div>
-    <div class="lore-map reveal" style="transition-delay:0.2s">
-      <div class="map-container">
-        <div class="map-regions">
-          <div class="map-region">
-            <span class="region-icon">🌲</span>
-            <span class="region-name">Verdant Canopy</span>
-            <span class="region-tag">Starter Zone</span>
-          </div>
-          <div class="map-divider"></div>
-          <div class="map-region">
-            <span class="region-icon">🌊</span>
-            <span class="region-name">Tidal Hollows</span>
-            <span class="region-tag">Water Realm</span>
-          </div>
-          <div class="map-divider"></div>
-          <div class="map-region" style="transform: translateY(-20px)">
-            <span class="region-icon">⭐</span>
-            <span class="region-name">The Atelier</span>
-            <span class="region-tag">Final Realm</span>
-          </div>
-          <div class="map-divider"></div>
-          <div class="map-region">
-            <span class="region-icon">🌑</span>
-            <span class="region-name">Umbral Peaks</span>
-            <span class="region-tag">Shadow Lands</span>
-          </div>
-          <div class="map-divider"></div>
-          <div class="map-region">
-            <span class="region-icon">🌸</span>
-            <span class="region-name">Sakura Vale</span>
-            <span class="region-tag">Spirit World</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ─── JOIN ─── -->
-  <section class="join-section" id="join">
-    <div class="reveal">
-      <p class="section-label">✦ Early Access</p>
-      <h2 class="section-title" style="margin:0 auto">Begin Your<br><em>Adventure</em> Today</h2>
-      <p class="section-body">Join thousands of explorers already discovering the world of Mirai. Get early access, exclusive rewards, and shape the future of the game.</p>
-      <div class="join-form">
-        <input type="email" placeholder="Enter your email address…" id="emailInput"/>
-        <button onclick="handleJoin()">Join Now</button>
-      </div>
-      <p style="margin-top:16px; font-size:0.75rem; color:rgba(245,239,230,0.3);">No spam, ever. Unsubscribe anytime. 🔒</p>
-    </div>
-  </section>
-
-  <!-- ─── FOOTER ─── -->
-  <footer>
-    <div class="footer-grid">
-      <div class="footer-brand">
-        <img src="logo.png" alt="Mirai Atelier" style="height:32px;width:auto;filter:drop-shadow(0 0 8px rgba(255,255,255,0.15));margin-bottom:12px;display:block">
-        <p>A handcrafted adventure game born from a love of magical worlds, warm stories, and the unbreakable bond between a child and their companion.</p>
-        <div class="social-links">
-          <a href="#" class="social-link" title="Twitter">𝕏</a>
-          <a href="#" class="social-link" title="Discord">💬</a>
-          <a href="#" class="social-link" title="Instagram">📸</a>
-          <a href="#" class="social-link" title="YouTube">▶</a>
-          <a href="#" class="social-link" title="TikTok">🎵</a>
-        </div>
-      </div>
-      <div class="footer-col">
-        <h4>Game</h4>
-        <ul>
-          <li><a href="#story">About</a></li>
-          <li><a href="#features">Features</a></li>
-          <li><a href="#lore">World Lore</a></li>
-          <li><a href="#">Patch Notes</a></li>
-          <li><a href="#">Roadmap</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h4>Community</h4>
-        <ul>
-          <li><a href="#">Discord</a></li>
-          <li><a href="#">Forums</a></li>
-          <li><a href="#">Fan Art</a></li>
-          <li><a href="#">Competitions</a></li>
-          <li><a href="#">Newsletter</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h4>Studio</h4>
-        <ul>
-          <li><a href="#">Our Team</a></li>
-          <li><a href="#">Press Kit</a></li>
-          <li><a href="#">Careers</a></li>
-          <li><a href="#">Privacy Policy</a></li>
-          <li><a href="#">Terms of Service</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>© 2026 Mirai Atelier Studio. All rights reserved.</p>
-      <p>Made with ♥ and a dash of magic.</p>
-    </div>
-  </footer>
-
-  <!-- ─── TRAILER MODAL ─── -->
-  <div class="modal-overlay" id="modal" onclick="closeModal(event)">
-    <div class="modal-box">
-      <h2>🎬 Mirai Atelier — Official Trailer</h2>
-      <p>Experience the world of Mirai in its full animated glory.</p>
-      <div class="modal-video-wrap">
-        <video id="trailerVideo" controls autoplay muted playsinline preload="auto" poster="hero.png">
-          <source src="videos/trailer.mp4" type="video/mp4">
-        </video>
-        <div class="video-fallback" id="videoFallback" style="display:none">
-          <span>🎬</span>
-          Video belum tersedia — taruh <strong>trailer.mp4</strong> di folder <code>videos/</code>
-        </div>
-      </div>
-      <button class="modal-close" onclick="closeTrailer()">Close ✕</button>
     </div>
   </div>
+</section>
 
-  <!-- ─── AUDIO ─── -->
-  <audio id="ambientAudio" loop>
-    <!-- Ambient audio placeholder -->
-  </audio>
 
-  <script>
-    // ─── Navbar scroll effect
-    const navbar = document.getElementById('navbar');
-    window.addEventListener('scroll', () => {
-      navbar.classList.toggle('scrolled', window.scrollY > 60);
+<!-- ════════════════════════════
+     FEATURES BENTO
+════════════════════════════ -->
+<section class="py-32 bg-background relative overflow-hidden">
+  <div class="absolute top-1/4 -right-[20%] w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px] pointer-events-none"></div>
+  <div class="absolute bottom-1/4 -left-[20%] w-[500px] h-[500px] rounded-full bg-purple-accent/5 blur-[100px] pointer-events-none"></div>
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="mb-24 reveal">
+      <span class="section-eyebrow block mb-4">Fitur Utama</span>
+      <h2 class="font-['Inter'] text-4xl md:text-6xl font-black tracking-tight text-white leading-tight">
+        Semua yang dibutuhkan<br/>tim kreatif kamu
+      </h2>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]">
+      <!-- Featured: Review Queue -->
+      <div class="md:col-span-2 glass-panel p-10 rounded-2xl flex flex-col justify-between group hover:bg-white/[0.05] transition-all duration-500 reveal">
+        <div class="flex justify-between items-start">
+          <div class="w-14 h-14 rounded-xl bg-purple-accent/10 flex items-center justify-center">
+            <span class="material-symbols-outlined text-purple-accent text-3xl">rate_review</span>
+          </div>
+          <span class="text-[9px] font-black bg-purple-accent/20 text-purple-accent px-3 py-1 rounded-full uppercase tracking-widest font-['Inter']">Featured</span>
+        </div>
+        <div class="max-w-md">
+          <h3 class="text-3xl font-bold text-white mb-4 font-['Inter']">Review Queue</h3>
+          <p class="text-text-sec font-light leading-relaxed font-['Inter']">Sistem persetujuan aset yang efisien antara Director dan Producer untuk memastikan standar kualitas studio dengan feedback real-time.</p>
+        </div>
+      </div>
+      <!-- Task Management -->
+      <div class="bg-surface p-10 rounded-2xl flex flex-col justify-between hover:bg-card transition-all duration-300 reveal">
+        <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+          <span class="material-symbols-outlined text-primary text-2xl">assignment</span>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white mb-2 font-['Inter']">Task Management</h3>
+          <p class="text-sm text-text-muted font-light leading-relaxed font-['Inter']">Buat, assign, dan pantau task seluruh tim dari satu dashboard terpusat.</p>
+        </div>
+      </div>
+      <!-- Real-time Chat -->
+      <div class="bg-surface p-10 rounded-2xl flex flex-col justify-between hover:bg-card transition-all duration-300 reveal">
+        <div class="w-12 h-12 rounded-lg bg-teal-accent/10 flex items-center justify-center">
+          <span class="material-symbols-outlined text-teal-accent text-2xl">forum</span>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white mb-2 font-['Inter']">Real-time Chat</h3>
+          <p class="text-sm text-text-muted font-light leading-relaxed font-['Inter']">DM antar anggota tim dan thread diskusi per task yang terintegrasi penuh.</p>
+        </div>
+      </div>
+      <!-- Leaderboard -->
+      <div class="bg-surface p-10 rounded-2xl flex flex-col justify-between hover:bg-card transition-all duration-300 reveal">
+        <div class="w-12 h-12 rounded-lg bg-pink-accent/10 flex items-center justify-center">
+          <span class="material-symbols-outlined text-pink-accent text-2xl">leaderboard</span>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white mb-2 font-['Inter']">Leaderboard &amp; Poin</h3>
+          <p class="text-sm text-text-muted font-light leading-relaxed font-['Inter']">Sistem poin otomatis saat task disetujui untuk menjaga semangat kompetisi sehat.</p>
+        </div>
+      </div>
+      <!-- Kanban -->
+      <div class="bg-surface p-10 rounded-2xl flex flex-col justify-between hover:bg-card transition-all duration-300 reveal">
+        <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+          <span class="material-symbols-outlined text-primary text-2xl">view_kanban</span>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white mb-2 font-['Inter']">Kanban Board</h3>
+          <p class="text-sm text-text-muted font-light leading-relaxed font-['Inter']">Visualisasi status task drag-and-drop yang memudahkan manajemen workflow.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════
+     HOW IT WORKS
+════════════════════════════ -->
+<section class="py-32 bg-surface" id="workflow">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-24 reveal">
+      <span class="section-eyebrow block mb-4">Alur Kerja</span>
+      <h2 class="font-['Inter'] text-4xl font-black text-white tracking-tight">Tiga Langkah Sederhana</h2>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-16 relative">
+      <div class="hidden md:block absolute top-12 left-[15%] right-[15%] h-[1px] border-t border-dashed border-primary/30 z-0"></div>
+
+      <div class="relative z-10 flex flex-col items-center text-center reveal">
+        <div class="relative w-24 h-24 rounded-full bg-background border border-primary/20 flex items-center justify-center mb-8 shadow-2xl">
+          <span class="text-[10px] absolute -top-3 font-black text-primary tracking-widest bg-surface px-2 font-['Inter']">01</span>
+          <span class="material-symbols-outlined text-primary text-4xl">person_add</span>
+        </div>
+        <h4 class="text-xl font-bold text-white mb-4 font-['Inter']">Daftar &amp; Tunggu Role</h4>
+        <p class="text-sm text-text-muted font-light leading-relaxed max-w-[240px] font-['Inter']">Buat akun dengan identitas kamu. Admin akan segera menentukan divisi kamu.</p>
+      </div>
+      <div class="relative z-10 flex flex-col items-center text-center reveal" style="transition-delay:100ms">
+        <div class="relative w-24 h-24 rounded-full bg-background border border-primary/20 flex items-center justify-center mb-8 shadow-2xl">
+          <span class="text-[10px] absolute -top-3 font-black text-primary tracking-widest bg-surface px-2 font-['Inter']">02</span>
+          <span class="material-symbols-outlined text-primary text-4xl">task_alt</span>
+        </div>
+        <h4 class="text-xl font-bold text-white mb-4 font-['Inter']">Kerjakan Task</h4>
+        <p class="text-sm text-text-muted font-light leading-relaxed max-w-[240px] font-['Inter']">Terima task dari divisi kamu, kerjakan dengan maksimal, lalu submit hasil akhir.</p>
+      </div>
+      <div class="relative z-10 flex flex-col items-center text-center reveal" style="transition-delay:200ms">
+        <div class="relative w-24 h-24 rounded-full bg-background border border-primary/20 flex items-center justify-center mb-8 shadow-2xl">
+          <span class="text-[10px] absolute -top-3 font-black text-primary tracking-widest bg-surface px-2 font-['Inter']">03</span>
+          <span class="material-symbols-outlined text-primary text-4xl">workspace_premium</span>
+        </div>
+        <h4 class="text-xl font-bold text-white mb-4 font-['Inter']">Dapatkan Poin</h4>
+        <p class="text-sm text-text-muted font-light leading-relaxed max-w-[240px] font-['Inter']">Poin otomatis masuk setelah approval. Jadilah yang terbaik di leaderboard tim.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════
+     DIVISIONS
+════════════════════════════ -->
+<section class="py-32 px-6 max-w-7xl mx-auto" id="divisions">
+  <div class="mb-20 text-center reveal">
+    <span class="section-eyebrow block mb-4">Tim Kami</span>
+    <h2 class="font-['Inter'] text-4xl md:text-5xl font-black text-white tracking-tight">Divisi Studio</h2>
+  </div>
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div class="bg-surface p-8 rounded-xl text-center hover:scale-[1.03] transition-all duration-300 group reveal border border-transparent hover:border-primary/20">
+      <div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+        <span class="material-symbols-outlined text-primary" style="font-variation-settings:'FILL' 1">stars</span>
+      </div>
+      <h5 class="text-[10px] font-black text-primary uppercase tracking-[0.15em] font-['Inter']">Produser</h5>
+    </div>
+    <div class="bg-surface p-8 rounded-xl text-center hover:scale-[1.03] transition-all duration-300 group reveal border border-transparent hover:border-purple-accent/20">
+      <div class="w-14 h-14 bg-purple-accent/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+        <span class="material-symbols-outlined text-purple-accent" style="font-variation-settings:'FILL' 1">visibility</span>
+      </div>
+      <h5 class="text-[10px] font-black text-purple-accent uppercase tracking-[0.15em] font-['Inter']">Director</h5>
+    </div>
+    <div class="bg-surface p-8 rounded-xl text-center hover:scale-[1.03] transition-all duration-300 group reveal border border-transparent hover:border-teal-accent/20">
+      <div class="w-14 h-14 bg-teal-accent/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+        <span class="material-symbols-outlined text-teal-accent" style="font-variation-settings:'FILL' 1">deployed_code</span>
+      </div>
+      <h5 class="text-[10px] font-black text-teal-accent uppercase tracking-[0.15em] font-['Inter']">Modeller</h5>
+    </div>
+    <div class="bg-surface p-8 rounded-xl text-center hover:scale-[1.03] transition-all duration-300 group reveal border border-transparent hover:border-purple-accent/20">
+      <div class="w-14 h-14 bg-purple-accent/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+        <span class="material-symbols-outlined text-purple-accent" style="font-variation-settings:'FILL' 1">terminal</span>
+      </div>
+      <h5 class="text-[10px] font-black text-purple-accent uppercase tracking-[0.15em] font-['Inter']">Programmer</h5>
+    </div>
+    <div class="bg-surface p-8 rounded-xl text-center hover:scale-[1.03] transition-all duration-300 group reveal border border-transparent hover:border-pink-accent/20">
+      <div class="w-14 h-14 bg-pink-accent/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+        <span class="material-symbols-outlined text-pink-accent" style="font-variation-settings:'FILL' 1">motion_mode</span>
+      </div>
+      <h5 class="text-[10px] font-black text-pink-accent uppercase tracking-[0.15em] font-['Inter']">Animator</h5>
+    </div>
+    <div class="bg-surface p-8 rounded-xl text-center hover:scale-[1.03] transition-all duration-300 group reveal border border-transparent hover:border-primary/20">
+      <div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+        <span class="material-symbols-outlined text-primary" style="font-variation-settings:'FILL' 1">palette</span>
+      </div>
+      <h5 class="text-[10px] font-black text-primary uppercase tracking-[0.15em] font-['Inter']">UI Designer</h5>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════
+     CTA BANNER
+════════════════════════════ -->
+<section class="py-16 px-6 max-w-7xl mx-auto">
+  <div class="relative overflow-hidden rounded-[40px] border border-primary/20 bg-gradient-to-br from-primary/10 to-transparent p-16 md:p-24 text-center reveal">
+    <div class="absolute inset-0 bg-background/40 backdrop-blur-sm -z-10"></div>
+    <div class="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/8 blur-[100px] rounded-full pointer-events-none -z-10"></div>
+    <div class="max-w-2xl mx-auto">
+      <span class="section-eyebrow block mb-6">Sudah Siap?</span>
+      <h2 class="font-['Inter'] text-4xl md:text-6xl font-black text-white mb-8 tracking-tighter">
+        Masuk ke workspace<br/>tim kamu
+      </h2>
+      <p class="text-text-sec text-lg font-light mb-12 opacity-80 leading-relaxed font-['Inter']">
+        Semua task, notifikasi, dan progress tim tersedia di satu dashboard terpadu. Login sekarang untuk mulai berkolaborasi.
+      </p>
+      <button
+        onclick="window.location.href='login.html'"
+        class="primary-gradient text-background font-black px-16 py-5 rounded-[16px] text-xl hover:scale-105 transition-transform duration-300 shadow-2xl shadow-primary/30 font-['Inter']">
+        ▶ Team Login
+      </button>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════
+     FOOTER
+════════════════════════════ -->
+<footer class="bg-surface pt-24 pb-12">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="flex flex-col md:flex-row justify-between gap-16 mb-20">
+      <!-- Brand -->
+      <div class="max-w-xs">
+        <div class="mb-4">
+          <span class="font-display italic font-light text-2xl text-white/90 tracking-wide">Mirai Atelier</span>
+          <span class="font-['Inter'] text-text-muted font-light text-xs ml-2">Hub</span>
+        </div>
+        <p class="font-['Inter'] text-text-muted text-sm font-light leading-relaxed italic">"Where creativity ships."</p>
+      </div>
+      <!-- Links -->
+      <div class="grid grid-cols-2 gap-12 sm:gap-24">
+        <div class="flex flex-col gap-4">
+          <span class="text-[10px] font-black uppercase tracking-widest text-primary font-['Inter']">Platform</span>
+          <a class="text-sm text-text-muted hover:text-white transition-colors font-['Inter']" href="login.html">Team Login</a>
+          <a class="text-sm text-text-muted hover:text-white transition-colors font-['Inter']" href="register.html">Buat Akun</a>
+        </div>
+        <div class="flex flex-col gap-4">
+          <span class="text-[10px] font-black uppercase tracking-widest text-primary font-['Inter']">Studio</span>
+          <a class="text-sm text-text-muted hover:text-white transition-colors font-['Inter']" href="#platform">Features</a>
+          <a class="text-sm text-text-muted hover:text-white transition-colors font-['Inter']" href="#divisions">Divisions</a>
+        </div>
+      </div>
+    </div>
+    <!-- Copyright -->
+    <div class="pt-12 border-t border-outline-var flex flex-col sm:flex-row justify-between items-center gap-6">
+      <p class="text-[11px] font-bold text-text-muted tracking-wide uppercase font-['Inter']">© 2026 Mirai Atelier. Internal Platform.</p>
+      <div class="flex gap-4">
+        <div class="w-10 h-10 rounded-full bg-background flex items-center justify-center border border-outline-var hover:border-primary transition-colors cursor-pointer group">
+          <span class="material-symbols-outlined text-lg text-text-muted group-hover:text-primary transition-colors">public</span>
+        </div>
+        <div class="w-10 h-10 rounded-full bg-background flex items-center justify-center border border-outline-var hover:border-primary transition-colors cursor-pointer group">
+          <span class="material-symbols-outlined text-lg text-text-muted group-hover:text-primary transition-colors">mail</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+<script>
+  // Hero image load — trigger zoom-out animation
+  const heroBg = document.getElementById('heroBg');
+  const img = new Image();
+  img.onload = () => { heroBg.style.backgroundImage = `url('assets/hero.jpg')`; requestAnimationFrame(() => heroBg.classList.add('loaded')); };
+  img.src = 'assets/hero.jpg';
+
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('revealed'); observer.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Navbar glass on scroll
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 60);
+  });
+
+  // Stat counter
+  const statsObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const el = e.target, end = parseInt(el.dataset.val);
+      let cur = 0;
+      const step = Math.max(1, Math.floor(end / 60));
+      const t = setInterval(() => {
+        cur = Math.min(cur + step, end);
+        el.textContent = cur + '+';
+        if (cur >= end) clearInterval(t);
+      }, 20);
+      statsObs.unobserve(el);
     });
-
-    // ─── Particles / Fireflies
-    const container = document.getElementById('particles');
-    const count = 40;
-    for (let i = 0; i < count; i++) {
-      const p = document.createElement('div');
-      p.className = 'particle';
-      const size = Math.random() * 3 + 2;
-      p.style.cssText = `
-        width:${size}px; height:${size}px;
-        left:${Math.random()*100}%;
-        bottom:${Math.random()*40}%;
-        animation-duration:${Math.random()*8+6}s;
-        animation-delay:${Math.random()*8}s;
-      `;
-      container.appendChild(p);
-    }
-
-    // ─── Scroll reveal
-    const reveals = document.querySelectorAll('.reveal');
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          e.target.classList.add('visible');
-          observer.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.12 });
-    reveals.forEach(r => observer.observe(r));
-
-    // ─── Trailer modal
-    const trailerVideo = document.getElementById('trailerVideo');
-    const videoFallback = document.getElementById('videoFallback');
-
-    trailerVideo.addEventListener('error', () => {
-      trailerVideo.style.display = 'none';
-      videoFallback.style.display = 'flex';
-    });
-
-    function openTrailer() {
-      document.getElementById('modal').classList.add('active');
-      if (trailerVideo.style.display !== 'none') {
-        trailerVideo.currentTime = 0;
-        trailerVideo.play().catch(() => {}); // silently handle autoplay block
-      }
-    }
-
-    function closeTrailer() {
-      document.getElementById('modal').classList.remove('active');
-      trailerVideo.pause();
-      trailerVideo.currentTime = 0;
-    }
-
-    function closeModal(e) {
-      if (e.target.id === 'modal') closeTrailer();
-    }
-
-    // ─── Join form
-    function handleJoin() {
-      const email = document.getElementById('emailInput').value.trim();
-      if (!email || !email.includes('@')) {
-        alert('Please enter a valid email address.');
-        return;
-      }
-      const btn = document.querySelector('.join-form button');
-      btn.textContent = '✓ You\'re In!';
-      btn.style.background = 'linear-gradient(135deg, #4a9a3a, #6ac050)';
-      document.getElementById('emailInput').value = '';
-      setTimeout(() => {
-        btn.textContent = 'Join Now';
-        btn.style.background = '';
-      }, 3000);
-    }
-
-    // ─── Sound button toggle (visual only)
-    let soundOn = false;
-    const soundBtn = document.getElementById('soundBtn');
-    soundBtn.addEventListener('click', () => {
-      soundOn = !soundOn;
-      soundBtn.textContent = soundOn ? '🔊' : '🔇';
-    });
-
-    // ─── Parallax on hero
-    window.addEventListener('mousemove', (e) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 2;
-      const y = (e.clientY / window.innerHeight - 0.5) * 2;
-      document.querySelector('.hero-sun').style.transform =
-        `translate(calc(-50% + ${x*18}px), calc(-50% + ${y*10}px))`;
-    });
-  </script>
-
+  }, { threshold: 0.5 });
+  document.querySelectorAll('[data-val]').forEach(el => statsObs.observe(el));
+</script>
 </body>
 </html>

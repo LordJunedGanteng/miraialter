@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MIRAI | Join the Atelier</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "surface-container-lowest": "#0b0e13",
+          "surface-container":        "#1d2025",
+          "surface-container-high":   "#272a30",
+          "primary":                  "#ffd57e",
+          "primary-container":        "#e8b84b",
+          "on-primary":               "#3a2a00",
+          "on-surface":               "#e1e2e9",
+          "on-surface-variant":       "#d2c5b0",
+          "outline":                  "#9b8f7c",
+          "outline-variant":          "#4e4636",
+          "surface-variant":          "#32353a",
+          "background":               "#111319",
+          "secondary":                "#c5c0ff",
+          "tertiary":                 "#5ef3c5",
+          "error":                    "#ffb4ab"
+        },
+        borderRadius: { "DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px" },
+        fontFamily:   { "headline":["Inter"],"body":["Inter"],"label":["Inter"] }
+      }
+    }
+  }
+</script>
+<style>
+  body { background-color:#111319; color:#e1e2e9; font-family:'Inter',sans-serif; }
+  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+  .glass-panel { background:rgba(39,42,48,0.8); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); }
+  .gold-gradient { background:linear-gradient(135deg,#ffd57e 0%,#e8b84b 100%); }
+  .ambient-glow {
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:800px; height:800px;
+    background:radial-gradient(circle,rgba(61,40,191,0.15) 0%,rgba(17,19,25,0) 70%);
+    pointer-events:none; z-index:-1;
+  }
+
+  /* Underline input style — Stitch "recessed carved" */
+  .atelier-input {
+    width:100%; background:#0b0e13; border:none;
+    border-bottom:2px solid transparent;
+    padding:16px 0; color:#e1e2e9;
+    font-family:'Inter',sans-serif; font-size:0.875rem; font-weight:300;
+    letter-spacing:0.03em; outline:none;
+    transition:border-color 0.2s ease;
+    border-radius:0;
+  }
+  .atelier-input::placeholder { color:rgba(50,53,58,0.8); }
+  .atelier-input:focus { border-bottom-color:#ffd57e; }
+
+  .spinner {
+    display:inline-block; width:14px; height:14px;
+    border:2px solid rgba(58,42,0,0.3); border-top-color:#3a2a00;
+    border-radius:50%; animation:spin 0.6s linear infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body class="bg-background min-h-screen flex flex-col items-center selection:bg-primary/30">
+
+<div class="ambient-glow"></div>
+
+<!-- Top bar -->
+<header class="bg-background w-full z-50 sticky top-0">
+  <div class="flex items-center justify-between px-6 py-4 w-full max-w-7xl mx-auto">
+    <a href="login.html" class="text-outline hover:text-on-surface transition-colors">
+      <span class="material-symbols-outlined">arrow_back</span>
+    </a>
+    <a href="index.html" class="font-extrabold tracking-[-0.04em] uppercase text-2xl text-[#e8b84b] hover:opacity-80 transition-opacity">
+      MIRAI
+    </a>
+    <div class="w-6"></div><!-- spacer -->
+  </div>
+</header>
+
+<main class="flex-grow flex items-center justify-center w-full px-6 py-12">
+  <div class="max-w-md w-full relative">
+
+    <!-- Corner decorative lines -->
+    <div class="absolute -top-12 -left-12 w-24 h-24 border-l border-t border-outline-variant/20 pointer-events-none"></div>
+
+    <div class="space-y-12">
+
+      <!-- Title -->
+      <div class="text-center md:text-left">
+        <label class="font-bold uppercase tracking-[0.05em] text-[10px] text-primary mb-2 block">Registration</label>
+        <h1 class="text-5xl md:text-6xl font-extrabold tracking-[-0.04em] text-on-surface">
+          Join the<br/>Atelier
+        </h1>
+      </div>
+
+      <!-- Error message -->
+      <div id="errorMsg" class="hidden px-4 py-3 rounded-lg bg-error/10 border border-error/20 text-error text-xs font-medium leading-relaxed"></div>
+
+      <!-- Success message -->
+      <div id="successMsg" class="hidden px-4 py-3 rounded-lg bg-tertiary/10 border border-tertiary/20 text-tertiary text-xs font-medium leading-relaxed"></div>
+
+      <!-- Form -->
+      <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-6">
+        <div class="grid grid-cols-1 gap-6">
+          <!-- Full Name -->
+          <div class="relative">
+            <label class="font-bold text-[10px] uppercase tracking-widest text-outline mb-2 block">Nama Lengkap</label>
+            <input class="atelier-input" id="regName" type="text" placeholder="NAMA LENGKAP KAMU" required/>
+          </div>
+          <!-- Username -->
+          <div class="relative">
+            <label class="font-bold text-[10px] uppercase tracking-widest text-outline mb-2 block">Username</label>
+            <input class="atelier-input" id="regUsername" type="text" placeholder="@username_kamu" autocomplete="username" required/>
+            <p class="text-[10px] text-outline/60 mt-1 font-light">Hanya huruf kecil, angka, dan underscore.</p>
+          </div>
+          <!-- Password -->
+          <div class="relative">
+            <label class="font-bold text-[10px] uppercase tracking-widest text-outline mb-2 block">Password</label>
+            <input class="atelier-input" id="regPassword" type="password" placeholder="••••••••••••" minlength="8" required/>
+            <p class="text-[10px] text-outline/60 mt-1 font-light">Minimal 8 karakter.</p>
+          </div>
+        </div>
+
+        <!-- Role info banner -->
+        <div class="glass-panel rounded-lg p-4 flex gap-4 items-start border border-outline-variant/10">
+          <span class="material-symbols-outlined text-secondary text-lg mt-0.5" style="flex-shrink:0">info</span>
+          <p class="text-on-surface-variant text-[11px] leading-relaxed font-light">
+            Role / divisi kamu akan ditentukan oleh <strong class="text-secondary font-semibold">Admin</strong> setelah akun dibuat. Kamu tidak perlu memilih role sekarang.
+          </p>
+        </div>
+
+        <!-- Actions -->
+        <div class="pt-4 space-y-6">
+          <button type="submit" id="registerBtn"
+            class="gold-gradient w-full py-4 rounded-lg text-on-primary font-bold text-sm uppercase tracking-widest hover:opacity-90 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2">
+            <span id="registerBtnText">Register</span>
+            <span class="material-symbols-outlined text-base" id="registerBtnIcon">arrow_forward</span>
+          </button>
+
+          <div class="flex flex-col items-center gap-4">
+            <p class="text-[10px] font-light text-outline uppercase tracking-widest">Sudah bagian dari atelier?</p>
+            <a href="login.html"
+              class="text-primary text-[11px] font-bold uppercase tracking-[0.1em] hover:text-primary-container transition-colors flex items-center gap-2 group">
+              Login ke Akun
+              <span class="material-symbols-outlined text-sm transition-transform group-hover:translate-x-1">arrow_forward</span>
+            </a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="bg-transparent w-full py-8 mt-auto flex flex-col items-center gap-4 px-8">
+  <div class="flex gap-6 mb-2">
+    <a class="font-light text-[10px] uppercase tracking-widest text-slate-600 hover:text-[#ffd57e] transition-colors" href="index.html">Home</a>
+    <a class="font-light text-[10px] uppercase tracking-widest text-slate-600 hover:text-[#ffd57e] transition-colors" href="login.html">Login</a>
+  </div>
+  <p class="font-light text-[10px] uppercase tracking-widest text-[#e8b84b]/40">© 2026 MIRAI ATELIER. THE NOIR ATELIER EXPERIENCE.</p>
+</footer>
+
+<script>
+  // Redirect if already logged in
+  (async () => {
+    const { data: { session } } = await db.auth.getSession();
+    if (session) window.location.href = 'dashboard.html';
+  })();
+
+  function toEmail(username) {
+    return `${username.toLowerCase().trim()}@example.com`;
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    document.getElementById('successMsg').classList.add('hidden');
+  }
+
+  function showSuccess(msg) {
+    const el = document.getElementById('successMsg');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    document.getElementById('errorMsg').classList.add('hidden');
+  }
+
+  function hideMessages() {
+    document.getElementById('errorMsg').classList.add('hidden');
+    document.getElementById('successMsg').classList.add('hidden');
+  }
+
+  async function handleRegister(e) {
+    e.preventDefault();
+    hideMessages();
+
+    const btn      = document.getElementById('registerBtn');
+    const btnText  = document.getElementById('registerBtnText');
+    const btnIcon  = document.getElementById('registerBtnIcon');
+
+    const full_name = document.getElementById('regName').value.trim();
+    const username  = document.getElementById('regUsername').value.trim().toLowerCase();
+    const password  = document.getElementById('regPassword').value;
+
+    if (!full_name || !username) { showError('Nama dan username harus diisi.'); return; }
+    if (!/^[a-z0-9_]+$/.test(username)) { showError('Username hanya boleh huruf kecil, angka, dan underscore.'); return; }
+    if (password.length < 8) { showError('Password minimal 8 karakter.'); return; }
+
+    btn.disabled = true;
+    btnText.innerHTML = `<span class="spinner mr-2"></span> Membuat akun...`;
+    btnIcon.style.display = 'none';
+
+    try {
+      const { error } = await db.auth.signUp({
+        email: toEmail(username),
+        password,
+        options: { data: { full_name, username } }
+      });
+
+      if (error) {
+        showError(error.message.includes('already registered') ? 'Username sudah dipakai, coba yang lain.' : error.message);
+        btn.disabled = false;
+        btnText.textContent = 'Register';
+        btnIcon.style.display = '';
+        return;
+      }
+
+      showSuccess('✓ Akun berhasil dibuat! Mengarahkan ke halaman login...');
+      btn.disabled = true;
+      btnText.textContent = '✓ Berhasil!';
+
+      setTimeout(() => {
+        window.location.href = 'login.html';
+      }, 2000);
+
+    } catch (err) {
+      showError('Koneksi gagal. Cek konfigurasi Supabase.');
+      btn.disabled = false;
+      btnText.textContent = 'Register';
+      btnIcon.style.display = '';
+    }
+  }
+</script>
+</body>
+</html>
