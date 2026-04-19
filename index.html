@@ -487,8 +487,8 @@
   // Hero image load — trigger zoom-out animation
   const heroBg = document.getElementById('heroBg');
   const img = new Image();
-  img.onload = () => { heroBg.style.backgroundImage = `url('assets/hero.jpg')`; requestAnimationFrame(() => heroBg.classList.add('loaded')); };
-  img.src = 'assets/hero.jpg';
+  img.onload = () => { heroBg.style.backgroundImage = `url('assets/hero.png')`; requestAnimationFrame(() => heroBg.classList.add('loaded')); };
+  img.src = 'assets/hero.png';
 
   // Scroll reveal
   const observer = new IntersectionObserver((entries) => {
