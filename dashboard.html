@@ -1722,7 +1722,7 @@
     // ── HOME ──────────────────────────────────────────────
     async function loadHome() {
       const { data } = await db.from('tasks')
-        .select('id,title,description,status,priority,due_date,assigned_by:profiles!tasks_assigned_by_fkey(full_name)')
+        .select('id,title,description,status,priority,due_date,role_target,assigned_by:profiles!tasks_assigned_by_fkey(full_name)')
         .or(`assigned_to.eq.${CU.id},role_target.eq.${CP.role},role_target.eq.all`)
         .order('created_at', { ascending: false });
 
@@ -1769,9 +1769,10 @@
         <div class="task-num" style="background:${pc}22;color:${pc}">${i + 1}</div>
         <div class="task-row-info">
           <div class="task-row-title">${esc(t.title)}</div>
-          <div class="task-row-sub">${t.assigned_by?.full_name ? 'dari ' + esc(t.assigned_by.full_name) : 'Role task'}</div>
+          <div class="task-row-sub">${t.assigned_by?.full_name ? 'dari ' + esc(t.assigned_by.full_name) : ''}</div>
         </div>
         <div class="task-row-right">
+          ${t.role_target && t.role_target !== 'all' ? `<span class="badge badge-${t.role_target}" style="font-size:0.6rem">${ROLES[t.role_target]?.icon || ''} ${ROLES[t.role_target]?.label || t.role_target}</span>` : ''}
           <span class="badge badge-${t.status}">${STATUS_MAP[t.status]?.label || t.status}</span>
           <span class="badge badge-${t.priority}">${PRIORITY_MAP[t.priority] || t.priority}</span>
           ${t.due_date ? `<span style="font-size:0.6875rem;color:${over ? '#f87171' : 'var(--t3)'}">📅 ${fmtDate(t.due_date)}</span>` : ''}
@@ -1826,7 +1827,7 @@
           <div class="kb-card" onclick="openTaskModal('${t.id}')">
             <div class="kb-card-title">${esc(t.title)}</div>
             <div class="kb-card-meta">
-              ${t.assigned_to?.role ? `<span class="badge badge-${t.assigned_to.role}">${ROLES[t.assigned_to.role]?.icon || ''} ${ROLES[t.assigned_to.role]?.label || t.assigned_to.role}</span>` : ''}
+              ${t.role_target && t.role_target !== 'all' ? `<span class="badge badge-${t.role_target}">${ROLES[t.role_target]?.icon || ''} ${ROLES[t.role_target]?.label || t.role_target}</span>` : ''}
               <span class="badge badge-${t.priority}">${PRIORITY_MAP[t.priority] || t.priority}</span>
             </div>
             ${t.assigned_to?.full_name ? `<div class="kb-card-user"><span class="mini-ava">${ini(t.assigned_to.full_name)}</span>${esc(t.assigned_to.full_name)}</div>` : `<div style="font-size:0.6875rem;color:var(--t3);margin-top:6px">Unassigned</div>`}
