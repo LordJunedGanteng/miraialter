@@ -1595,32 +1595,6 @@
     </main>
 
     <!-- ── RIGHT PANEL ── -->
-    <aside class="dash-right" id="dashRight">
-      <!-- Upcoming deadlines -->
-      <div>
-        <div class="dr-title">
-          <div class="dr-title-icon purple">📅</div>
-          Upcoming Deadline
-        </div>
-        <div id="upcomingList">
-          <div class="page-loader"><span class="spinner-dark"></span></div>
-        </div>
-      </div>
-
-      <!-- Quick Done -->
-      <div>
-        <div class="dr-title">
-          <div class="dr-title-icon teal">✅</div>
-          Quick Done
-        </div>
-        <div class="qs-form">
-          <select class="qs-select" id="qsTaskSel">
-            <option value="">Pilih task...</option>
-          </select>
-          <button class="qs-btn" id="qsBtn" onclick="quickSubmit()">✅ Mark as Done</button>
-        </div>
-      </div>
-    </aside>
 
   </div>
 
@@ -1753,7 +1727,7 @@
       document.getElementById('progressText').textContent = `${pct}% Task Completed`;
       document.getElementById('progressFill').style.width = pct + '%';
 
-      renderTaskList(allMyTasks);
+      renderTaskList(allMyTasks.filter(t => t.status !== 'on_review' && t.status !== 'processed'));
     }
 
     function setTab(tab) {
@@ -1762,7 +1736,9 @@
         const tabs = ['all', 'ongoing', 'on_review', 'processed', 'revision'];
         b.classList.toggle('active', tabs[i] === tab);
       });
-      const filtered = tab === 'all' ? allMyTasks : allMyTasks.filter(t => t.status === tab);
+      const filtered = tab === 'all'
+        ? allMyTasks.filter(t => t.status !== 'on_review' && t.status !== 'processed')
+        : allMyTasks.filter(t => t.status === tab);
       renderTaskList(filtered);
     }
 
@@ -2142,36 +2118,106 @@
         ` : ''}`;
     }
 
+    const _MAX_VIDEO = 50 * 1024 * 1024;   // 50 MB
+    const _MAX_FILE  = 100 * 1024 * 1024;  // 100 MB
+    function _fmtSize(b) { return b >= 1048576 ? (b/1048576).toFixed(1)+'MB' : (b/1024).toFixed(0)+'KB'; }
+    function _isVideoFile(f) { return f.type.startsWith('video/') || /\.(mp4|webm|mov|avi|mkv)$/i.test(f.name); }
+
+    function _validateFile(f) {
+      if (_isVideoFile(f) && f.size > _MAX_VIDEO)
+        return `Video "${f.name}" terlalu besar — ${_fmtSize(f.size)} (maks 50MB)`;
+      if (f.size > _MAX_FILE)
+        return `File "${f.name}" terlalu besar — ${_fmtSize(f.size)} (maks 100MB)`;
+      return null;
+    }
+
     function modalOnFileSelect(e) {
-      [...e.target.files].forEach(f => _modalFiles.push(f));
+      for (const f of e.target.files) {
+        const err = _validateFile(f);
+        if (err) { toast(err, 'error'); continue; }
+        _modalFiles.push(f);
+      }
       renderModalChips();
       e.target.value = '';
     }
     function modalOnFileDrop(e) {
-      [...e.dataTransfer.files].forEach(f => _modalFiles.push(f));
+      for (const f of e.dataTransfer.files) {
+        const err = _validateFile(f);
+        if (err) { toast(err, 'error'); continue; }
+        _modalFiles.push(f);
+      }
       renderModalChips();
     }
     function modalRemoveFile(i) { _modalFiles.splice(i,1); renderModalChips(); }
     function renderModalChips() {
       const el = document.getElementById('modalFileChips');
       if (!el) return;
-      el.innerHTML = _modalFiles.map((f,i) =>
-        `<div class="modal-file-chip"><span>${esc(f.name)}</span><button onclick="modalRemoveFile(${i})">✕</button></div>`
-      ).join('');
+      el.innerHTML = _modalFiles.map((f,i) => `
+        <div class="modal-file-chip">
+          <span>${esc(f.name)}</span>
+          <span style="opacity:0.5;font-size:0.65rem;margin-left:2px">${_fmtSize(f.size)}</span>
+          <button onclick="modalRemoveFile(${i})">✕</button>
+        </div>`).join('');
+    }
+
+    // XHR upload with real progress
+    async function _uploadXHR(path, file, onProgress) {
+      const { data:{ session } } = await db.auth.getSession();
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(Math.round(e.loaded/e.total*100)); };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) { resolve(); return; }
+          try { const b = JSON.parse(xhr.responseText); reject(new Error(b.error||b.message||`Upload gagal (${xhr.status})`)); }
+          catch { reject(new Error(`Upload gagal (${xhr.status})`)); }
+        };
+        xhr.onerror = () => reject(new Error('Koneksi terputus saat upload'));
+        xhr.open('POST', `${SUPABASE_URL}/storage/v1/object/task-submissions/${path}`);
+        xhr.setRequestHeader('Authorization', `Bearer ${session.access_token}`);
+        xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+        xhr.setRequestHeader('x-upsert', 'false');
+        xhr.send(file);
+      });
     }
 
     async function modalSubmit(taskId, taskTitle) {
-      const btn  = document.getElementById('modalSubmitBtn');
       const note = document.getElementById('modalNote')?.value.trim() || '';
       if (_modalFiles.length === 0 && !note) { toast('Upload file atau tambahkan catatan.','error'); return; }
-      btn.disabled = true;
-      btn.innerHTML = `<span class="spinner" style="border-top-color:#fff;width:14px;height:14px"></span> Mengupload...`;
+
+      const btn = document.getElementById('modalSubmitBtn');
+      btn.style.display = 'none';
+
+      // Inject progress UI
+      const prog = document.createElement('div');
+      prog.id = 'modalProg';
+      prog.innerHTML = `
+        <div style="font-size:0.8125rem;font-weight:600;color:var(--t1);margin-bottom:6px" id="progLabel">Mempersiapkan...</div>
+        <div style="background:var(--border);border-radius:99px;height:8px;overflow:hidden;margin-bottom:6px">
+          <div id="progBar" style="height:100%;width:0%;border-radius:99px;transition:width 0.25s ease;background:linear-gradient(90deg,#7c6fff,#5b4de8)"></div>
+        </div>
+        <div style="font-size:0.7rem;color:var(--t3)" id="progSub"></div>`;
+      btn.insertAdjacentElement('afterend', prog);
+
+      const setProg = (pct, label, sub='') => {
+        document.getElementById('progBar').style.width = pct+'%';
+        document.getElementById('progLabel').textContent = label;
+        document.getElementById('progSub').textContent = sub;
+      };
+
       try {
-        for (let i = 0; i < _modalFiles.length; i++) {
+        const total = _modalFiles.length;
+        for (let i = 0; i < total; i++) {
           const f = _modalFiles[i];
           const path = `${CU.id}/${taskId}_${Date.now()}_${f.name}`;
-          const { error: upErr } = await db.storage.from('task-submissions').upload(path, f);
-          if (upErr) throw new Error('Upload gagal: ' + upErr.message);
+          const base = (i / total) * 85;
+          const chunk = 85 / total;
+
+          setProg(base, `Mengupload file ${i+1} dari ${total}`, `${f.name} · ${_fmtSize(f.size)}`);
+
+          await _uploadXHR(path, f, pct => {
+            setProg(base + chunk*(pct/100), `Mengupload file ${i+1} dari ${total} — ${pct}%`, `${f.name} · ${_fmtSize(f.size)}`);
+          });
+
           const { data:{ publicUrl } } = db.storage.from('task-submissions').getPublicUrl(path);
           await db.from('task_submissions').insert({
             task_id:taskId, submitted_by:CU.id,
@@ -2179,10 +2225,16 @@
             note: i===0 ? note : null
           });
         }
-        if (_modalFiles.length === 0) {
+
+        if (total === 0) {
+          setProg(50, 'Menyimpan catatan...');
           await db.from('task_submissions').insert({ task_id:taskId, submitted_by:CU.id, note });
         }
+
+        setProg(90, 'Memperbarui status task...');
         await db.from('tasks').update({ status:'on_review', updated_at:new Date().toISOString() }).eq('id',taskId);
+
+        setProg(95, 'Mengirim notifikasi...');
         const admins = await getAdminIds();
         for (const aid of admins) {
           await db.from('notifications').insert({
@@ -2191,14 +2243,19 @@
             message:`"${taskTitle}" telah disubmit dan menunggu review`
           });
         }
+
+        setProg(100, '✓ Upload selesai!');
+        document.getElementById('progBar').style.background = 'linear-gradient(90deg,#5ef3c5,#3dd9ad)';
+        await new Promise(r => setTimeout(r, 700));
+
         _modalFiles = [];
         toast('✓ Task berhasil disubmit!','success');
         closeModal();
-        loadHome(); loadUpcoming();
+        loadHome();
       } catch(err) {
+        document.getElementById('modalProg')?.remove();
+        btn.style.display = '';
         toast(err.message||'Gagal submit.','error');
-        btn.disabled = false;
-        btn.innerHTML = `<span class="ms">check_circle</span> Submit Task`;
       }
     }
 
