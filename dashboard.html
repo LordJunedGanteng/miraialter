@@ -1118,6 +1118,58 @@
       transform: scale(1) translateY(0);
     }
 
+    /* ── TASK MODAL INLINE SUBMIT ── */
+    .modal-divider {
+      font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em;
+      color:var(--t3); margin:18px 0 10px; display:flex; align-items:center; gap:8px;
+    }
+    .modal-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+
+    .modal-drop {
+      border:1.5px dashed var(--border2); border-radius:10px;
+      padding:22px 16px; text-align:center; cursor:pointer;
+      transition:border-color 0.2s, background 0.2s; background:var(--surf);
+    }
+    .modal-drop:hover, .modal-drop.drag-over {
+      border-color:var(--purple); background:rgba(124,111,255,0.06);
+    }
+    .modal-file-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; min-height:0; }
+    .modal-file-chip {
+      display:flex; align-items:center; gap:5px;
+      background:rgba(124,111,255,0.1); border:1px solid rgba(124,111,255,0.25);
+      border-radius:99px; padding:3px 10px; font-size:0.75rem; color:var(--t1); max-width:220px;
+    }
+    .modal-file-chip span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .modal-file-chip button { background:none; border:none; color:var(--t3); cursor:pointer; padding:0; line-height:1; flex-shrink:0; }
+    .modal-file-chip button:hover { color:#f87171; }
+    .modal-note {
+      width:100%; box-sizing:border-box; resize:none; min-height:60px;
+      background:var(--card2); border:1px solid var(--border); border-radius:8px;
+      color:var(--t1); padding:10px 12px; font-size:0.8125rem; font-family:inherit;
+      outline:none; transition:border-color var(--ease); margin-top:10px;
+    }
+    .modal-note:focus { border-color:var(--purple); }
+    .modal-submit-btn {
+      width:100%; margin-top:12px; padding:12px; border-radius:8px; border:none; cursor:pointer;
+      background:linear-gradient(135deg,#7c6fff,#5b4de8); color:#fff;
+      font-weight:700; font-size:0.875rem; letter-spacing:0.01em;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      transition:opacity 0.2s, transform 0.1s;
+    }
+    .modal-submit-btn:hover { opacity:0.9; }
+    .modal-submit-btn:active { transform:scale(0.99); }
+    .modal-submit-btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .modal-banner {
+      border-radius:10px; padding:14px; margin-top:4px;
+      display:flex; align-items:center; gap:10px; font-size:0.8125rem;
+    }
+    .modal-banner-warning { background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.2); }
+    .modal-banner-success { background:rgba(94,243,197,0.07); border:1px solid rgba(94,243,197,0.2); }
+    .sub-item {
+      background:var(--surf); border:1px solid var(--border);
+      border-radius:8px; padding:10px 12px; margin-bottom:6px;
+    }
+
     .modal-hd {
       display: flex;
       align-items: center;
@@ -1367,7 +1419,6 @@
         <button class="ds-btn active" onclick="switchSection('home')" title="Overview"><span class="ms">grid_view</span></button>
         <button class="ds-btn" onclick="switchSection('kanban')" title="Kanban Board"><span class="ms">view_kanban</span></button>
         <button class="ds-btn" onclick="switchSection('leaderboard')" title="Leaderboard"><span class="ms">leaderboard</span></button>
-        <button class="ds-btn" onclick="switchSection('submit')" title="Submit Task"><span class="ms">upload_file</span></button>
       </nav>
       <div class="ds-bottom">
         <div class="notif-btn-wrap">
@@ -1504,47 +1555,6 @@
       </section>
 
       <!-- SUBMIT -->
-      <section class="ds-section" id="sec-submit">
-        <div class="sub-wrap">
-          <div class="section-hd">
-            <h2>✅ Mark as Done</h2>
-            <p>Upload bukti pekerjaan dan tandai task selesai</p>
-          </div>
-          <div class="sub-card">
-            <form id="submitForm" onsubmit="handleSubmit(event)">
-              <div class="form-group">
-                <label class="form-label">Pilih Task</label>
-                <select class="form-select" id="subTaskSel" required>
-                  <option value="">— Pilih task kamu —</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">📎 Upload File Bukti</label>
-                <div class="file-drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
-                  <div style="font-size:1.75rem;margin-bottom:6px">📁</div>
-                  <div style="font-size:0.8125rem;color:var(--t2)">Klik, drag, atau <kbd style="background:var(--card2);border:1px solid var(--border2);border-radius:4px;padding:1px 5px;font-size:0.75rem">Ctrl+V</kbd> paste screenshot</div>
-                  <div style="font-size:0.6875rem;color:var(--t3);margin-top:3px">PNG, JPG, PDF, MP4, ZIP · Max 50MB · Multi-file</div>
-                </div>
-                <input type="file" id="fileInput" style="display:none" multiple accept="image/*,video/*,.pdf,.zip,.rar" onchange="onFileSelect(this)">
-                <!-- Multi-file preview grid -->
-                <div id="filePreviewGrid" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Catatan</label>
-                <textarea class="form-textarea" id="subNote"
-                  placeholder="Keterangan, link, atau detail pekerjaan..."></textarea>
-              </div>
-              <div id="subError"
-                style="display:none;background:rgba(248,113,113,0.1);color:#f87171;border:1px solid rgba(248,113,113,0.2);border-radius:8px;padding:10px 14px;font-size:0.8125rem;margin-bottom:12px">
-              </div>
-              <button type="submit" class="btn btn-primary" id="subBtn"
-                style="width:100%;justify-content:center;padding:11px">
-                ✅ Done
-              </button>
-            </form>
-          </div>
-        </div>
-      </section>
 
       <!-- PROFILE -->
       <section class="ds-section" id="sec-profile">
@@ -1658,15 +1668,16 @@
 
   <!-- Task Detail Modal -->
   <div class="modal-overlay" id="taskModal">
-    <div class="modal-box">
+    <div class="modal-box" style="max-width:600px">
       <div class="modal-hd">
         <div class="modal-title" id="modalTitle">Detail Task</div>
         <button class="modal-x" onclick="closeModal()">✕</button>
       </div>
       <div id="modalBody"></div>
-      <div id="modalActions" style="margin-top:14px;display:flex;gap:8px"></div>
     </div>
   </div>
+  <input id="modalFileInput" type="file" multiple hidden accept="image/*,video/*,.pdf,.zip,.rar,.7z,.psd,.ai,.mp4,.mov"
+    onchange="modalOnFileSelect(event)">
 
   <script>
     let CU = null, CP = null, selectedFiles = [], currentTab = 'all';
@@ -2050,80 +2061,155 @@
     }
 
     // ── TASK MODAL ────────────────────────────────────────
+    let _modalFiles = [];
+
     async function openTaskModal(taskId) {
+      _modalFiles = [];
       document.getElementById('taskModal').classList.add('open');
       document.getElementById('modalBody').innerHTML = `<div class="page-loader"><span class="spinner-dark"></span></div>`;
-      document.getElementById('modalActions').innerHTML = '';
 
-      const { data: t } = await db.from('tasks')
-        .select('*, assigned_to:profiles!tasks_assigned_to_fkey(full_name,role), assigned_by:profiles!tasks_assigned_by_fkey(full_name)')
-        .eq('id', taskId).single();
+      const [{ data: t }, { data: subs }] = await Promise.all([
+        db.from('tasks')
+          .select('*, assigned_to:profiles!tasks_assigned_to_fkey(full_name,role), assigned_by:profiles!tasks_assigned_by_fkey(full_name)')
+          .eq('id', taskId).single(),
+        db.from('task_submissions')
+          .select('*, submitted_by:profiles!task_submissions_submitted_by_fkey(full_name)')
+          .eq('task_id', taskId).order('submitted_at', { ascending: false })
+      ]);
       if (!t) return;
 
       document.getElementById('modalTitle').textContent = t.title;
-      const { data: subs } = await db.from('task_submissions')
-        .select('*, submitted_by:profiles!task_submissions_submitted_by_fkey(full_name)')
-        .eq('task_id', taskId).order('submitted_at', { ascending: false });
 
-      // Resolve all file URLs to signed URLs (private bucket)
       for (const s of (subs || [])) {
         if (s.file_url) s.file_url = await resolveFileUrl(s.file_url) || s.file_url;
       }
 
-      const isImg   = url => /\.(png|jpg|jpeg|gif|webp|svg)(\?|$)/i.test(url||'');
-      const isVid   = url => /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(url||'');
+      const isImg = url => /\.(png|jpg|jpeg|gif|webp|svg)(\?|$)/i.test(url||'');
+      const isVid = url => /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(url||'');
+      const over  = t.due_date && new Date(t.due_date) < new Date() && t.status !== 'processed';
+      const canSubmit = t.status === 'ongoing' || t.status === 'revision';
 
-      document.getElementById('modalBody').innerHTML = `
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
-        <span class="badge badge-${t.status}">${STATUS_MAP[t.status]?.label || t.status}</span>
-        <span class="badge badge-${t.priority}">${PRIORITY_MAP[t.priority] || t.priority}</span>
-        ${t.assigned_to?.role ? `<span class="badge badge-${t.assigned_to.role}">${ROLES[t.assigned_to.role]?.icon || ''} ${ROLES[t.assigned_to.role]?.label || t.assigned_to.role}</span>` : ''}
-      </div>
-      ${t.description ? `<p style="font-size:0.875rem;color:var(--t2);margin-bottom:14px;line-height:1.6">${esc(t.description)}</p>` : ''}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:${subs?.length ? '16px' : '0'}">
-        <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px">
-          <div style="font-size:0.625rem;color:var(--t3);text-transform:uppercase;letter-spacing:0.08em">Assigned To</div>
-          <div style="font-size:0.875rem;font-weight:600;margin-top:3px">${t.assigned_to?.full_name || '—'}</div>
-        </div>
-        <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px">
-          <div style="font-size:0.625rem;color:var(--t3);text-transform:uppercase;letter-spacing:0.08em">Due Date</div>
-          <div style="font-size:0.875rem;font-weight:600;margin-top:3px">${fmtDate(t.due_date)}</div>
-        </div>
-      </div>
-      ${subs?.length ? `
-      <div style="margin-top:14px">
-        <div style="font-size:0.625rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--t3);margin-bottom:8px">Submissions (${subs.length})</div>
-        ${subs.map(s => {
-          const fileHtml = s.file_url
-            ? isImg(s.file_url)
-              ? `<img src="${s.file_url}" alt="${esc(s.file_name||'img')}"
-                  style="width:100%;max-height:200px;object-fit:contain;border-radius:6px;border:1px solid var(--border);cursor:zoom-in;margin-top:6px;display:block"
-                  onclick="window.open('${s.file_url}','_blank')">`
-              : isVid(s.file_url)
-              ? `<video src="${s.file_url}" controls style="width:100%;max-height:220px;border-radius:6px;border:1px solid var(--border);margin-top:6px;display:block" preload="metadata"></video>`
-              : `<a href="${s.file_url}" target="_blank" download="${esc(s.file_name||'file')}"
-                  style="font-size:0.75rem;color:var(--gold);display:inline-flex;align-items:center;gap:4px;margin-top:6px">⬇️ ${esc(s.file_name||'Download File')}</a>`
-            : '';
-          return `<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-            <span style="font-size:0.8125rem;font-weight:600">${esc(s.submitted_by?.full_name || '?')}</span>
+      const subsHtml = (subs||[]).map(s => {
+        const fh = s.file_url
+          ? isImg(s.file_url) ? `<img src="${s.file_url}" style="width:100%;max-height:180px;object-fit:contain;border-radius:6px;border:1px solid var(--border);margin-top:8px;cursor:zoom-in;display:block" onclick="window.open('${s.file_url}','_blank')">`
+          : isVid(s.file_url) ? `<video src="${s.file_url}" controls style="width:100%;max-height:180px;border-radius:6px;margin-top:8px;display:block" preload="metadata"></video>`
+          : `<a href="${s.file_url}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:0.75rem;color:var(--gold)"><span class="ms" style="font-size:0.875rem">download</span>${esc(s.file_name||'Download')}</a>`
+          : '';
+        return `<div class="sub-item">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:0.8rem;font-weight:600">${esc(s.submitted_by?.full_name||'?')}</span>
             <span style="font-size:0.6875rem;color:var(--t3)">${timeAgo(s.submitted_at)}</span>
           </div>
-          ${s.note ? `<p style="font-size:0.8125rem;color:var(--t2);margin-bottom:4px">📎 ${esc(s.note)}</p>` : ''}
-          ${fileHtml}
+          ${s.note ? `<p style="font-size:0.8rem;color:var(--t2);margin-top:4px;line-height:1.5">${esc(s.note)}</p>` : ''}
+          ${fh}
         </div>`;
-        }).join('')}
-      </div>` : ''}`;
+      }).join('');
 
-      const acts = document.getElementById('modalActions');
-      if (t.status === 'ongoing' || t.status === 'revision') {
-        acts.innerHTML = `
-        <button class="btn btn-primary btn-sm" onclick="inlineSubmit('${t.id}','${esc(t.title)}')">✅ Done</button>
-        <button class="btn btn-ghost btn-sm" onclick="closeModal();switchSection('submit');setTimeout(()=>document.getElementById('subTaskSel').value='${t.id}',100)">📎 + File</button>`;
-      } else if (t.status === 'on_review') {
-        acts.innerHTML = `
-        <span style="font-size:0.75rem;color:var(--t2)">✅ Menunggu review admin</span>
-        <button class="btn btn-ghost btn-sm" onclick="inlineUnsubmit('${t.id}','${esc(t.title)}')">↩ Batalkan</button>`;
+      document.getElementById('modalBody').innerHTML = `
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+          <span class="badge badge-${t.status}">${STATUS_MAP[t.status]?.label||t.status}</span>
+          <span class="badge badge-${t.priority}">${PRIORITY_MAP[t.priority]||t.priority}</span>
+          ${t.role_target&&t.role_target!=='all' ? `<span class="badge badge-${t.role_target}">${ROLES[t.role_target]?.icon||''} ${ROLES[t.role_target]?.label||t.role_target}</span>` : ''}
+        </div>
+        ${t.description ? `<p style="font-size:0.875rem;color:var(--t2);line-height:1.65;margin-bottom:12px">${esc(t.description)}</p>` : ''}
+        <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:0.8125rem;color:var(--t2);margin-bottom:4px">
+          ${t.due_date ? `<span style="display:flex;align-items:center;gap:4px;color:${over?'#f87171':'var(--t2)'}"><span class="ms" style="font-size:0.875rem">${over?'alarm_off':'calendar_today'}</span>${over?'Overdue · ':''}${fmtDate(t.due_date)}</span>` : ''}
+          ${t.assigned_by?.full_name ? `<span style="display:flex;align-items:center;gap:4px"><span class="ms" style="font-size:0.875rem">person</span>dari ${esc(t.assigned_by.full_name)}</span>` : ''}
+        </div>
+
+        <div class="modal-divider">File Submissions <span style="background:rgba(124,111,255,0.15);color:#9d8fff;border-radius:99px;padding:1px 8px;font-size:0.6rem;font-weight:700">${(subs||[]).length}</span></div>
+        ${subsHtml || `<div style="text-align:center;padding:12px 0 4px;font-size:0.8125rem;color:var(--t3)">Belum ada submission</div>`}
+
+        ${canSubmit ? `
+          <div class="modal-divider">Upload File</div>
+          <div class="modal-drop" id="modalDrop"
+            onclick="document.getElementById('modalFileInput').click()"
+            ondragover="event.preventDefault();this.classList.add('drag-over')"
+            ondragleave="this.classList.remove('drag-over')"
+            ondrop="event.preventDefault();this.classList.remove('drag-over');modalOnFileDrop(event)">
+            <span class="ms" style="font-size:2rem;color:var(--t3);display:block;margin-bottom:6px">upload_file</span>
+            <div style="font-size:0.875rem;color:var(--t2);font-weight:500">Klik atau drop file di sini</div>
+            <div style="font-size:0.7rem;color:var(--t3);margin-top:3px">Gambar, video, PDF, ZIP — maks 100MB per file</div>
+          </div>
+          <div class="modal-file-chips" id="modalFileChips"></div>
+          <textarea class="modal-note" id="modalNote" placeholder="Catatan untuk Admin (opsional)..." rows="2"></textarea>
+          <button class="modal-submit-btn" id="modalSubmitBtn" onclick="modalSubmit('${t.id}','${esc(t.title)}')">
+            <span class="ms">check_circle</span> Submit Task
+          </button>
+        ` : t.status === 'on_review' ? `
+          <div class="modal-banner modal-banner-warning">
+            <span class="ms" style="color:#fbbf24;font-size:1.25rem;flex-shrink:0">hourglass_top</span>
+            <div style="flex:1">
+              <div style="font-weight:600;color:var(--t1)">Menunggu review Admin</div>
+              <div style="font-size:0.75rem;color:var(--t2);margin-top:2px">Task sudah disubmit, tunggu persetujuan.</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="inlineUnsubmit('${t.id}','${esc(t.title)}')">Batalkan</button>
+          </div>
+        ` : t.status === 'processed' ? `
+          <div class="modal-banner modal-banner-success">
+            <span class="ms" style="color:#5ef3c5;font-size:1.25rem;flex-shrink:0">check_circle</span>
+            <div style="font-weight:600;color:var(--t1)">Task selesai! 🎉</div>
+          </div>
+        ` : ''}`;
+    }
+
+    function modalOnFileSelect(e) {
+      [...e.target.files].forEach(f => _modalFiles.push(f));
+      renderModalChips();
+      e.target.value = '';
+    }
+    function modalOnFileDrop(e) {
+      [...e.dataTransfer.files].forEach(f => _modalFiles.push(f));
+      renderModalChips();
+    }
+    function modalRemoveFile(i) { _modalFiles.splice(i,1); renderModalChips(); }
+    function renderModalChips() {
+      const el = document.getElementById('modalFileChips');
+      if (!el) return;
+      el.innerHTML = _modalFiles.map((f,i) =>
+        `<div class="modal-file-chip"><span>${esc(f.name)}</span><button onclick="modalRemoveFile(${i})">✕</button></div>`
+      ).join('');
+    }
+
+    async function modalSubmit(taskId, taskTitle) {
+      const btn  = document.getElementById('modalSubmitBtn');
+      const note = document.getElementById('modalNote')?.value.trim() || '';
+      if (_modalFiles.length === 0 && !note) { toast('Upload file atau tambahkan catatan.','error'); return; }
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner" style="border-top-color:#fff;width:14px;height:14px"></span> Mengupload...`;
+      try {
+        for (let i = 0; i < _modalFiles.length; i++) {
+          const f = _modalFiles[i];
+          const path = `${CU.id}/${taskId}_${Date.now()}_${f.name}`;
+          const { error: upErr } = await db.storage.from('task-submissions').upload(path, f);
+          if (upErr) throw new Error('Upload gagal: ' + upErr.message);
+          const { data:{ publicUrl } } = db.storage.from('task-submissions').getPublicUrl(path);
+          await db.from('task_submissions').insert({
+            task_id:taskId, submitted_by:CU.id,
+            file_url:publicUrl, file_name:f.name,
+            note: i===0 ? note : null
+          });
+        }
+        if (_modalFiles.length === 0) {
+          await db.from('task_submissions').insert({ task_id:taskId, submitted_by:CU.id, note });
+        }
+        await db.from('tasks').update({ status:'on_review', updated_at:new Date().toISOString() }).eq('id',taskId);
+        const admins = await getAdminIds();
+        for (const aid of admins) {
+          await db.from('notifications').insert({
+            recipient_id:aid, sender_id:CU.id, type:'task_submitted', task_id:taskId,
+            title:`📤 ${CP.full_name} submit task`,
+            message:`"${taskTitle}" telah disubmit dan menunggu review`
+          });
+        }
+        _modalFiles = [];
+        toast('✓ Task berhasil disubmit!','success');
+        closeModal();
+        loadHome(); loadUpcoming();
+      } catch(err) {
+        toast(err.message||'Gagal submit.','error');
+        btn.disabled = false;
+        btn.innerHTML = `<span class="ms">check_circle</span> Submit Task`;
       }
     }
 
