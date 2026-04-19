@@ -1928,15 +1928,6 @@
       document.getElementById('fileDrop').style.display = '';
     }
 
-    const fd = document.getElementById('fileDrop');
-    fd.addEventListener('dragover', e => { e.preventDefault(); fd.classList.add('dragover'); });
-    fd.addEventListener('dragleave', () => fd.classList.remove('dragover'));
-    fd.addEventListener('drop', e => {
-      e.preventDefault(); fd.classList.remove('dragover');
-      const files = Array.from(e.dataTransfer.files);
-      files.forEach(f => { if (!selectedFiles.find(x => x.name === f.name)) selectedFiles.push(f); });
-      renderFilePreview();
-    });
 
     // ── PASTE (Ctrl+V) screenshot support ──────────────
     document.addEventListener('paste', e => {
