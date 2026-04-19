@@ -1872,10 +1872,8 @@
       const { data } = await db.from('tasks').select('id,title,status')
         .or(`assigned_to.eq.${CU.id},role_target.eq.${CP.role},role_target.eq.all`)
         .in('status', ['ongoing', 'revision']).order('created_at', { ascending: false });
-
-      const opts = `<option value="">— Pilih task —</option>` + (data || []).map(t => `<option value="${t.id}">[${STATUS_MAP[t.status]?.label || t.status}] ${esc(t.title)}</option>`).join('');
-      document.getElementById('subTaskSel').innerHTML = opts;
-      document.getElementById('qsTaskSel').innerHTML = `<option value="">Pilih task...</option>` + (data || []).map(t => `<option value="${t.id}">${esc(t.title)}</option>`).join('');
+      const qs = document.getElementById('qsTaskSel');
+      if (qs) qs.innerHTML = `<option value="">Pilih task...</option>` + (data || []).map(t => `<option value="${t.id}">${esc(t.title)}</option>`).join('');
     }
 
     // ── MULTI-FILE HANDLING ───────────────────────────
