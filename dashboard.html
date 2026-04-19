@@ -1709,7 +1709,8 @@
       event?.currentTarget?.classList.add('active');
 
       // Right panel only on home
-      document.getElementById('dashRight').style.display = name === 'home' ? '' : 'none';
+      const dashRight = document.getElementById('dashRight');
+      if (dashRight) dashRight.style.display = name === 'home' ? '' : 'none';
 
       if (name === 'kanban') loadKanban();
       if (name === 'leaderboard') loadLeaderboard();
