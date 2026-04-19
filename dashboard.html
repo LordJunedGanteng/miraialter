@@ -1720,7 +1720,7 @@
     async function loadHome() {
       const { data } = await db.from('tasks')
         .select('id,title,description,status,priority,due_date,role_target,assigned_by:profiles!tasks_assigned_by_fkey(full_name)')
-        .or(`assigned_to.eq.${CU.id},role_target.eq.${CP.role},role_target.eq.all`)
+        .or(`assigned_to.eq.${CU.id},and(role_target.eq.${CP.role},assigned_to.is.null),and(role_target.eq.all,assigned_to.is.null)`)
         .order('created_at', { ascending: false });
 
       allMyTasks = data || [];
@@ -1784,7 +1784,7 @@
     async function loadUpcoming() {
       const { data } = await db.from('tasks')
         .select('id,title,due_date,status,priority')
-        .or(`assigned_to.eq.${CU.id},role_target.eq.${CP.role},role_target.eq.all`)
+        .or(`assigned_to.eq.${CU.id},and(role_target.eq.${CP.role},assigned_to.is.null),and(role_target.eq.all,assigned_to.is.null)`)
         .neq('status', 'processed')
         .not('due_date', 'is', null)
         .order('due_date', { ascending: true })
@@ -1858,7 +1858,7 @@
     // ── SUBMIT TASK ───────────────────────────────────────
     async function loadSubmitDropdowns() {
       const { data } = await db.from('tasks').select('id,title,status')
-        .or(`assigned_to.eq.${CU.id},role_target.eq.${CP.role},role_target.eq.all`)
+        .or(`assigned_to.eq.${CU.id},and(role_target.eq.${CP.role},assigned_to.is.null),and(role_target.eq.all,assigned_to.is.null)`)
         .in('status', ['ongoing', 'revision']).order('created_at', { ascending: false });
       const qs = document.getElementById('qsTaskSel');
       if (qs) qs.innerHTML = `<option value="">Pilih task...</option>` + (data || []).map(t => `<option value="${t.id}">${esc(t.title)}</option>`).join('');
