@@ -49,18 +49,47 @@
     pointer-events:none; z-index:-1;
   }
 
-  /* Underline input style — Stitch "recessed carved" */
-  .atelier-input {
-    width:100%; background:#0b0e13; border:none;
-    border-bottom:2px solid transparent;
-    padding:16px 0; color:#e1e2e9;
-    font-family:'Inter',sans-serif; font-size:0.875rem; font-weight:300;
-    letter-spacing:0.03em; outline:none;
-    transition:border-color 0.2s ease;
-    border-radius:0;
+  /* ── INPUT FIELD — Noir Atelier "recessed" style ── */
+  .input-wrap {
+    position:relative;
   }
-  .atelier-input::placeholder { color:rgba(50,53,58,0.8); }
-  .atelier-input:focus { border-bottom-color:#ffd57e; }
+  .input-icon {
+    position:absolute; left:16px; top:50%; transform:translateY(-50%);
+    color:#9b8f7c; font-size:1.1rem; pointer-events:none;
+    transition:color 0.2s ease;
+  }
+  .atelier-input {
+    width:100%;
+    background:#191c21;                       /* surface level — slightly elevated */
+    border:1.5px solid rgba(78,70,54,0.25);   /* ghost border, always visible */
+    border-bottom:2px solid rgba(78,70,54,0.35);
+    border-radius:12px 12px 4px 4px;           /* rounded top, sharp bottom */
+    padding:15px 16px 15px 46px;              /* left room for icon */
+    color:#e1e2e9;
+    font-family:'Inter',sans-serif; font-size:0.875rem; font-weight:300;
+    letter-spacing:0.02em; outline:none;
+    transition:border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
+    -webkit-autofill: none;
+  }
+  .atelier-input::placeholder { color:rgba(155,143,124,0.35); letter-spacing:0.05em; }
+  .atelier-input:hover { background:#1d2025; border-color:rgba(78,70,54,0.45); }
+  .atelier-input:focus {
+    background:#1d2025;
+    border-color:rgba(78,70,54,0.2);
+    border-bottom:2px solid #ffd57e;          /* gold underline on focus */
+    box-shadow:0 4px 24px rgba(232,184,75,0.08);
+  }
+  .input-wrap:focus-within .input-icon { color:#e8b84b; }
+
+  /* Override browser autofill blue tint */
+  .atelier-input:-webkit-autofill,
+  .atelier-input:-webkit-autofill:hover,
+  .atelier-input:-webkit-autofill:focus {
+    -webkit-box-shadow:0 0 0 1000px #1d2025 inset !important;
+    -webkit-text-fill-color:#e1e2e9 !important;
+    border-bottom-color:#ffd57e !important;
+    caret-color:#e1e2e9;
+  }
 
   .spinner {
     display:inline-block; width:14px; height:14px;
@@ -111,23 +140,32 @@
 
       <!-- Form -->
       <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-6">
-        <div class="grid grid-cols-1 gap-6">
+        <div class="grid grid-cols-1 gap-7">
           <!-- Full Name -->
-          <div class="relative">
-            <label class="font-bold text-[10px] uppercase tracking-widest text-outline mb-2 block">Nama Lengkap</label>
-            <input class="atelier-input" id="regName" type="text" placeholder="NAMA LENGKAP KAMU" required/>
+          <div>
+            <label class="font-bold text-[10px] uppercase tracking-[0.15em] text-outline mb-2.5 block">Nama Lengkap</label>
+            <div class="input-wrap">
+              <span class="material-symbols-outlined input-icon">badge</span>
+              <input class="atelier-input" id="regName" type="text" placeholder="Nama lengkap kamu" required/>
+            </div>
           </div>
           <!-- Username -->
-          <div class="relative">
-            <label class="font-bold text-[10px] uppercase tracking-widest text-outline mb-2 block">Username</label>
-            <input class="atelier-input" id="regUsername" type="text" placeholder="@username_kamu" autocomplete="username" required/>
-            <p class="text-[10px] text-outline/60 mt-1 font-light">Hanya huruf kecil, angka, dan underscore.</p>
+          <div>
+            <label class="font-bold text-[10px] uppercase tracking-[0.15em] text-outline mb-2.5 block">Username</label>
+            <div class="input-wrap">
+              <span class="material-symbols-outlined input-icon">alternate_email</span>
+              <input class="atelier-input" id="regUsername" type="text" placeholder="username_kamu" autocomplete="username" required/>
+            </div>
+            <p class="text-[10px] text-outline/50 mt-2 font-light pl-1">Hanya huruf kecil, angka, dan underscore.</p>
           </div>
           <!-- Password -->
-          <div class="relative">
-            <label class="font-bold text-[10px] uppercase tracking-widest text-outline mb-2 block">Password</label>
-            <input class="atelier-input" id="regPassword" type="password" placeholder="••••••••••••" minlength="8" required/>
-            <p class="text-[10px] text-outline/60 mt-1 font-light">Minimal 8 karakter.</p>
+          <div>
+            <label class="font-bold text-[10px] uppercase tracking-[0.15em] text-outline mb-2.5 block">Password</label>
+            <div class="input-wrap">
+              <span class="material-symbols-outlined input-icon">lock</span>
+              <input class="atelier-input" id="regPassword" type="password" placeholder="Min. 8 karakter" minlength="8" required/>
+            </div>
+            <p class="text-[10px] text-outline/50 mt-2 font-light pl-1">Minimal 8 karakter.</p>
           </div>
         </div>
 
