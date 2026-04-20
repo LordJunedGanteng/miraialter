@@ -547,6 +547,12 @@
       border-color: rgba(34, 211, 238, 0.25);
     }
 
+    .badge-sound_designer {
+      background: rgba(167, 139, 250, 0.12);
+      color: #a78bfa;
+      border-color: rgba(167, 139, 250, 0.25);
+    }
+
     .badge-admin {
       background: rgba(232, 184, 75, 0.12);
       color: #e8b84b;
@@ -1619,6 +1625,7 @@
                 <div class="ds-progress-fill" id="progressFill" style="width:0%"></div>
               </div>
             </div>
+            <div id="greetRole" style="margin-top:10px;display:none"></div>
           </div>
           <div class="ds-date-block">
             <div class="ds-date-day" id="dateDay"></div>
@@ -1905,6 +1912,12 @@
       // Sidebar avatar
       document.getElementById('sidebarAvatar').textContent = ini(CP.full_name);
       document.getElementById('greetName').textContent = CP.full_name.split(' ')[0];
+      const _rr = ROLES[CP.role];
+      if (_rr) {
+        const greetRole = document.getElementById('greetRole');
+        greetRole.innerHTML = `<span class="badge badge-${CP.role}" style="font-size:0.65rem;padding:3px 10px">${_rr.icon} ${_rr.label}</span>`;
+        greetRole.style.display = '';
+      }
 
       // Date
       const now = new Date();
@@ -2105,12 +2118,22 @@
       const cmtMap = {};
       (cmtRows||[]).forEach(c => { cmtMap[c.submission_id] = (cmtMap[c.submission_id]||0) + 1; });
 
+      // Deduplicate by task_id — keep latest per task, flag updated if resubmitted
+      const seenTask = {};
+      const countPerTask = {};
+      subs.forEach(s => { countPerTask[s.task_id] = (countPerTask[s.task_id]||0) + 1; });
+      const dedupedSubs = subs.filter(s => {
+        if (seenTask[s.task_id]) return false;
+        seenTask[s.task_id] = true;
+        return true;
+      }).map(s => ({ ...s, isUpdated: countPerTask[s.task_id] > 1 }));
+
       // Resolve signed URLs so thumbnails and previews can load
-      await Promise.all(subs.map(async s => {
+      await Promise.all(dedupedSubs.map(async s => {
         if (s.file_url) s.file_url = (await resolveFileUrl(s.file_url)) || s.file_url;
       }));
 
-      _stripSubs = subs.map(s => ({ ...s, task: taskMap[s.task_id] }));
+      _stripSubs = dedupedSubs.map(s => ({ ...s, task: taskMap[s.task_id] }));
 
       document.getElementById('actRail').innerHTML = _stripSubs.map(s => renderStripCard(s, cmtMap[s.id]||0)).join('');
       document.getElementById('actStripSection').style.display = '';
@@ -2122,16 +2145,19 @@
       const thumb = s.file_url && isImg(s.file_url)
         ? `<img src="${s.file_url}" class="ac-slide-thumb" alt="" onerror="this.style.display='none'">`
         : s.file_url && isVid(s.file_url)
-          ? `<div class="ac-slide-thumb-placeholder">🎬</div>`
+          ? `<video src="${s.file_url}" class="ac-slide-thumb" muted playsinline preload="metadata" onloadedmetadata="this.currentTime=0.1" style="pointer-events:none"></video>`
           : `<div class="ac-slide-thumb-placeholder">📄</div>`;
 
       const statusDot = s.task?.status === 'processed'
         ? `<span class="badge badge-processed" style="font-size:0.55rem;padding:1px 6px">✓</span>`
         : s.task?.status === 'on_review'
           ? `<span class="badge badge-on_review" style="font-size:0.55rem;padding:1px 6px">Review</span>` : '';
+      const updatedBadge = s.isUpdated
+        ? `<span style="position:absolute;top:8px;left:8px;background:rgba(197,192,255,0.18);border:1px solid rgba(197,192,255,0.35);color:#c5c0ff;font-size:0.5rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:4px">Updated</span>`
+        : '';
 
       return `<div class="ac-slide" onclick="openActivityDetail('${s.id}')">
-        ${thumb}
+        <div style="position:relative">${thumb}${updatedBadge}</div>
         <div class="ac-slide-body">
           <div class="ac-slide-who">${esc(s.submitted_by?.full_name||'?')}</div>
           <div class="ac-slide-title">${esc(s.task?.title||'Task')}</div>
@@ -2293,6 +2319,11 @@
       const taskIds = [...new Set(subs.map(s => s.task_id))];
       const { data: tasks } = await db.from('tasks').select('id,title,status').in('id', taskIds);
       const taskMap = Object.fromEntries((tasks||[]).map(t => [t.id, t]));
+
+      // Resolve signed URLs so previews can load
+      await Promise.all(subs.map(async s => {
+        if (s.file_url) s.file_url = (await resolveFileUrl(s.file_url)) || s.file_url;
+      }));
 
       el.innerHTML = subs.map(s => renderActivityCard(s, taskMap[s.task_id])).join('');
 

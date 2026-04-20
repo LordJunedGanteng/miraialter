@@ -85,6 +85,25 @@
     box-shadow:0 4px 24px rgba(232,184,75,0.08);
   }
   .input-wrap:focus-within .input-icon { color:#e8b84b; }
+  /* show-password toggle */
+  .pw-toggle {
+    position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    background:none; border:none; cursor:pointer; padding:2px;
+    color:#9b8f7c; display:flex; align-items:center; justify-content:center;
+    transition:color 0.2s ease;
+  }
+  .pw-toggle:hover { color:#e8b84b; }
+  .pw-toggle .material-symbols-outlined { font-size:1.1rem; }
+  /* extra right padding so text doesn't go under the eye */
+  #loginPassword { padding-right: 42px; }
+
+  /* reset request panel */
+  .reset-panel {
+    overflow:hidden; max-height:0; opacity:0;
+    transition: max-height 0.35s ease, opacity 0.3s ease, margin 0.3s ease;
+  }
+  .reset-panel.open { max-height:120px; opacity:1; margin-top:10px; }
+
   .atelier-input:-webkit-autofill,
   .atelier-input:-webkit-autofill:hover,
   .atelier-input:-webkit-autofill:focus {
@@ -100,14 +119,12 @@
 <div class="ambient-glow"></div>
 
 <!-- Top bar -->
-<header class="bg-background w-full z-50 sticky top-0">
+<header class="bg-background w-full z-50 sticky top-0" id="loginHeader">
   <div class="flex items-center justify-between px-6 py-4 w-full max-w-7xl mx-auto">
-    <a href="index.html" class="text-outline hover:text-on-surface transition-colors">
+    <a href="index.html" class="text-outline hover:text-on-surface transition-colors" id="loginBackBtn">
       <span class="material-symbols-outlined">arrow_back</span>
     </a>
-    <a href="index.html" class="font-extrabold tracking-[-0.04em] uppercase text-2xl text-[#e8b84b] hover:opacity-80 transition-opacity">
-      MIRAI
-    </a>
+    <span class="font-extrabold tracking-[-0.04em] uppercase text-2xl text-[#e8b84b]">MIRAI</span>
     <div class="w-6"></div>
   </div>
 </header>
@@ -148,6 +165,27 @@
             <div class="input-wrap">
               <span class="material-symbols-outlined input-icon">lock</span>
               <input class="atelier-input" id="loginPassword" type="password" placeholder="••••••••" required/>
+              <button type="button" class="pw-toggle" id="pwToggle" onclick="togglePw()" tabindex="-1" title="Show/hide password">
+                <span class="material-symbols-outlined" id="pwToggleIcon">visibility</span>
+              </button>
+            </div>
+            <div class="flex justify-end mt-2">
+              <button type="button" onclick="toggleResetPanel()"
+                class="text-[10px] font-light text-outline/60 hover:text-primary transition-colors uppercase tracking-widest">
+                Lupa Password?
+              </button>
+            </div>
+            <!-- Reset request panel -->
+            <div class="reset-panel" id="resetPanel">
+              <div class="flex gap-2 items-center">
+                <input id="resetUsernameInput" class="atelier-input" type="text" placeholder="Konfirmasi username kamu"
+                  style="padding-top:10px;padding-bottom:10px"/>
+                <button type="button" onclick="submitResetRequest()"
+                  class="flex-shrink-0 px-4 py-2.5 rounded-lg text-on-primary-container font-bold text-[11px] uppercase tracking-wider gold-gradient-btn hover:opacity-90 transition-opacity whitespace-nowrap">
+                  Kirim
+                </button>
+              </div>
+              <div id="resetMsg" class="text-[10px] mt-2 pl-1 hidden"></div>
             </div>
           </div>
         </div>
@@ -176,7 +214,7 @@
 
 <!-- Footer -->
 <footer class="bg-transparent w-full py-8 mt-auto flex flex-col items-center gap-4 px-8">
-  <div class="flex gap-6 mb-2">
+  <div class="flex gap-6 mb-2" id="loginFooterLinks">
     <a class="font-light text-[10px] uppercase tracking-widest text-slate-600 hover:text-[#ffd57e] transition-colors" href="index.html">Home</a>
     <a class="font-light text-[10px] uppercase tracking-widest text-slate-600 hover:text-[#ffd57e] transition-colors" href="register.html">Buat Akun</a>
   </div>
@@ -184,6 +222,12 @@
 </footer>
 
 <script>
+  // Hide web-only nav in Electron
+  if (window.electronAPI) {
+    document.getElementById('loginBackBtn').style.display = 'none';
+    document.getElementById('loginFooterLinks').style.display = 'none';
+  }
+
   // Redirect if already logged in
   (async () => {
     const { data: { session } } = await db.auth.getSession();
@@ -204,6 +248,42 @@
   }
   function hideError() {
     document.getElementById('errorMsg').classList.add('hidden');
+  }
+
+  function togglePw() {
+    const inp = document.getElementById('loginPassword');
+    const icon = document.getElementById('pwToggleIcon');
+    const show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    icon.textContent = show ? 'visibility_off' : 'visibility';
+  }
+
+  let _resetOpen = false;
+  function toggleResetPanel() {
+    _resetOpen = !_resetOpen;
+    const panel = document.getElementById('resetPanel');
+    panel.classList.toggle('open', _resetOpen);
+    if (_resetOpen) document.getElementById('resetUsernameInput').focus();
+  }
+
+  async function submitResetRequest() {
+    const username = document.getElementById('resetUsernameInput').value.trim().toLowerCase();
+    const msg = document.getElementById('resetMsg');
+    if (!username) { showResetMsg('Masukkan username kamu.', 'error'); return; }
+
+    showResetMsg('Mengirim...', 'info');
+    const { data, error } = await db.rpc('request_password_reset', { p_username: username });
+    if (error) { showResetMsg('Gagal mengirim. Coba lagi.', 'error'); return; }
+    if (data?.error) { showResetMsg('Username tidak ditemukan.', 'error'); return; }
+    showResetMsg('✓ Permintaan terkirim ke Admin!', 'success');
+    document.getElementById('resetUsernameInput').value = '';
+  }
+
+  function showResetMsg(text, type) {
+    const el = document.getElementById('resetMsg');
+    el.textContent = text;
+    el.className = `text-[10px] mt-2 pl-1 ${type === 'error' ? 'text-error' : type === 'success' ? 'text-tertiary' : 'text-outline'}`;
+    el.classList.remove('hidden');
   }
 
   async function handleLogin(e) {

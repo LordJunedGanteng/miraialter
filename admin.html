@@ -296,7 +296,8 @@
     .bg-modeller    { background: rgba(52,211,153,.12);  color: #34d399;  border-color: rgba(52,211,153,.25); }
     .bg-programmer  { background: rgba(251,146,60,.12);  color: #fb923c;  border-color: rgba(251,146,60,.25); }
     .bg-animator    { background: rgba(244,114,182,.12); color: #f472b6;  border-color: rgba(244,114,182,.25); }
-    .bg-ui_designer { background: rgba(34,211,238,.12);  color: #22d3ee;  border-color: rgba(34,211,238,.25); }
+    .bg-ui_designer    { background: rgba(34,211,238,.12);  color: #22d3ee;  border-color: rgba(34,211,238,.25); }
+    .bg-sound_designer { background: rgba(167,139,250,.12); color: #a78bfa; border-color: rgba(167,139,250,.25); }
 
     /* ── BUTTONS ── */
     .btn {
@@ -1015,6 +1016,7 @@
             <option value="programmer">Programmer</option>
             <option value="animator">Animator</option>
             <option value="ui_designer">UI Designer</option>
+            <option value="sound_designer">Sound Designer</option>
             <option value="admin">Admin</option>
           </select>
           <select class="form-select" id="userActiveFilter" style="width:auto" onchange="filterUsers()">
@@ -1064,6 +1066,7 @@
                   <option value="programmer">Programmer</option>
                   <option value="animator">Animator</option>
                   <option value="ui_designer">UI Designer</option>
+                  <option value="sound_designer">Sound Designer</option>
                 </select>
               </div>
             </div>
@@ -1133,6 +1136,7 @@
             <option value="programmer">Programmer</option>
             <option value="animator">Animator</option>
             <option value="ui_designer">UI Designer</option>
+            <option value="sound_designer">Sound Designer</option>
           </select>
         </div>
       </div>
@@ -1354,6 +1358,7 @@
             <option value="programmer">Programmer</option>
             <option value="animator">Animator</option>
             <option value="ui_designer">UI Designer</option>
+            <option value="sound_designer">Sound Designer</option>
           </select>
         </div>
         <div class="form-group">
@@ -1390,6 +1395,7 @@
         <option value="programmer">💻 Programmer</option>
         <option value="animator">✨ Animator</option>
         <option value="ui_designer">🖌️ UI Designer</option>
+        <option value="sound_designer">🎵 Sound Designer</option>
         <option value="admin">👑 Admin</option>
       </select>
     </div>
@@ -1633,6 +1639,11 @@
     const taskIds = [...new Set(subs.map(s => s.task_id))];
     const { data: tasks } = await db.from('tasks').select('id,title,status').in('id', taskIds);
     const taskMap = Object.fromEntries((tasks||[]).map(t => [t.id, t]));
+
+    // Resolve signed URLs so previews can load
+    await Promise.all(subs.map(async s => {
+      if (s.file_url) s.file_url = (await resolveFileUrl(s.file_url)) || s.file_url;
+    }));
 
     el.innerHTML = subs.map(s => renderAdmActivityCard(s, taskMap[s.task_id])).join('');
     subs.forEach(s => loadAdmCardComments(s.id));
@@ -1885,7 +1896,7 @@
           <div class="uc-stat-item"><div class="uc-stat-val">${u._done||0}</div><div class="uc-stat-lbl">Selesai</div></div>
         </div>
         <select class="form-select uc-role-select" onchange="quickRole('${u.id}',this.value)">
-          ${['produser','director','modeller','programmer','animator','ui_designer','admin'].map(r=>
+          ${['produser','director','modeller','programmer','animator','ui_designer','sound_designer','admin'].map(r=>
             `<option value="${r}" ${u.role===r?'selected':''}>${ROLES[r]?.icon||''} ${ROLES[r]?.label||r}</option>`
           ).join('')}
         </select>

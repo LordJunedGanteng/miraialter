@@ -113,9 +113,7 @@
     <a href="login.html" class="text-outline hover:text-on-surface transition-colors">
       <span class="material-symbols-outlined">arrow_back</span>
     </a>
-    <a href="index.html" class="font-extrabold tracking-[-0.04em] uppercase text-2xl text-[#e8b84b] hover:opacity-80 transition-opacity">
-      MIRAI
-    </a>
+    <span class="font-extrabold tracking-[-0.04em] uppercase text-2xl text-[#e8b84b]">MIRAI</span>
     <div class="w-6"></div><!-- spacer -->
   </div>
 </header>
@@ -205,7 +203,7 @@
 
 <!-- Footer -->
 <footer class="bg-transparent w-full py-8 mt-auto flex flex-col items-center gap-4 px-8">
-  <div class="flex gap-6 mb-2">
+  <div class="flex gap-6 mb-2" id="regFooterLinks">
     <a class="font-light text-[10px] uppercase tracking-widest text-slate-600 hover:text-[#ffd57e] transition-colors" href="index.html">Home</a>
     <a class="font-light text-[10px] uppercase tracking-widest text-slate-600 hover:text-[#ffd57e] transition-colors" href="login.html">Login</a>
   </div>
@@ -213,6 +211,11 @@
 </footer>
 
 <script>
+  // Hide web-only nav in Electron
+  if (window.electronAPI) {
+    document.getElementById('regFooterLinks').style.display = 'none';
+  }
+
   // Redirect if already logged in
   (async () => {
     const { data: { session } } = await db.auth.getSession();
