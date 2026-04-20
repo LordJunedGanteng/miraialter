@@ -1219,6 +1219,32 @@
     }
     .ac-send-btn:hover { background: var(--gold-l); }
 
+    /* ── ACTIVITY CAROUSEL ── */
+    .ac-strip { margin-bottom: 28px; }
+    .ac-strip-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .ac-strip-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--t3); display: flex; align-items: center; gap: 6px; }
+    .ac-strip-wrap { position: relative; }
+    .ac-rail { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; padding: 4px 2px 10px; scrollbar-width: none; }
+    .ac-rail::-webkit-scrollbar { display: none; }
+    .ac-nav { position: absolute; top: 50%; transform: translateY(-56%); width: 32px; height: 32px; border-radius: 50%; background: var(--card2); border: 1px solid var(--border2); color: var(--t1); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: all 0.15s; }
+    .ac-nav:hover { background: var(--gold); color: #0e1116; border-color: var(--gold); }
+    .ac-nav.prev { left: -16px; }
+    .ac-nav.next { right: -16px; }
+    .ac-slide { scroll-snap-align: start; flex-shrink: 0; width: 210px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; cursor: pointer; transition: transform 0.2s ease, border-color 0.2s, box-shadow 0.2s; }
+    .ac-slide:hover { transform: translateY(-4px); border-color: rgba(232,184,75,0.3); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .ac-slide-thumb { width: 100%; height: 130px; object-fit: cover; display: block; background: var(--card2); }
+    .ac-slide-thumb-placeholder { width: 100%; height: 130px; background: var(--card2); display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+    .ac-slide-body { padding: 11px 13px; }
+    .ac-slide-who { font-size: 0.6875rem; font-weight: 700; color: var(--gold); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ac-slide-title { font-size: 0.8125rem; font-weight: 700; color: var(--t1); line-height: 1.3; margin-bottom: 8px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .ac-slide-foot { display: flex; align-items: center; justify-content: space-between; font-size: 0.6875rem; color: var(--t3); }
+    .ac-slide-cmts { display: flex; align-items: center; gap: 3px; }
+
+    /* Activity Detail Modal */
+    .ac-detail-box { width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto; background: var(--card); border: 1px solid var(--border2); border-radius: var(--r-lg); display: flex; flex-direction: column; }
+    .ac-detail-preview { width: 100%; max-height: 320px; object-fit: cover; display: block; }
+    .ac-detail-body { padding: 20px 22px; flex: 1; }
+
     /* ── MODAL ── */
     .modal-overlay {
       position: fixed;
@@ -1622,6 +1648,22 @@
           </div>
         </div>
 
+        <!-- Activity Carousel -->
+        <div class="ac-strip" id="actStripSection" style="display:none">
+          <div class="ac-strip-hd">
+            <div class="ac-strip-label">
+              <span style="width:6px;height:6px;border-radius:50%;background:var(--gold);display:inline-block"></span>
+              Aktivitas Tim
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="switchSection('activity')" style="font-size:0.6875rem">Lihat semua →</button>
+          </div>
+          <div class="ac-strip-wrap">
+            <button class="ac-nav prev" onclick="scrollStrip(-1)"><span class="ms" style="font-size:1rem">chevron_left</span></button>
+            <div class="ac-rail" id="actRail"></div>
+            <button class="ac-nav next" onclick="scrollStrip(1)"><span class="ms" style="font-size:1rem">chevron_right</span></button>
+          </div>
+        </div>
+
         <!-- Task List -->
         <div class="ds-tasks-header">
           <div class="ds-tasks-title">Recent Tasks</div>
@@ -1830,6 +1872,11 @@
     </div>
   </div>
 
+  <!-- Activity Detail Modal -->
+  <div class="modal-overlay" id="actDetailModal" onclick="closeActivityDetail()">
+    <div class="ac-detail-box" onclick="event.stopPropagation()" id="actDetailBox"></div>
+  </div>
+
   <!-- Task Detail Modal -->
   <div class="modal-overlay" id="taskModal">
     <div class="modal-box" style="max-width:600px">
@@ -1874,6 +1921,7 @@
       _refreshAvatar(CP);
 
       await loadHome();
+      loadActivityStrip();
       loadSubmitDropdowns();
       loadUpcoming();
       pollNotifications();
@@ -2037,6 +2085,166 @@
       </div>`).join('');
     }
 
+    // ── ACTIVITY CAROUSEL (home strip) ───────────────────
+    let _stripSubs = [];
+
+    async function loadActivityStrip() {
+      const { data: subs } = await db.from('task_submissions')
+        .select(`id, file_url, file_name, note, submitted_at, task_id,
+          submitted_by:profiles!task_submissions_submitted_by_fkey(id, full_name, role)`)
+        .order('submitted_at', { ascending: false }).limit(20);
+
+      if (!subs?.length) return;
+
+      const taskIds = [...new Set(subs.map(s => s.task_id))];
+      const { data: tasks } = await db.from('tasks').select('id,title,status').in('id', taskIds);
+      const taskMap = Object.fromEntries((tasks||[]).map(t => [t.id, t]));
+
+      const { data: cmtRows } = await db.from('submission_comments')
+        .select('submission_id').in('submission_id', subs.map(s => s.id));
+      const cmtMap = {};
+      (cmtRows||[]).forEach(c => { cmtMap[c.submission_id] = (cmtMap[c.submission_id]||0) + 1; });
+
+      _stripSubs = subs.map(s => ({ ...s, task: taskMap[s.task_id] }));
+
+      document.getElementById('actRail').innerHTML = _stripSubs.map(s => renderStripCard(s, cmtMap[s.id]||0)).join('');
+      document.getElementById('actStripSection').style.display = '';
+    }
+
+    function renderStripCard(s, cmtCount) {
+      const isImg = u => /\.(png|jpg|jpeg|gif|webp)(\?|$)/i.test(u||'');
+      const isVid = u => /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(u||'');
+      const thumb = s.file_url && isImg(s.file_url)
+        ? `<img src="${s.file_url}" class="ac-slide-thumb" alt="" onerror="this.style.display='none'">`
+        : s.file_url && isVid(s.file_url)
+          ? `<div class="ac-slide-thumb-placeholder">🎬</div>`
+          : `<div class="ac-slide-thumb-placeholder">📄</div>`;
+
+      const statusDot = s.task?.status === 'processed'
+        ? `<span class="badge badge-processed" style="font-size:0.55rem;padding:1px 6px">✓</span>`
+        : s.task?.status === 'on_review'
+          ? `<span class="badge badge-on_review" style="font-size:0.55rem;padding:1px 6px">Review</span>` : '';
+
+      return `<div class="ac-slide" onclick="openActivityDetail('${s.id}')">
+        ${thumb}
+        <div class="ac-slide-body">
+          <div class="ac-slide-who">${esc(s.submitted_by?.full_name||'?')}</div>
+          <div class="ac-slide-title">${esc(s.task?.title||'Task')}</div>
+          <div class="ac-slide-foot">
+            <span>${timeAgo(s.submitted_at)}</span>
+            <div style="display:flex;align-items:center;gap:5px">
+              ${statusDot}
+              <span class="ac-slide-cmts"><span class="ms" style="font-size:0.8rem">chat_bubble</span>${cmtCount}</span>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    function scrollStrip(dir) {
+      document.getElementById('actRail').scrollBy({ left: dir * 240, behavior: 'smooth' });
+    }
+
+    async function openActivityDetail(subId) {
+      const s = _stripSubs.find(x => x.id === subId) || _carouselSubs?.find(x => x.id === subId);
+      if (!s) return;
+
+      const isImg = u => /\.(png|jpg|jpeg|gif|webp)(\?|$)/i.test(u||'');
+      const isVid = u => /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(u||'');
+      const dt = new Date(s.submitted_at);
+      const dateStr = dt.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+      const timeStr = dt.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+
+      const preview = s.file_url
+        ? isImg(s.file_url)
+          ? `<img src="${s.file_url}" class="ac-detail-preview" onclick="window.open('${s.file_url}','_blank')" style="cursor:zoom-in" onerror="this.remove()">`
+          : isVid(s.file_url)
+            ? `<video src="${s.file_url}" class="ac-detail-preview" controls preload="metadata" style="max-height:300px"></video>`
+            : `<div style="padding:16px 22px 0"><a href="${s.file_url}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--gold)"><span class="ms" style="font-size:1rem">attach_file</span>${esc(s.file_name||'Lihat File')}</a></div>`
+        : '';
+
+      document.getElementById('actDetailBox').innerHTML = `
+        <div class="modal-hd" style="padding:18px 22px 14px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold-d),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.8rem;color:#0e1116;flex-shrink:0">${ini(s.submitted_by?.full_name||'?')}</div>
+            <div>
+              <div style="font-size:0.875rem;font-weight:700">${esc(s.submitted_by?.full_name||'?')}<span style="font-weight:300;color:var(--t2)"> mengumpulkan task</span></div>
+              <div style="font-size:0.6875rem;color:var(--t3)">${timeAgo(s.submitted_at)}</div>
+            </div>
+          </div>
+          <button class="modal-x" onclick="closeActivityDetail()">✕</button>
+        </div>
+        ${preview}
+        <div class="ac-detail-body">
+          <div style="font-size:1.25rem;font-weight:800;color:var(--t1);margin-bottom:6px;line-height:1.3">${esc(s.task?.title||'Task')}</div>
+          ${s.note ? `<div style="font-size:0.875rem;color:var(--t2);font-style:italic;margin-bottom:10px;line-height:1.5">"${esc(s.note)}"</div>` : ''}
+          <div style="font-size:0.75rem;color:var(--t3);display:flex;align-items:center;gap:5px;margin-bottom:20px">
+            <span class="ms" style="font-size:0.9rem">schedule</span> Diselesaikan pada ${timeStr}, ${dateStr}
+          </div>
+          <div class="modal-divider">Komentar</div>
+          <div id="actDetailCmts" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;min-height:36px">
+            <div style="font-size:0.8rem;color:var(--t3)">Memuat...</div>
+          </div>
+          <div style="display:flex;gap:9px;align-items:center">
+            <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--gold-d),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.68rem;color:#0e1116;flex-shrink:0">${ini(CP?.full_name||'?')}</div>
+            <input type="text" class="ac-input" id="actDetailInput-${subId}" placeholder="Tulis komentar..."
+              onkeydown="if(event.key==='Enter'){event.preventDefault();postDetailComment('${subId}')}">
+            <button class="ac-send-btn" onclick="postDetailComment('${subId}')">
+              <span class="ms" style="font-size:1rem">send</span>
+            </button>
+          </div>
+        </div>`;
+
+      document.getElementById('actDetailModal').classList.add('open');
+      loadDetailComments(subId);
+    }
+
+    function closeActivityDetail() {
+      document.getElementById('actDetailModal').classList.remove('open');
+    }
+
+    async function loadDetailComments(subId) {
+      const el = document.getElementById('actDetailCmts');
+      if (!el) return;
+      const { data } = await db.from('submission_comments')
+        .select(`id, content, created_at, user_id, profiles!submission_comments_user_id_fkey(full_name)`)
+        .eq('submission_id', subId).order('created_at', { ascending: true });
+
+      if (!data?.length) {
+        el.innerHTML = `<div style="font-size:0.8rem;color:var(--t3);padding:4px 0">Belum ada komentar — jadilah yang pertama! 💬</div>`; return;
+      }
+      el.innerHTML = data.map(c => `
+        <div class="ac-comment-item" id="detCmt-${c.id}">
+          <div class="ac-ava ac-ava-sm">${ini(c.profiles?.full_name||'?')}</div>
+          <div class="ac-comment-bubble">
+            <div class="ac-comment-name">${esc(c.profiles?.full_name||'?')}</div>
+            <div class="ac-comment-text">${esc(c.content)}</div>
+            <div class="ac-comment-time">${timeAgo(c.created_at)}</div>
+          </div>
+          ${c.user_id === CU.id ? `<button class="ac-comment-del" onclick="deleteDetailComment('${c.id}','${subId}')" title="Hapus">✕</button>` : ''}
+        </div>`).join('');
+    }
+
+    async function postDetailComment(subId) {
+      const input = document.getElementById(`actDetailInput-${subId}`);
+      const content = input?.value.trim();
+      if (!content) return;
+      input.value = ''; input.disabled = true;
+      const { error } = await db.from('submission_comments').insert({ submission_id: subId, user_id: CU.id, content });
+      input.disabled = false;
+      if (error) { toast('Gagal: ' + error.message, 'error'); return; }
+      loadDetailComments(subId);
+      loadActivityStrip();
+    }
+
+    async function deleteDetailComment(commentId, subId) {
+      await db.from('submission_comments').delete().eq('id', commentId);
+      document.getElementById(`detCmt-${commentId}`)?.remove();
+      const el = document.getElementById('actDetailCmts');
+      if (el && !el.querySelector('.ac-comment-item'))
+        el.innerHTML = `<div style="font-size:0.8rem;color:var(--t3);padding:4px 0">Belum ada komentar 💬</div>`;
+    }
+
     // ── ACTIVITY FEED ────────────────────────────────────
     let _activityLastSeen = parseInt(localStorage.getItem('activityLastSeen') || '0');
 
@@ -2196,6 +2404,8 @@
           async payload => {
             // Show badge on activity button
             bumpActivityBadge();
+            // Refresh home strip
+            loadActivityStrip();
             // If activity section is open, prepend new card
             if (document.getElementById('sec-activity')?.classList.contains('active')) {
               const s = payload.new;
