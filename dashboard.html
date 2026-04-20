@@ -2105,6 +2105,11 @@
       const cmtMap = {};
       (cmtRows||[]).forEach(c => { cmtMap[c.submission_id] = (cmtMap[c.submission_id]||0) + 1; });
 
+      // Resolve signed URLs so thumbnails and previews can load
+      await Promise.all(subs.map(async s => {
+        if (s.file_url) s.file_url = (await resolveFileUrl(s.file_url)) || s.file_url;
+      }));
+
       _stripSubs = subs.map(s => ({ ...s, task: taskMap[s.task_id] }));
 
       document.getElementById('actRail').innerHTML = _stripSubs.map(s => renderStripCard(s, cmtMap[s.id]||0)).join('');
