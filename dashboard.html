@@ -1125,6 +1125,100 @@
     }
     .prof-reset-btn:hover { background: rgba(255,180,171,0.15); }
 
+    /* ── ACTIVITY FEED ── */
+    .activity-wrap { max-width: 700px; width: 100%; }
+
+    .activity-feed { display: flex; flex-direction: column; gap: 20px; }
+
+    .activity-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+
+    .ac-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 20px 12px;
+    }
+
+    .ac-ava {
+      width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--gold-d), var(--gold));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.875rem; font-weight: 800; color: #0e1116;
+    }
+    .ac-ava-sm { width: 30px; height: 30px; font-size: 0.7rem; }
+
+    .ac-header-info { flex: 1; min-width: 0; }
+    .ac-name { font-size: 0.875rem; font-weight: 700; color: var(--t1); }
+    .ac-action { font-weight: 300; color: var(--t2); }
+    .ac-time { font-size: 0.6875rem; color: var(--t3); margin-top: 2px; }
+
+    .ac-preview {
+      width: 100%; max-height: 340px; object-fit: cover;
+      display: block; background: var(--card2);
+    }
+
+    .ac-body { padding: 14px 20px 16px; }
+    .ac-task-title {
+      font-size: 1.125rem; font-weight: 700; color: var(--t1);
+      line-height: 1.3; margin-bottom: 6px;
+    }
+    .ac-note {
+      font-size: 0.875rem; color: var(--t2); font-weight: 300;
+      line-height: 1.55; margin-bottom: 8px;
+    }
+    .ac-meta { font-size: 0.75rem; color: var(--t3); display: flex; align-items: center; gap: 5px; }
+
+    .ac-comments {
+      border-top: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+
+    .ac-comment-item { display: flex; gap: 9px; align-items: flex-start; }
+
+    .ac-comment-bubble {
+      background: var(--card2); border-radius: 12px;
+      padding: 8px 12px; flex: 1; min-width: 0;
+    }
+    .ac-comment-name { font-size: 0.6875rem; font-weight: 700; color: var(--gold); margin-bottom: 3px; }
+    .ac-comment-text { font-size: 0.8125rem; color: var(--t2); line-height: 1.45; word-break: break-word; }
+    .ac-comment-time { font-size: 0.6rem; color: var(--t3); margin-top: 4px; }
+    .ac-comment-del {
+      background: none; border: none; color: var(--t3);
+      cursor: pointer; font-size: 0.7rem; padding: 4px 6px;
+      opacity: 0; transition: opacity 0.15s; flex-shrink: 0;
+      border-radius: 4px;
+    }
+    .ac-comment-item:hover .ac-comment-del { opacity: 1; }
+    .ac-comment-del:hover { background: rgba(248,113,113,0.1); color: #f87171; }
+
+    .ac-no-comments { font-size: 0.75rem; color: var(--t4); padding: 2px 0; }
+
+    .ac-comment-form {
+      display: flex; align-items: center; gap: 9px;
+      padding: 10px 20px 14px;
+    }
+    .ac-input {
+      flex: 1; background: var(--card2);
+      border: 1px solid var(--border); border-radius: 20px;
+      padding: 8px 16px; color: var(--t1);
+      font-size: 0.8125rem; outline: none;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.15s;
+    }
+    .ac-input:focus { border-color: rgba(232,184,75,0.4); }
+    .ac-input::placeholder { color: var(--t4); }
+    .ac-send-btn {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--gold); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #0e1116; flex-shrink: 0; transition: background 0.15s;
+    }
+    .ac-send-btn:hover { background: var(--gold-l); }
+
     /* ── MODAL ── */
     .modal-overlay {
       position: fixed;
@@ -1464,6 +1558,10 @@
         <button class="ds-btn active" onclick="switchSection('home')" title="Overview"><span class="ms">grid_view</span></button>
         <button class="ds-btn" onclick="switchSection('kanban')" title="Kanban Board"><span class="ms">view_kanban</span></button>
         <button class="ds-btn" onclick="switchSection('leaderboard')" title="Leaderboard"><span class="ms">leaderboard</span></button>
+        <div class="notif-btn-wrap">
+          <button class="ds-btn" id="activityBtn" onclick="switchSection('activity')" title="Aktivitas Tim"><span class="ms">dynamic_feed</span></button>
+          <span class="notif-badge" id="activityBadge" style="display:none"></span>
+        </div>
       </nav>
       <div class="ds-bottom">
         <div class="notif-btn-wrap">
@@ -1600,6 +1698,19 @@
       </section>
 
       <!-- SUBMIT -->
+
+      <!-- ACTIVITY FEED -->
+      <section class="ds-section" id="sec-activity">
+        <div class="activity-wrap">
+          <div class="section-hd">
+            <h2>📣 Aktivitas Tim</h2>
+            <p>Task yang baru dikumpulkan oleh anggota tim</p>
+          </div>
+          <div class="activity-feed" id="activityFeed">
+            <div class="page-loader"><span class="spinner-dark"></span></div>
+          </div>
+        </div>
+      </section>
 
       <!-- PROFILE -->
       <section class="ds-section" id="sec-profile">
@@ -1738,11 +1849,11 @@
 
     // ── INIT ─────────────────────────────────────────────
     async function init() {
-      const session = await requireAuth('/login');
+      const session = await requireAuth('login.html');
       if (!session) return;
       CU = session.user;
       CP = await getProfile(CU.id);
-      if (!CP) { window.location.href = '/login'; return; }
+      if (!CP) { window.location.href = 'login.html'; return; }
 
       // Sidebar avatar
       document.getElementById('sidebarAvatar').textContent = ini(CP.full_name);
@@ -1768,6 +1879,7 @@
       pollNotifications();
       pollDashChatBadge();
       subscribeDashNotifications();
+      subscribeActivityFeed();
     }
 
     // ── NAVIGATION ────────────────────────────────────────
@@ -1783,6 +1895,7 @@
 
       if (name === 'kanban') loadKanban();
       if (name === 'leaderboard') loadLeaderboard();
+      if (name === 'activity') { loadActivityFeed(); clearActivityBadge(); }
     }
 
     // ── HOME ──────────────────────────────────────────────
@@ -1922,6 +2035,194 @@
           <div class="lb-score-lbl">pts</div>
         </div>
       </div>`).join('');
+    }
+
+    // ── ACTIVITY FEED ────────────────────────────────────
+    let _activityLastSeen = parseInt(localStorage.getItem('activityLastSeen') || '0');
+
+    function clearActivityBadge() {
+      _activityLastSeen = Date.now();
+      localStorage.setItem('activityLastSeen', _activityLastSeen);
+      const badge = document.getElementById('activityBadge');
+      if (badge) badge.style.display = 'none';
+    }
+
+    function bumpActivityBadge() {
+      if (document.getElementById('sec-activity')?.classList.contains('active')) return;
+      let badge = document.getElementById('activityBadge');
+      if (!badge) {
+        const wrap = document.createElement('span');
+        wrap.id = 'activityBadge';
+        wrap.className = 'notif-badge';
+        wrap.style.cssText = 'display:none';
+        document.getElementById('activityBtn')?.parentElement?.appendChild(wrap);
+        badge = wrap;
+      }
+      badge.style.display = '';
+    }
+
+    async function loadActivityFeed() {
+      const el = document.getElementById('activityFeed');
+      el.innerHTML = `<div class="page-loader"><span class="spinner-dark"></span></div>`;
+
+      // Fetch latest submissions
+      const { data: subs } = await db.from('task_submissions')
+        .select(`id, file_url, file_name, note, submitted_at, task_id,
+          submitted_by:profiles!task_submissions_submitted_by_fkey(id, full_name, role)`)
+        .order('submitted_at', { ascending: false })
+        .limit(30);
+
+      if (!subs?.length) {
+        el.innerHTML = `<div class="empty">📭 Belum ada aktivitas</div>`; return;
+      }
+
+      // Batch-fetch tasks
+      const taskIds = [...new Set(subs.map(s => s.task_id))];
+      const { data: tasks } = await db.from('tasks').select('id,title,status').in('id', taskIds);
+      const taskMap = Object.fromEntries((tasks||[]).map(t => [t.id, t]));
+
+      el.innerHTML = subs.map(s => renderActivityCard(s, taskMap[s.task_id])).join('');
+
+      // Load comments for each card in parallel
+      subs.forEach(s => loadCardComments(s.id));
+    }
+
+    function renderActivityCard(s, task) {
+      const isImg = u => /\.(png|jpg|jpeg|gif|webp)(\?|$)/i.test(u||'');
+      const isVid = u => /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(u||'');
+      const name  = s.submitted_by?.full_name || '?';
+      const dt    = new Date(s.submitted_at);
+      const dateStr = dt.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+      const timeStr = dt.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+
+      const preview = s.file_url
+        ? isImg(s.file_url)
+          ? `<img src="${s.file_url}" class="ac-preview" alt="preview" onclick="window.open('${s.file_url}','_blank')" style="cursor:zoom-in" onerror="this.remove()">`
+          : isVid(s.file_url)
+            ? `<video src="${s.file_url}" class="ac-preview" controls preload="metadata"></video>`
+            : `<div style="padding:12px 20px 0"><a href="${s.file_url}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--gold)"><span class="ms" style="font-size:1rem">attach_file</span>${esc(s.file_name||'Lihat File')}</a></div>`
+        : '';
+
+      const statusBadge = task?.status === 'processed'
+        ? `<span class="badge badge-processed" style="margin-left:auto;flex-shrink:0">✓ Approved</span>`
+        : task?.status === 'on_review'
+          ? `<span class="badge badge-on_review" style="margin-left:auto;flex-shrink:0">On Review</span>` : '';
+
+      return `<div class="activity-card" id="ac-${s.id}">
+        <div class="ac-header">
+          <div class="ac-ava">${ini(name)}</div>
+          <div class="ac-header-info">
+            <div class="ac-name">${esc(name)}<span class="ac-action"> mengumpulkan task</span></div>
+            <div class="ac-time">${timeAgo(s.submitted_at)}</div>
+          </div>
+          ${statusBadge}
+        </div>
+        ${preview}
+        <div class="ac-body">
+          <div class="ac-task-title">${esc(task?.title || 'Task')}</div>
+          ${s.note ? `<div class="ac-note">"${esc(s.note)}"</div>` : ''}
+          <div class="ac-meta"><span class="ms" style="font-size:0.9rem">schedule</span> Diselesaikan pada ${timeStr}, ${dateStr}</div>
+        </div>
+        <div class="ac-comments" id="acCmt-${s.id}">
+          <div class="ac-no-comments">Memuat komentar...</div>
+        </div>
+        <div class="ac-comment-form">
+          <div class="ac-ava ac-ava-sm">${ini(CP?.full_name||'?')}</div>
+          <input type="text" class="ac-input" id="acIn-${s.id}" placeholder="Tulis komentar..."
+            onkeydown="if(event.key==='Enter'){event.preventDefault();postComment('${s.id}')}">
+          <button class="ac-send-btn" onclick="postComment('${s.id}')">
+            <span class="ms" style="font-size:1rem">send</span>
+          </button>
+        </div>
+      </div>`;
+    }
+
+    async function loadCardComments(subId) {
+      const el = document.getElementById(`acCmt-${subId}`);
+      if (!el) return;
+
+      const { data } = await db.from('submission_comments')
+        .select(`id, content, created_at, user_id,
+          profiles!submission_comments_user_id_fkey(full_name)`)
+        .eq('submission_id', subId)
+        .order('created_at', { ascending: true });
+
+      if (!data?.length) {
+        el.innerHTML = `<div class="ac-no-comments">Belum ada komentar — jadilah yang pertama! 💬</div>`; return;
+      }
+
+      el.innerHTML = data.map(c => `
+        <div class="ac-comment-item" id="accItem-${c.id}">
+          <div class="ac-ava ac-ava-sm">${ini(c.profiles?.full_name||'?')}</div>
+          <div class="ac-comment-bubble">
+            <div class="ac-comment-name">${esc(c.profiles?.full_name||'?')}</div>
+            <div class="ac-comment-text">${esc(c.content)}</div>
+            <div class="ac-comment-time">${timeAgo(c.created_at)}</div>
+          </div>
+          ${c.user_id === CU.id
+            ? `<button class="ac-comment-del" onclick="deleteComment('${c.id}','${subId}')" title="Hapus">✕</button>`
+            : ''}
+        </div>`).join('');
+    }
+
+    async function postComment(subId) {
+      const input = document.getElementById(`acIn-${subId}`);
+      const content = input?.value.trim();
+      if (!content) return;
+      input.value = '';
+      input.disabled = true;
+
+      const { error } = await db.from('submission_comments').insert({
+        submission_id: subId, user_id: CU.id, content
+      });
+      input.disabled = false;
+      if (error) { toast('Gagal: ' + error.message, 'error'); return; }
+      loadCardComments(subId);
+    }
+
+    async function deleteComment(commentId, subId) {
+      await db.from('submission_comments').delete().eq('id', commentId);
+      document.getElementById(`accItem-${commentId}`)?.remove();
+      // If no comments left, reload to show empty state
+      const el = document.getElementById(`acCmt-${subId}`);
+      if (el && !el.querySelector('.ac-comment-item')) {
+        el.innerHTML = `<div class="ac-no-comments">Belum ada komentar — jadilah yang pertama! 💬</div>`;
+      }
+    }
+
+    function subscribeActivityFeed() {
+      db.channel('activity-submissions')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'task_submissions' },
+          async payload => {
+            // Show badge on activity button
+            bumpActivityBadge();
+            // If activity section is open, prepend new card
+            if (document.getElementById('sec-activity')?.classList.contains('active')) {
+              const s = payload.new;
+              const { data: prof } = await db.from('profiles').select('id,full_name,role').eq('id', s.submitted_by).single();
+              const { data: task } = await db.from('tasks').select('id,title,status').eq('id', s.task_id).single();
+              s.submitted_by = prof;
+              const feed = document.getElementById('activityFeed');
+              const empty = feed.querySelector('.empty');
+              if (empty) empty.remove();
+              const tmp = document.createElement('div');
+              tmp.innerHTML = renderActivityCard(s, task);
+              const card = tmp.firstElementChild;
+              card.style.cssText = 'opacity:0;transform:translateY(-12px);transition:opacity 0.35s ease,transform 0.35s ease';
+              feed.prepend(card);
+              requestAnimationFrame(() => { card.style.opacity='1'; card.style.transform='translateY(0)'; });
+              loadCardComments(s.id);
+            }
+          })
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'submission_comments' },
+          payload => {
+            const c = payload.new;
+            // If the comment is from someone else and the card is visible, reload comments
+            if (c.user_id !== CU.id && document.getElementById(`acCmt-${c.submission_id}`)) {
+              loadCardComments(c.submission_id);
+            }
+          })
+        .subscribe();
     }
 
     // ── SUBMIT TASK ───────────────────────────────────────
