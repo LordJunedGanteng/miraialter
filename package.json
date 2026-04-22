@@ -1,0 +1,52 @@
+{
+  "name": "mirai-atelier",
+  "version": "1.0.0",
+  "description": "MIRAI ATELIER — Creative Team Hub",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.miraiatelier.hub",
+    "productName": "MIRAI ATELIER",
+    "copyright": "© 2026 MIRAI ATELIER",
+    "files": [
+      "**/*",
+      "!node_modules/.cache/**",
+      "!*.sql",
+      "!videos/**",
+      "!db/**",
+      "!.claude/**"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "MIRAI ATELIER"
+    }
+  },
+  "devDependencies": {
+    "electron": "^30.5.1",
+    "electron-builder": "^24.13.3",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.34.5"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

@@ -1597,7 +1597,7 @@
       </nav>
       <div class="ds-bottom">
         <div class="notif-btn-wrap">
-          <button class="ds-btn" onclick="toggleChatPanel()" title="Chat" id="chatBtn"><span class="ms">forum</span></button>
+          <button class="ds-btn" onclick="window.location.href='chat.html'" title="Server Chat" id="chatBtn"><span class="ms">forum</span></button>
           <span class="notif-badge" id="chatBadge" style="display:none">0</span>
         </div>
         <div class="notif-btn-wrap">
@@ -2442,6 +2442,15 @@
             bumpActivityBadge();
             // Refresh home strip
             loadActivityStrip();
+            // Windows notification for new team submission
+            if (payload.new.submitted_by !== CU.id) {
+              const { data: prof } = await db.from('profiles').select('full_name').eq('id', payload.new.submitted_by).single();
+              const { data: task } = await db.from('tasks').select('title').eq('id', payload.new.task_id).single();
+              window.electronAPI?.notify(
+                `${prof?.full_name || 'Seseorang'} mengumpulkan task`,
+                task?.title || ''
+              );
+            }
             // If activity section is open, prepend new card
             if (document.getElementById('sec-activity')?.classList.contains('active')) {
               const s = payload.new;
@@ -2461,11 +2470,19 @@
             }
           })
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'submission_comments' },
-          payload => {
+          async payload => {
             const c = payload.new;
-            // If the comment is from someone else and the card is visible, reload comments
-            if (c.user_id !== CU.id && document.getElementById(`acCmt-${c.submission_id}`)) {
-              loadCardComments(c.submission_id);
+            if (c.user_id !== CU.id) {
+              // Reload comments if card is visible
+              if (document.getElementById(`acCmt-${c.submission_id}`)) {
+                loadCardComments(c.submission_id);
+              }
+              // Windows notification
+              const { data: prof } = await db.from('profiles').select('full_name').eq('id', c.user_id).single();
+              window.electronAPI?.notify(
+                `${prof?.full_name || 'Seseorang'} berkomentar`,
+                String(c.content).substring(0, 100)
+              );
             }
           })
         .subscribe();
@@ -3404,6 +3421,9 @@
     };
     let _ntsq = 0;
     function showNotifToast(title, message, type) {
+      // Fire Windows desktop notification when app is in background or always
+      window.electronAPI?.notify(title, message ? String(message).substring(0, 100) : '');
+
       const cfg = _NCFG[type] || { icon:'notifications', color:'#a78bfa', label:'Notifikasi' };
       const id = `nts${++_ntsq}`;
       const el = document.createElement('div');
