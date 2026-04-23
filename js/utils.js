@@ -8,8 +8,9 @@ const ROLES = {
   modeller:    { label: 'Modeller',    icon: '🎨', color: '#34d399' },
   programmer:  { label: 'Programmer',  icon: '💻', color: '#fb923c' },
   animator:    { label: 'Animator',    icon: '✨', color: '#f472b6' },
-  ui_designer: { label: 'UI Designer', icon: '🖌️', color: '#22d3ee' },
-  admin:       { label: 'Admin',       icon: '👑', color: '#e8b84b' }
+  ui_designer:    { label: 'UI Designer',    icon: '🖌️', color: '#22d3ee' },
+  sound_designer: { label: 'Sound Designer', icon: '🎵', color: '#a78bfa' },
+  admin:          { label: 'Admin',          icon: '👑', color: '#e8b84b' }
 };
 
 const STATUS_MAP = {
@@ -38,13 +39,13 @@ async function getProfile(uid) {
   return data;
 }
 
-async function requireAuth(redirect = '/login') {
+async function requireAuth(redirect = 'login.html') {
   const session = await getSession();
   if (!session) { window.location.href = redirect; return null; }
   return session;
 }
 
-async function requireAdmin(redirect = '/dashboard') {
+async function requireAdmin(redirect = 'dashboard.html') {
   const session = await requireAuth();
   if (!session) return null;
   const profile = await getProfile(session.user.id);
@@ -54,7 +55,7 @@ async function requireAdmin(redirect = '/dashboard') {
 
 async function signOut() {
   await db.auth.signOut();
-  window.location.href = '/login';
+  window.location.href = 'login.html';
 }
 
 // ── UI helpers ────────────────────────────────────────
